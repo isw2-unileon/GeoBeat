@@ -1,3 +1,12 @@
+# Descripción Temporal
+GeoBeat es una aplicación web basada en un juego de adivinar los generos musicales más prominentes en distintas regiones/paises del mundo.
+El objetivo del juego es obtener el mayor número de puntos en función de los generos acertados a lo largo de la partida.
+El usuario podrá navegar por un mapa interactivo para seleccionar las regiones, las cuales se irán marcando conforme el usuario acierte o falle.
+Por el momento se contempla que haya distintos modos de juego como podrían ser:
+ - Contrareloj
+ - Canción Hit (Identifica en que lugar una canción fue un hit)
+ - ETC...
+
 # Monorepo Template: Go + React/Vite
 
 A monorepo template for full-stack applications with a **Go** backend and a **React + TypeScript + Vite** frontend.
