@@ -1,5 +1,5 @@
 import {Map, Source, Layer} from '@vis.gl/react-maplibre';
-import {FillLayer} from '@vis.gl/react-maplibre';
+import type {FillLayer} from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 type ViewState = {
@@ -19,7 +19,17 @@ const countryLayer: FillLayer = {
 
 export default function App() {
 
-  return <Map
+  return (
+    <main className="relative min-h-screen">
+      <DailyModeTitle />
+      <ContentMap/>
+    </main>
+  )
+}
+
+function ContentMap() {
+
+   return <Map
     initialViewState={{...dailyViewState()}}
     style={{width: '100vw', height: '100vh'}}
     projection={'globe'}
@@ -30,7 +40,7 @@ export default function App() {
     });
 
     if (features.length > 0) {
-      console.log(features[0].properties.name);
+      console.log(features[0]?.properties.name);
     }
   }}
   >
@@ -42,6 +52,14 @@ export default function App() {
       <Layer {...countryLayer}/>
     </Source>
   </Map>
+}
+
+function DailyModeTitle() {
+  return (
+  <h1 className="absolute top-6 left-14 text-5xl text-blue-600 font-semibold font-[sans] animate-fade-in-down z-1">
+    DAILY MODE
+  </h1>
+  )
 }
 
 function dailyViewState(): ViewState {
