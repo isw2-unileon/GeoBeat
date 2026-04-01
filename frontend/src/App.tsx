@@ -2,6 +2,11 @@ import {Map, Source, Layer} from '@vis.gl/react-maplibre';
 import type {FillLayer} from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
+import { AppField } from './components/app-field';
+
+import { useState } from 'react';
+
+
 type ViewState = {
   longitude: number;
   latitude: number;
@@ -19,15 +24,18 @@ const countryLayer: FillLayer = {
 
 export default function App() {
 
+  const [country, setCountry] = useState<string>('(Select a country)')
+
   return (
-    <main className="relative min-h-screen">
-      <DailyModeTitle />
-      <ContentMap/>
-    </main>
+      <main className="relative min-h-screen flex flex-row items-start">
+        <DailyModeTitle />
+        <ContentMap setCountry={setCountry}/>
+        <AppField country={country} />
+      </main>
   )
 }
 
-function ContentMap() {
+function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateAction<string>> }) {
 
    return <Map
     initialViewState={{...dailyViewState()}}
@@ -40,7 +48,9 @@ function ContentMap() {
     });
 
     if (features.length > 0) {
-      console.log(features[0]?.properties.name);
+      const country: string = features[0]?.properties.name
+      console.log(country);
+      setCountry(country)
     }
   }}
   >
