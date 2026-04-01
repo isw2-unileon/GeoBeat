@@ -1,5 +1,4 @@
-import {Map, Source, Layer} from '@vis.gl/react-maplibre';
-import type {FillLayer} from '@vis.gl/react-maplibre';
+import {Map, Source, Layer, FillLayerSpecification} from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { AppField } from './components/app-field';
@@ -13,9 +12,10 @@ type ViewState = {
   zoom: number;
 };
 
-const countryLayer: FillLayer = {
+const countryLayer: FillLayerSpecification = {
   id: 'country-layer',
   type: 'fill',
+  source: 'countries',
   paint: {
     'fill-color': '#2d643c',
     'fill-opacity': 0.4
