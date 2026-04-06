@@ -59,6 +59,13 @@ func TestCountryService_GetTopGenres(t *testing.T) {
 			expectedGenres: []string{},
 			expectError:    false,
 		},
+		{
+			name:           "error from provider",
+			countryCode:    "DE",
+			mockTracks:     nil,
+			expectedGenres: nil,
+			expectError:    true,
+		},
 	}
 
 	for _, tc := range tests {

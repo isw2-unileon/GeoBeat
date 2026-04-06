@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"sort"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/core/domain"
 )
@@ -21,10 +22,40 @@ func NewCountryService(musicProvider MusicProvider) *CountryService {
 }
 
 func (s *CountryService) GetCountryTopGenres(ctx context.Context, countryCode string) (domain.Country, error) {
-	// Do actual logic here, e.g. call a music provider to get top tracks and extract genres
+	tracks, err := s.musicProvider.GetTopTracks(ctx, countryCode)
+	if err != nil {
+		return domain.Country{}, err
+	}
+
+	genreCount := make(map[string]int)
+	for _, track := range tracks {
+		for _, genre := range track.Genres {
+			genreCount[genre]++
+		}
+	}
+
+	type genreFreq struct {
+		Genre string
+		Freq  int
+	}
+
+	var genres []genreFreq
+	for genre, freq := range genreCount {
+		genres = append(genres, genreFreq{Genre: genre, Freq: freq})
+	}
+
+	sort.Slice(genres, func(i, j int) bool {
+		return genres[i].Freq > genres[j].Freq
+	})
+
+	topGenres := []string{}
+	for i := 0; i < len(genres) && i < 3; i++ {
+		topGenres = append(topGenres, genres[i].Genre)
+	}
+
 	return domain.Country{
 		Code:      countryCode,
-		Name:      "Country Name",                 // Replace with actual country name
-		TopGenres: []string{"Genre 1", "Genre 2"}, // Replace with actual top genres
+		Name:      "", // Map country code to name later
+		TopGenres: topGenres,
 	}, nil
 }
