@@ -7,7 +7,7 @@ How to use this template to start a new project.
 Click **Use this template** on GitHub (or clone and re-init):
 
 ```bash
-git clone https://github.com/isw2-unileon/proyect-scaffolding.git my-project
+git clone https://github.com/isw2-unileon/GeoBeat.git my-project
 cd my-project
 rm -rf .git
 git init
@@ -25,7 +25,7 @@ go mod edit -module github.com/your-org/my-project
 Then update all import paths in Go files:
 
 ```bash
-grep -rl "isw2-unileon/proyect-scaffolding" backend/ | xargs sed -i '' 's|isw2-unileon/proyect-scaffolding|your-org/my-project|g'
+grep -rl "isw2-unileon/GeoBeat" backend/ | xargs sed -i '' 's|isw2-unileon/GeoBeat|your-org/my-project|g'
 ```
 
 Run `go mod tidy` to verify.
@@ -108,12 +108,12 @@ make e2e             # Run Playwright E2E tests
 
 The template includes four GitHub Actions workflows:
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| `backend.yml` | Push/PR changing `backend/` or `go.mod` | `go vet` + `go test -race` + `go build` |
-| `frontend.yml` | Push/PR changing `frontend/` | ESLint + TypeScript check + Vite build |
-| `e2e.yml` | Manual dispatch | Playwright tests across browsers |
-| `codeql.yml` | Weekly + push/PR | Security analysis for Go and JS/TS |
+| Workflow       | Trigger                                 | What it does                            |
+| -------------- | --------------------------------------- | --------------------------------------- |
+| `backend.yml`  | Push/PR changing `backend/` or `go.mod` | `go vet` + `go test -race` + `go build` |
+| `frontend.yml` | Push/PR changing `frontend/`            | ESLint + TypeScript check + Vite build  |
+| `e2e.yml`      | Manual dispatch                         | Playwright tests across browsers        |
+| `codeql.yml`   | Weekly + push/PR                        | Security analysis for Go and JS/TS      |
 
 ## 9. Record Decisions
 
