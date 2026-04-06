@@ -7,20 +7,24 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/core/domain"
 )
 
+// MusicProvider defines the interface for fetching music data, allowing for different implementations (e.g., Last.fm, Spotify).
 type MusicProvider interface {
 	GetTopTracks(ctx context.Context, countryCode string) ([]domain.Track, error)
 }
 
+// CountryService provides methods to get country-related music data, such as top genres.
 type CountryService struct {
 	musicProvider MusicProvider
 }
 
+// NewCountryService creates a new instance of CountryService with the given MusicProvider.
 func NewCountryService(musicProvider MusicProvider) *CountryService {
 	return &CountryService{
 		musicProvider: musicProvider,
 	}
 }
 
+// GetCountryTopGenres retrieves the top genres for a given country by analyzing the genres of the top tracks.
 func (s *CountryService) GetCountryTopGenres(ctx context.Context, countryCode string) (domain.Country, error) {
 	tracks, err := s.musicProvider.GetTopTracks(ctx, countryCode)
 	if err != nil {

@@ -1,5 +1,6 @@
 package domain
 
+// Track represents a music track with its ID, name, artist, and associated genres.
 type Track struct {
 	ID     string   `json:"id"`
 	Name   string   `json:"name"`

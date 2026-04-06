@@ -13,6 +13,7 @@ import (
 
 const baseURL = "http://ws.audioscrobbler.com/2.0/"
 
+// Client is a simple wrapper around the Last.fm API.
 type Client struct {
 	APIKey string
 }

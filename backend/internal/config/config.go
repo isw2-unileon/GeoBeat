@@ -17,6 +17,10 @@ type Config struct {
 // Load reads configuration from environment variables with sensible defaults.
 func Load() *Config {
 	godotenv.Load("backend/.env") // Load .env file if it exists
+	if err := godotenv.Load(); err != nil {
+		// It's fine if the .env file doesn't exist, we'll just rely on actual environment variables
+	}
+
 	return &Config{
 		Port:            getEnv("PORT", "8080"),
 		GinMode:         getEnv("GIN_MODE", "debug"),
