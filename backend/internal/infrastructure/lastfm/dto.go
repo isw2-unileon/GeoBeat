@@ -1,6 +1,6 @@
 package lastfm
 
-// DTO for parsing the top tracks response for a country
+// TopTracksResponse is the DTO for parsing the top tracks response for a country
 type TopTracksResponse struct {
 	Tracks struct {
 		Track []struct {
@@ -12,7 +12,7 @@ type TopTracksResponse struct {
 	} `json:"tracks"`
 }
 
-// DTO for parsing the top tags response for a track
+// TopTagsResponse is the DTO for parsing the top tags response for a track
 type TopTagsResponse struct {
 	Toptags struct {
 		Tag []struct {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -14,11 +15,12 @@ type Config struct {
 	LastFMAPIKey    string
 }
 
+var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 // Load reads configuration from environment variables with sensible defaults.
 func Load() *Config {
-	godotenv.Load("backend/.env") // Load .env file if it exists
-	if err := godotenv.Load(); err != nil {
-		// It's fine if the .env file doesn't exist, we'll just rely on actual environment variables
+	if err := godotenv.Load("backend/.env"); err != nil {
+		logger.Warn("could not load .env file, relying on environment variables", "error", err)
 	}
 
 	return &Config{

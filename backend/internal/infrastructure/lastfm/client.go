@@ -18,6 +18,7 @@ type Client struct {
 	APIKey string
 }
 
+// NewClient creates a new Last.fm API client with the given API key.
 func NewClient(apiKey string) *Client {
 	return &Client{APIKey: apiKey}
 }
@@ -36,6 +37,7 @@ var codes = map[string]string{
 	"RU": "Russia",
 }
 
+// GetTopTracks fetches the top tracks for a given country code and retrieves their genres.
 func (c *Client) GetTopTracks(ctx context.Context, countryCode string) ([]domain.Track, error) {
 	countryName, exists := codes[countryCode]
 	if !exists {
