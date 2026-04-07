@@ -1,4 +1,4 @@
-package daily
+package domains
 
 import (
 	"errors"
@@ -6,19 +6,27 @@ import (
 	"time"
 )
 
+// GameStatus represents the current state of the game session.
 type GameStatus string
 
 const (
+	// StatusPlaying indicates the game is ongoing, the player can still make attempts.
 	StatusPlaying GameStatus = "playing"
-	StatusWon     GameStatus = "won"
-	StatusLost    GameStatus = "lost"
-	MaxAttempts   int        = 5
+	// StatusWon indicates the player has guessed correctly and won the game.
+	StatusWon GameStatus = "won"
+	// StatusLost indicates the player has used all attempts without guessing correctly and lost the game.
+	StatusLost GameStatus = "lost"
+	// MaxAttempts defines the maximum number of attempts a player has to guess the correct answer.
+	MaxAttempts int = 5
 )
 
 var (
+	// ErrChallengeNotFound is returned when there is no challenge available for the current day.
 	ErrChallengeNotFound = errors.New("no challenge available for today")
-	ErrGameOver          = errors.New("game is already over")
-	ErrInvalidInput      = errors.New("invalid input, please try again")
+	// ErrGameOver is returned when a player tries to make an attempt after the game has already ended.
+	ErrGameOver = errors.New("game is already over")
+	// ErrInvalidInput is returned when the player's guess is invalid (e.g., empty or not a valid genre).
+	ErrInvalidInput = errors.New("invalid input, please try again")
 )
 
 // Challenge represents the rules for the daily challenge.
@@ -48,6 +56,7 @@ type AttemptResult struct {
 	Hint     string     `json:"hint,omitempty"`
 }
 
+// NewSession creates a new game session for a user and challenge.
 func NewSession(userID, challengeID int) *Session {
 	return &Session{
 		UserID:       userID,
@@ -57,6 +66,7 @@ func NewSession(userID, challengeID int) *Session {
 	}
 }
 
+// MakeAttempt processes a player's guess and updates the session state accordingly.
 func (s *Session) MakeAttempt(guess string, challenge *Challenge) (*AttemptResult, error) {
 	if s.Status != StatusPlaying {
 		return nil, ErrGameOver
@@ -70,11 +80,12 @@ func (s *Session) MakeAttempt(guess string, challenge *Challenge) (*AttemptResul
 		Attempts: MaxAttempts - s.AttemptsUsed,
 	}
 
-	if isCorrect {
+	switch {
+	case isCorrect:
 		s.Status = StatusWon
-	} else if s.AttemptsUsed >= MaxAttempts {
+	case s.AttemptsUsed >= 5:
 		s.Status = StatusLost
-	} else {
+	default:
 		result.Hint = challenge.HintSongs[s.AttemptsUsed-1]
 	}
 
