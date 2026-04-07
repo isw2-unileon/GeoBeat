@@ -1,0 +1,7 @@
+frontend/
+docs/
+e2e/
+.git/
+.github/
+README.md
+Makefile
