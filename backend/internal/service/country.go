@@ -1,15 +1,16 @@
-package services
+package service
 
 import (
 	"context"
 	"sort"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/core/domain"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/country"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/track"
 )
 
 // MusicProvider defines the interface for fetching music data, allowing for different implementations (e.g., Last.fm, Spotify).
 type MusicProvider interface {
-	GetTopTracks(ctx context.Context, countryCode string) ([]domain.Track, error)
+	GetTopTracks(ctx context.Context, countryCode string) ([]track.Track, error)
 }
 
 // CountryService provides methods to get country-related music data, such as top genres.
@@ -25,10 +26,10 @@ func NewCountryService(musicProvider MusicProvider) *CountryService {
 }
 
 // GetCountryTopGenres retrieves the top genres for a given country by analyzing the genres of the top tracks.
-func (s *CountryService) GetCountryTopGenres(ctx context.Context, countryCode string) (domain.Country, error) {
+func (s *CountryService) GetCountryTopGenres(ctx context.Context, countryCode string) (country.Country, error) {
 	tracks, err := s.musicProvider.GetTopTracks(ctx, countryCode)
 	if err != nil {
-		return domain.Country{}, err
+		return country.Country{}, err
 	}
 
 	genreCount := make(map[string]int)
@@ -57,7 +58,7 @@ func (s *CountryService) GetCountryTopGenres(ctx context.Context, countryCode st
 		topGenres = append(topGenres, genres[i].Genre)
 	}
 
-	return domain.Country{
+	return country.Country{
 		Code:      countryCode,
 		Name:      "", // Map country code to name later
 		TopGenres: topGenres,

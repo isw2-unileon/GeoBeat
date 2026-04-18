@@ -7,13 +7,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/domains"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
 // DailyService defines the interface for the daily challenge service.
 type DailyService interface {
-	GetCurrentStatus(ctx context.Context, userID int) (*domains.Challenge, *domains.Session, error)
-	ProcessAttempt(ctx context.Context, userID int, guess string) (*domains.AttemptResult, error)
+	GetCurrentStatus(ctx context.Context, userID int) (*daily.Challenge, *daily.Session, error)
+	ProcessAttempt(ctx context.Context, userID int, guess string) (*daily.AttemptResult, error)
 }
 
 // Handler handles HTTP requests for the daily challenge endpoints.
@@ -52,7 +52,7 @@ func (h *Handler) getDailyStatus(w http.ResponseWriter, r *http.Request) {
 
 	challenge, session, err := h.svc.GetCurrentStatus(r.Context(), userID)
 	if err != nil {
-		handleDomainError(w, err)
+		dailyError(w, err)
 		return
 	}
 
@@ -78,21 +78,21 @@ func (h *Handler) postAttempt(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.svc.ProcessAttempt(r.Context(), userID, req.Guess)
 	if err != nil {
-		handleDomainError(w, err)
+		dailyError(w, err)
 		return
 	}
 
 	writeJSON(w, http.StatusOK, result)
 }
 
-// handleDomainError maps domain errors to appropriate HTTP responses.
-func handleDomainError(w http.ResponseWriter, err error) {
+// dailyError maps daily errors to appropriate HTTP responses.
+func dailyError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, domains.ErrChallengeNotFound):
+	case errors.Is(err, daily.ErrChallengeNotFound):
 		writeError(w, http.StatusNotFound, err.Error())
-	case errors.Is(err, domains.ErrGameOver):
+	case errors.Is(err, daily.ErrGameOver):
 		writeError(w, http.StatusConflict, err.Error())
-	case errors.Is(err, domains.ErrInvalidInput):
+	case errors.Is(err, daily.ErrInvalidInput):
 		writeError(w, http.StatusBadRequest, err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, "internal server error")

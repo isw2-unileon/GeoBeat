@@ -1,4 +1,4 @@
-package domain
+package country
 
 // Country represents a country with its code, name, and top music genres.
 type Country struct {

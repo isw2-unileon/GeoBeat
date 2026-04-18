@@ -1,12 +1,12 @@
-package services_test
+package service_test
 
 import (
 	"context"
 	"reflect"
 	"testing"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/core/domain"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/core/services"
+	services "github.com/isw2-unileon/GeoBeat/backend/internal/service"
+	domain "github.com/isw2-unileon/GeoBeat/backend/internal/track"
 )
 
 type mockMusicProvider struct {
