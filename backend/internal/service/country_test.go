@@ -5,16 +5,16 @@ import (
 	"reflect"
 	"testing"
 
-	services "github.com/isw2-unileon/GeoBeat/backend/internal/service"
-	domain "github.com/isw2-unileon/GeoBeat/backend/internal/track"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/track"
 )
 
 type mockMusicProvider struct {
-	tracks []domain.Track
+	tracks []track.Track
 	err    error
 }
 
-func (m *mockMusicProvider) GetTopTracks(ctx context.Context, countryCode string) ([]domain.Track, error) {
+func (m *mockMusicProvider) GetTopTracks(ctx context.Context, countryCode string) ([]track.Track, error) {
 	return m.tracks, m.err
 }
 
@@ -22,14 +22,14 @@ func TestCountryService_GetTopGenres(t *testing.T) {
 	tests := []struct {
 		name           string
 		countryCode    string
-		mockTracks     []domain.Track
+		mockTracks     []track.Track
 		expectedGenres []string
 		expectError    bool
 	}{
 		{
 			name:        "three genres",
 			countryCode: "ES",
-			mockTracks: []domain.Track{
+			mockTracks: []track.Track{
 				{Genres: []string{"Pop", "Urban"}},
 				{Genres: []string{"Pop", "Indie"}},
 				{Genres: []string{"Pop", "Rock"}},
@@ -44,7 +44,7 @@ func TestCountryService_GetTopGenres(t *testing.T) {
 		{
 			name:        "two genres",
 			countryCode: "US",
-			mockTracks: []domain.Track{
+			mockTracks: []track.Track{
 				{Genres: []string{"Rock"}},
 				{Genres: []string{"Rock"}},
 				{Genres: []string{"Country"}},
@@ -55,7 +55,7 @@ func TestCountryService_GetTopGenres(t *testing.T) {
 		{
 			name:           "empty genres",
 			countryCode:    "FR",
-			mockTracks:     []domain.Track{},
+			mockTracks:     []track.Track{},
 			expectedGenres: []string{},
 			expectError:    false,
 		},
@@ -68,7 +68,7 @@ func TestCountryService_GetTopGenres(t *testing.T) {
 				err:    nil,
 			}
 
-			service := services.NewCountryService(mockProvider)
+			service := service.NewCountryService(mockProvider)
 
 			country, err := service.GetCountryTopGenres(context.Background(), tc.countryCode)
 
