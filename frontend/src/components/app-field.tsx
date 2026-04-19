@@ -9,17 +9,15 @@ import {
 } from "@/components/ui/field"
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxList, ComboboxItem, ComboboxContent } from "@/components/ui/combobox"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { modes, genres } from "@/data/placeholder-data";
 
 type Props = {
   country: string;
 };
 
-const modes = ["Daily Mode", "WIP 1", "WIP 2"]
-const genres = ["Rock", "Pop", "Country", "Jazz", "Rap", "Hip-Hop", "Classic"]
-
 export function AppField({country}: Props) {
     return (
-        <FieldSet className="absolute top-4 right-4 p-4 max-w-xs bg-white/80 rounded-md animate-fade-in-left">
+        <FieldSet className="md:absolute md:top-4 md:right-4 p-4 max-w-xs bg-white/80 rounded-md animate-fade-in-left">
             <FieldLegend className="!text-2xl bg-white rounded-md px-2"> GeoBeat </FieldLegend>
             <FieldDescription>The not so hit music genre guessing game</FieldDescription>
             <FieldGroup>
