@@ -9,13 +9,11 @@ import {
 } from "@/components/ui/field"
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxList, ComboboxItem, ComboboxContent } from "@/components/ui/combobox"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { modes, genres } from "@/data/placeholder-data";
 
 type Props = {
   country: string;
 };
-
-const modes = ["Daily Mode", "WIP 1", "WIP 2"]
-const genres = ["Rock", "Pop", "Country", "Jazz", "Rap", "Hip-Hop", "Classic"]
 
 export function AppField({country}: Props) {
     return (
@@ -26,9 +24,9 @@ export function AppField({country}: Props) {
                 <FieldSeparator />
                 <Field>
                     <FieldLabel className="text-1xl">Mode selection</FieldLabel>
-                    <Select>
+                    <Select defaultValue={modes[0]}>
                         <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a game mode" />
+                            <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>

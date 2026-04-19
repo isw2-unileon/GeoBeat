@@ -2,6 +2,7 @@ import {Map, Source, Layer, FillLayerSpecification} from '@vis.gl/react-maplibre
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { AppField } from './components/app-field';
+import { AppDrawer } from './components/app-drawer';
 
 import { useState } from 'react';
 
@@ -24,13 +25,20 @@ const countryLayer: FillLayerSpecification = {
 
 export default function App() {
 
-  const [country, setCountry] = useState<string>('(Select a country)')
+  const [country, setCountry] = useState<string>('(Select a country by clicking on it)')
 
   return (
-      <main className="relative min-h-screen flex flex-row items-start">
+      <main className="relative min-h-screen flex flex-col">
         <DailyModeTitle />
         <ContentMap setCountry={setCountry}/>
-        <AppField country={country} />
+        {/* Desktop */}
+        <div className='hidden md:block'>
+          <AppField country={country} />
+        </div>
+        {/* Mobile */}
+        <div className='md:hidden'>
+          <AppDrawer country={country} />
+        </div>
       </main>
   )
 }
@@ -66,7 +74,9 @@ function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateA
 
 function DailyModeTitle() {
   return (
-  <h1 className="absolute top-6 left-14 text-5xl text-blue-600 font-semibold font-[sans] animate-fade-in-down z-1">
+  <h1 className="md:absolute md:top-6 md:left-14 md:text-5xl md:translate-x-0
+                absolute top-2 left-1/2 -translate-x-1/2 text-outline
+                text-2xl text-center text-blue-600 font-semibold font-[sans] animate-fade-in-down z-1">
     DAILY MODE
   </h1>
   )
