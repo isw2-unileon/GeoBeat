@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/core/domain"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/track"
 )
 
 const baseURL = "http://ws.audioscrobbler.com/2.0/"
@@ -38,7 +38,7 @@ var codes = map[string]string{
 }
 
 // GetTopTracks fetches the top tracks for a given country code and retrieves their genres.
-func (c *Client) GetTopTracks(ctx context.Context, countryCode string) ([]domain.Track, error) {
+func (c *Client) GetTopTracks(ctx context.Context, countryCode string) ([]track.Track, error) {
 	countryName, exists := codes[countryCode]
 	if !exists {
 		return nil, fmt.Errorf("invalid country code: %s", countryCode)
@@ -53,7 +53,7 @@ func (c *Client) GetTopTracks(ctx context.Context, countryCode string) ([]domain
 		return nil, fmt.Errorf("no tracks found for country: %s", countryCode)
 	}
 
-	tracks := []domain.Track{}
+	tracks := []track.Track{}
 	for _, t := range topTracksResp.Tracks.Track {
 		tagsResp, err := c.getTags(ctx, t.Artist.Name, t.Name)
 		if err != nil {
@@ -65,7 +65,7 @@ func (c *Client) GetTopTracks(ctx context.Context, countryCode string) ([]domain
 			genres = append(genres, tag.Name)
 		}
 
-		tracks = append(tracks, domain.Track{
+		tracks = append(tracks, track.Track{
 			Name:   t.Name,
 			Artist: t.Artist.Name,
 			Genres: genres,

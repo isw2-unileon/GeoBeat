@@ -1,4 +1,4 @@
-package domain
+package track
 
 // Track represents a music track with its ID, name, artist, and associated genres.
 type Track struct {

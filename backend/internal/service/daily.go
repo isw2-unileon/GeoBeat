@@ -1,18 +1,18 @@
-package services
+package service
 
 import (
 	"context"
 	"errors"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/domains"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
 // Repository defines the interface for data access related to the daily challenge.
 type Repository interface {
-	GetChallengeByDate(ctx context.Context, date string) (*domains.Challenge, error)
-	GetSession(ctx context.Context, userID, challengeID int) (*domains.Session, error)
-	CreateSession(ctx context.Context, session *domains.Session) error
-	UpdateSession(ctx context.Context, session *domains.Session) error
+	GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error)
+	GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error)
+	CreateSession(ctx context.Context, session *daily.Session) error
+	UpdateSession(ctx context.Context, session *daily.Session) error
 }
 
 // Daily provides methods to manage the daily challenge game logic.
@@ -26,15 +26,15 @@ func NewService(r Repository) *Daily {
 }
 
 // GetCurrentStatus retrieves the current challenge and session status for a given user.
-func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*domains.Challenge, *domains.Session, error) {
+func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challenge, *daily.Session, error) {
 	challenge, err := s.repo.GetChallengeByDate(ctx, "today")
 	if err != nil {
-		return nil, nil, domains.ErrChallengeNotFound
+		return nil, nil, daily.ErrChallengeNotFound
 	}
 
 	session, err := s.repo.GetSession(ctx, userID, challenge.ID)
 	if err != nil {
-		session = domains.NewSession(userID, challenge.ID)
+		session = daily.NewSession(userID, challenge.ID)
 		if err := s.repo.CreateSession(ctx, session); err != nil {
 			return nil, nil, errors.New("error al iniciar sesión")
 		}
@@ -44,15 +44,15 @@ func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*domains.Chal
 }
 
 // ProcessAttempt processes a user's guess for the daily challenge and updates the session state accordingly.
-func (s *Daily) ProcessAttempt(ctx context.Context, userID int, guess string) (*domains.AttemptResult, error) {
+func (s *Daily) ProcessAttempt(ctx context.Context, userID int, guess string) (*daily.AttemptResult, error) {
 	challenge, err := s.repo.GetChallengeByDate(ctx, "today")
 	if err != nil {
-		return nil, domains.ErrChallengeNotFound
+		return nil, daily.ErrChallengeNotFound
 	}
 
 	session, err := s.repo.GetSession(ctx, userID, challenge.ID)
 	if err != nil {
-		session = domains.NewSession(userID, challenge.ID)
+		session = daily.NewSession(userID, challenge.ID)
 		if err := s.repo.CreateSession(ctx, session); err != nil {
 			return nil, errors.New("error creating session")
 		}
