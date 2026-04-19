@@ -24,8 +24,8 @@ export function AppDrawer({country}: Props) {
 
     return (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
-            <DrawerTrigger>
-                <Button>Sexy button</Button>
+            <DrawerTrigger className="absolute top-10 right-4">
+                <Button className="bg-white/80 text-black">Menu</Button>
             </DrawerTrigger>
             <DrawerContent>
                 <DrawerHeader>
@@ -39,9 +39,10 @@ export function AppDrawer({country}: Props) {
                                 console.log(value);
                                 setIsOpen(false)
                             }}
+                            defaultValue={modes[0]}
                         >
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select a game mode" />
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
@@ -57,7 +58,7 @@ export function AppDrawer({country}: Props) {
                 </div>
                 <div className="text-center mb-4">
                     <h1 className="text-base">What is the most popular genre of?</h1>
-                    <label>(select a country)</label>
+                    <label>{country}</label>
                     <div className="max-w-xs mx-auto">
                         <Combobox items={genres}>
                             <ComboboxInput placeholder="Select a genre" />
@@ -78,7 +79,7 @@ export function AppDrawer({country}: Props) {
                     <DrawerClose>
                         <Button variant="outline">Close</Button>
                     </DrawerClose>
-                    </DrawerFooter>
+                </DrawerFooter>
             </DrawerContent>
         </Drawer>
     )

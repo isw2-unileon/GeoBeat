@@ -17,16 +17,16 @@ type Props = {
 
 export function AppField({country}: Props) {
     return (
-        <FieldSet className="md:absolute md:top-4 md:right-4 p-4 max-w-xs bg-white/80 rounded-md animate-fade-in-left">
+        <FieldSet className="absolute top-4 right-4 p-4 max-w-xs bg-white/80 rounded-md animate-fade-in-left">
             <FieldLegend className="!text-2xl bg-white rounded-md px-2"> GeoBeat </FieldLegend>
             <FieldDescription>The not so hit music genre guessing game</FieldDescription>
             <FieldGroup>
                 <FieldSeparator />
                 <Field>
                     <FieldLabel className="text-1xl">Mode selection</FieldLabel>
-                    <Select>
+                    <Select defaultValue={modes[0]}>
                         <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a game mode" />
+                            <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
