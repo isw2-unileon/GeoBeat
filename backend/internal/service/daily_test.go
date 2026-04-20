@@ -193,7 +193,7 @@ func TestDaily_ProcessAttempt(t *testing.T) {
 			name:  "3. Error while updating session is handled properly",
 			guess: "Pop",
 			setupRepo: func(m *mockDailyRepo) {
-				m.updateSessionErr = errors.New("deadlock en base de datos")
+				m.updateSessionErr = errors.New("db update failed")
 			},
 			wantErr: errors.New("error updating session"),
 		},
