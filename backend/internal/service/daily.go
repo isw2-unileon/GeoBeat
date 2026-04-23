@@ -34,9 +34,12 @@ func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challe
 
 	session, err := s.repo.GetSession(ctx, userID, challenge.ID)
 	if err != nil {
-		session = daily.NewSession(userID, challenge.ID)
+		session, err = daily.NewSession(userID, challenge.ID)
+		if err != nil {
+			return nil, nil, err
+		}
 		if err := s.repo.CreateSession(ctx, session); err != nil {
-			return nil, nil, errors.New("error al iniciar sesión")
+			return nil, nil, errors.New("error while creating session")
 		}
 	}
 
@@ -45,17 +48,9 @@ func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challe
 
 // ProcessAttempt processes a user's guess for the daily challenge and updates the session state accordingly.
 func (s *Daily) ProcessAttempt(ctx context.Context, userID int, guess string) (*daily.AttemptResult, error) {
-	challenge, err := s.repo.GetChallengeByDate(ctx, "today")
+	challenge, session, err := s.GetCurrentStatus(ctx, userID)
 	if err != nil {
-		return nil, daily.ErrChallengeNotFound
-	}
-
-	session, err := s.repo.GetSession(ctx, userID, challenge.ID)
-	if err != nil {
-		session = daily.NewSession(userID, challenge.ID)
-		if err := s.repo.CreateSession(ctx, session); err != nil {
-			return nil, errors.New("error creating session")
-		}
+		return nil, err
 	}
 
 	result, err := session.MakeAttempt(guess, challenge)

@@ -27,6 +27,8 @@ var (
 	ErrGameOver = errors.New("game is already over")
 	// ErrInvalidInput is returned when the player's guess is invalid (e.g., empty or not a valid genre).
 	ErrInvalidInput = errors.New("invalid input, please try again")
+	// ErrInvalidID is returned when the user ID or challenge ID is invalid (e.g., non-positive integers).
+	ErrInvalidID = errors.New("invalid user or challenge ID")
 )
 
 // Challenge represents the rules for the daily challenge.
@@ -57,13 +59,16 @@ type AttemptResult struct {
 }
 
 // NewSession creates a new game session for a user and challenge.
-func NewSession(userID, challengeID int) *Session {
+func NewSession(userID, challengeID int) (*Session, error) {
+	if userID <= 0 || challengeID <= 0 {
+		return nil, ErrInvalidID
+	}
 	return &Session{
 		UserID:       userID,
 		ChallengeID:  challengeID,
 		AttemptsUsed: 0,
 		Status:       StatusPlaying,
-	}
+	}, nil
 }
 
 // MakeAttempt processes a player's guess and updates the session state accordingly.
