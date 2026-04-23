@@ -32,14 +32,14 @@ func TestNewSession(t *testing.T) {
 			userID:      -1,
 			challengeID: 1,
 			want:        nil,
-			wantErr:     daily.ErrIvalidID,
+			wantErr:     daily.ErrInvalidID,
 		},
 		{
 			name:        "Invalid challenge ID",
 			userID:      1,
 			challengeID: -1,
 			want:        nil,
-			wantErr:     daily.ErrIvalidID,
+			wantErr:     daily.ErrInvalidID,
 		},
 	}
 	for _, tt := range tests {
