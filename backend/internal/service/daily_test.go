@@ -80,14 +80,16 @@ func (m *mockDailyRepo) UpdateSession(ctx context.Context, session *daily.Sessio
 	return nil
 }
 
+type currentStatusTestCase struct {
+	name        string
+	setupRepo   func(*mockDailyRepo)
+	wantSession bool
+	wantErr     error
+}
+
 func TestDaily_GetCurrentStatus(t *testing.T) {
 	userID := 1
-	tests := []struct {
-		name        string
-		setupRepo   func(*mockDailyRepo)
-		wantSession bool
-		wantErr     error
-	}{
+	tests := []currentStatusTestCase{
 		{
 			name: "Fail to get challenge returns error",
 			setupRepo: func(m *mockDailyRepo) {
@@ -134,23 +136,52 @@ func TestDaily_GetCurrentStatus(t *testing.T) {
 
 			_, session, err := svc.GetCurrentStatus(context.Background(), userID)
 
-			if (err != nil && tt.wantErr == nil) || (err == nil && tt.wantErr != nil) || (err != nil && tt.wantErr != nil && err.Error() != tt.wantErr.Error()) {
-				if !errors.Is(err, tt.wantErr) && err.Error() != tt.wantErr.Error() {
-					t.Errorf("GetCurrentStatus() error = %v, wantErr %v", err, tt.wantErr)
-				}
+			assertError(t, err, tt.wantErr)
+
+			if err != nil {
+				return
 			}
 
-			if tt.wantSession && session == nil {
-				t.Error("GetCurrentStatus() expected a session but got nil")
-			}
-
-			if tt.wantSession {
-				key := sessionKey{userID, 1}
-				if _, exists := repo.sessions[key]; !exists {
-					t.Error("GetCurrentStatus() did not persist the session in the database")
-				}
-			}
+			assertSessionState(t, tt.wantSession, session, repo, userID)
 		})
+	}
+}
+
+// assertError isolates error checking to keep cyclomatic complexity extremely low.
+func assertError(t *testing.T, got, want error) {
+	t.Helper()
+
+	if want == nil {
+		if got != nil {
+			t.Fatalf("unexpected error: %v", got)
+		}
+		return
+	}
+
+	if got == nil {
+		t.Fatalf("expected error %q, but got nil", want)
+	}
+
+	if !errors.Is(got, want) && got.Error() != want.Error() {
+		t.Fatalf("got error %q, want %q", got, want)
+	}
+}
+
+// assertSessionState isolates state checking to keep cyclomatic complexity extremely low.
+func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, repo *mockDailyRepo, userID int) {
+	t.Helper()
+
+	if wantSession {
+		if session == nil {
+			t.Fatal("expected a session but got nil")
+		}
+
+		key := sessionKey{userID, 1}
+		if _, exists := repo.sessions[key]; !exists {
+			t.Error("did not persist the session in the database")
+		}
+	} else if session != nil {
+		t.Fatal("expected no session, but got one")
 	}
 }
 
