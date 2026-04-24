@@ -3,6 +3,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { AppField } from './components/app-field';
 import { AppDrawer } from './components/app-drawer';
+import { AppDialog } from './components/app-dialog';
 
 import { useState } from 'react';
 
@@ -30,6 +31,7 @@ export default function App() {
   return (
       <main className="relative min-h-screen flex flex-col">
         <DailyModeTitle />
+        <AppDialog />
         <ContentMap setCountry={setCountry}/>
         {/* Desktop */}
         <div className='hidden md:block'>
