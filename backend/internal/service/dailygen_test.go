@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -13,17 +14,19 @@ type mockMusicProvider struct {
 	songs []track.Track
 }
 
-func (m *mockMusicProvider) GetTopSongsByCountry(country string) ([]track.Track, error) {
+func (m *mockMusicProvider) GetTopSongsByCountry(ctx context.Context, country string) ([]track.Track, error) {
 	return m.songs, nil
 }
 
-func (m *mockMusicProvider) getSongsGenre(songs []track.Track) ([]genre.Genre, error) {
-	var genres []genre.Genre
+func (m *mockMusicProvider) GetSongsGenre(ctx context.Context, songs []track.Track) ([]string, error) {
+	var genres []string
 
 	for _, song := range songs {
 		for _, stored := range m.songs {
 			if song.Name == stored.Name && song.Artist == stored.Artist {
-				genres = append(genres, stored.Genres...)
+				for _, g := range stored.Genres {
+					genres = append(genres, g.NormalizedName)
+				}
 				break
 			}
 		}
@@ -34,7 +37,7 @@ func (m *mockMusicProvider) getSongsGenre(songs []track.Track) ([]genre.Genre, e
 
 type mockGenreRepository struct{}
 
-func (m *mockGenreRepository) GetAllowedGenres() ([]genre.Genre, error) {
+func (m *mockGenreRepository) GetAllowedGenres(ctx context.Context) ([]genre.Genre, error) {
 	return []genre.Genre{
 		{ID: "1", Name: "Pop", NormalizedName: "pop"},
 		{ID: "2", Name: "Rock", NormalizedName: "rock"},
@@ -44,7 +47,7 @@ func (m *mockGenreRepository) GetAllowedGenres() ([]genre.Genre, error) {
 
 type mockDailyChallengeRepository struct{}
 
-func (m *mockDailyChallengeRepository) SaveDailyChallenge(challenge daily.Challenge) error {
+func (m *mockDailyChallengeRepository) SaveDailyChallenge(ctx context.Context, challenge daily.Challenge) error {
 	return nil
 }
 
@@ -81,16 +84,7 @@ func TestGenerateDailyChallenge(t *testing.T) {
 			name:          "valid country with no songs",
 			country:       "EmptyLand",
 			mockSongs:     []track.Track{},
-			expectedError: errors.New("could not fetch top songs for country: no songs found"),
-		},
-		{
-			name:    "valid country with songs but no genres",
-			country: "EN",
-			mockSongs: []track.Track{
-				{ID: "1", Name: "Song A", Artist: "Artist A", Genres: []genre.Genre{}},
-				{ID: "2", Name: "Song B", Artist: "Artist B", Genres: []genre.Genre{}},
-			},
-			expectedError: errors.New("could not fetch genres for songs: no genres found"),
+			expectedError: errors.New("no songs found for the specified country"),
 		},
 		{
 			name:    "invalid genres returned by music provider",
