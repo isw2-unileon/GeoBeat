@@ -6,22 +6,12 @@ import { AppDrawer } from './components/app-drawer';
 import { AppDialog } from './components/app-dialog';
 
 import { useState } from 'react';
-
+import type { Feature, Geometry, GeoJsonProperties } from "geojson";
 
 type ViewState = {
   longitude: number;
   latitude: number;
   zoom: number;
-};
-
-const countryLayer: FillLayerSpecification = {
-  id: 'country-layer',
-  type: 'fill',
-  source: 'countries',
-  paint: {
-    'fill-color': '#2d643c',
-    'fill-opacity': 0.4
-  }
 };
 
 export default function App() {
@@ -47,7 +37,29 @@ export default function App() {
 
 function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateAction<string>> }) {
 
-   return <Map
+  const [countryFeatures, setCountyFeatures] = useState<Feature<Geometry, GeoJsonProperties>[]>([]);
+
+  const countryLayer: FillLayerSpecification = {
+    id: 'country-layer',
+    type: 'fill',
+    source: 'countries',
+    paint: {
+      'fill-color': '#2d643c',
+      'fill-opacity': 0.4
+    }
+  };
+
+  const selectedCountyLayer: FillLayerSpecification = {
+    id: 'selected-country-layer',
+    type: 'fill',
+    source: 'selection',
+    paint: {
+      'fill-color': '#5145ac',
+      'fill-opacity': 0.4,
+    }
+  }
+
+  return <Map
     initialViewState={{...dailyViewState()}}
     style={{width: '100vw', height: '100vh'}}
     projection={'globe'}
@@ -60,7 +72,14 @@ function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateA
     if (features.length > 0) {
       const country: string = features[0]?.properties.name
       console.log(country);
-      setCountry(country)
+      setCountry(country);
+      setCountyFeatures(
+        features.map((f) => ({
+          type: "Feature",
+          geometry: f.geometry,
+          properties: f.properties ?? {}
+        }))
+      );
     }
   }}
   >
@@ -70,6 +89,16 @@ function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateA
       data="https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
     >
       <Layer {...countryLayer}/>
+    </Source>
+    <Source
+      id='selection'
+      type='geojson'
+      data={{
+        type: "FeatureCollection",
+        features: countryFeatures
+      }}
+    >
+      <Layer {...selectedCountyLayer} />
     </Source>
   </Map>
 }
