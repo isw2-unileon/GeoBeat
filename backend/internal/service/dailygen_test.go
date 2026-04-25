@@ -6,30 +6,25 @@ import (
 	"testing"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/genre"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/track"
 )
 
 type mockMusicProvider struct {
-	songs []track.Track
+	songs []Track
 }
 
-func (m *mockMusicProvider) GetTopSongsByCountry(ctx context.Context, country string) ([]track.Track, error) {
+func (m *mockMusicProvider) GetTopSongsByCountry(ctx context.Context, country string) ([]Track, error) {
 	return m.songs, nil
 }
 
-func (m *mockMusicProvider) GetSongsGenre(ctx context.Context, songs []track.Track) ([]string, error) {
-	var genres []string
+func (m *mockMusicProvider) GetSongsGenre(ctx context.Context, songs []Track) ([][]string, error) {
+	var genres [][]string
 
 	for _, song := range songs {
-		for _, stored := range m.songs {
-			if song.Name == stored.Name && song.Artist == stored.Artist {
-				for _, g := range stored.Genres {
-					genres = append(genres, g.NormalizedName)
-				}
-				break
-			}
+		var songGenres []string
+		for _, genre := range song.Genres {
+			songGenres = append(songGenres, genre.NormalizedName)
 		}
+		genres = append(genres, songGenres)
 	}
 
 	return genres, nil
@@ -37,8 +32,8 @@ func (m *mockMusicProvider) GetSongsGenre(ctx context.Context, songs []track.Tra
 
 type mockGenreRepository struct{}
 
-func (m *mockGenreRepository) GetAllowedGenres(ctx context.Context) ([]genre.Genre, error) {
-	return []genre.Genre{
+func (m *mockGenreRepository) GetAllowedGenres(ctx context.Context) ([]Genre, error) {
+	return []Genre{
 		{ID: "1", Name: "Pop", NormalizedName: "pop"},
 		{ID: "2", Name: "Rock", NormalizedName: "rock"},
 		{ID: "3", Name: "Jazz", NormalizedName: "jazz"},
@@ -55,42 +50,42 @@ func TestGenerateDailyChallenge(t *testing.T) {
 	tests := []struct {
 		name          string
 		country       string
-		mockSongs     []track.Track
+		mockSongs     []Track
 		expectedError error
 	}{
 		{
 			name:    "valid country with songs and genres",
 			country: "ES",
-			mockSongs: []track.Track{
-				{ID: "1", Name: "Song A", Artist: "Artist A", Genres: []genre.Genre{{ID: "1", Name: "Pop", NormalizedName: "pop"}}},
-				{ID: "2", Name: "Song B", Artist: "Artist B", Genres: []genre.Genre{{ID: "2", Name: "Rock", NormalizedName: "rock"}}},
-				{ID: "3", Name: "Song C", Artist: "Artist C", Genres: []genre.Genre{{ID: "3", Name: "Rock", NormalizedName: "rock"}}},
-				{ID: "4", Name: "Song D", Artist: "Artist D", Genres: []genre.Genre{{ID: "4", Name: "Jazz", NormalizedName: "jazz"}}},
-				{ID: "5", Name: "Song E", Artist: "Artist E", Genres: []genre.Genre{{ID: "5", Name: "Pop", NormalizedName: "pop"}}},
-				{ID: "6", Name: "Song F", Artist: "Artist F", Genres: []genre.Genre{{ID: "6", Name: "Rock", NormalizedName: "rock"}}},
+			mockSongs: []Track{
+				{ID: "1", Name: "Song A", Artist: "Artist A", Genres: []Genre{{ID: "1", Name: "Pop", NormalizedName: "pop"}}},
+				{ID: "2", Name: "Song B", Artist: "Artist B", Genres: []Genre{{ID: "2", Name: "Rock", NormalizedName: "rock"}}},
+				{ID: "3", Name: "Song C", Artist: "Artist C", Genres: []Genre{{ID: "2", Name: "Rock", NormalizedName: "rock"}}},
+				{ID: "4", Name: "Song D", Artist: "Artist D", Genres: []Genre{{ID: "3", Name: "Jazz", NormalizedName: "jazz"}}},
+				{ID: "5", Name: "Song E", Artist: "Artist E", Genres: []Genre{{ID: "1", Name: "Pop", NormalizedName: "pop"}}},
+				{ID: "6", Name: "Song F", Artist: "Artist F", Genres: []Genre{{ID: "2", Name: "Rock", NormalizedName: "rock"}}},
 			},
 			expectedError: nil,
 		},
 		{
 			name:    "genre tie",
 			country: "FR",
-			mockSongs: []track.Track{
-				{ID: "1", Name: "Song A", Artist: "Artist A", Genres: []genre.Genre{{ID: "1", Name: "Pop", NormalizedName: "pop"}}},
-				{ID: "2", Name: "Song B", Artist: "Artist B", Genres: []genre.Genre{{ID: "2", Name: "Rock", NormalizedName: "rock"}}},
+			mockSongs: []Track{
+				{ID: "1", Name: "Song A", Artist: "Artist A", Genres: []Genre{{ID: "1", Name: "Pop", NormalizedName: "pop"}}},
+				{ID: "2", Name: "Song B", Artist: "Artist B", Genres: []Genre{{ID: "2", Name: "Rock", NormalizedName: "rock"}}},
 			},
 			expectedError: nil,
 		},
 		{
 			name:          "valid country with no songs",
 			country:       "EmptyLand",
-			mockSongs:     []track.Track{},
+			mockSongs:     []Track{},
 			expectedError: errors.New("no songs found for the specified country"),
 		},
 		{
 			name:    "invalid genres returned by music provider",
 			country: "DE",
-			mockSongs: []track.Track{
-				{ID: "1", Name: "Song A", Artist: "Artist A", Genres: []genre.Genre{{ID: "999", Name: "Unknown", NormalizedName: "unknown"}}},
+			mockSongs: []Track{
+				{ID: "1", Name: "Song A", Artist: "Artist A", Genres: []Genre{{ID: "999", Name: "Unknown", NormalizedName: "unknown"}}},
 			},
 			expectedError: errors.New("no allowed genres found for songs"),
 		},

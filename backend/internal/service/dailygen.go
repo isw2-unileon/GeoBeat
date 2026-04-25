@@ -3,32 +3,51 @@ package service
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/genre"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/track"
 )
 
+// Genre represents a music genre.
+type Genre struct {
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	NormalizedName string `json:"normalized_name"`
+}
+
+// Track represents a music track with its associated genres.
+type Track struct {
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Artist string  `json:"artist"`
+	Genres []Genre `json:"genres"`
+}
+
+// MusicProvider defines the interface for fetching music data.
 type MusicProvider interface {
-	GetTopSongsByCountry(ctx context.Context, country string) ([]track.Track, error)
-	GetSongsGenre(ctx context.Context, songs []track.Track) ([]string, error)
+	GetTopSongsByCountry(ctx context.Context, country string) ([]Track, error)
+	GetSongsGenre(ctx context.Context, songs []Track) ([][]string, error)
 }
 
+// GenreRepository defines the interface for fetching allowed genres.
 type GenreRepository interface {
-	GetAllowedGenres(ctx context.Context) ([]genre.Genre, error)
+	GetAllowedGenres(ctx context.Context) ([]Genre, error)
 }
 
+// DailyChallengeRepository defines the interface for saving daily challenges.
 type DailyChallengeRepository interface {
 	SaveDailyChallenge(ctx context.Context, challenge daily.Challenge) error
 }
 
+// DailyChallengeService is responsible for generating and saving the daily challenge.
 type DailyChallengeService struct {
 	musicProvider MusicProvider
 	genreRepo     GenreRepository
 	dailyRepo     DailyChallengeRepository
 }
 
+// NewDailyChallengeService creates a new instance of DailyChallengeService with the provided dependencies.
 func NewDailyChallengeService(mp MusicProvider, gr GenreRepository, dr DailyChallengeRepository) *DailyChallengeService {
 	return &DailyChallengeService{
 		musicProvider: mp,
@@ -37,6 +56,7 @@ func NewDailyChallengeService(mp MusicProvider, gr GenreRepository, dr DailyChal
 	}
 }
 
+// GenerateDailyChallenge generates a new daily challenge based on the top songs and genres of a specified country and saves it to the repository.
 func (s *DailyChallengeService) GenerateDailyChallenge(country string) error {
 	ctx := context.Background()
 	songs, err := s.musicProvider.GetTopSongsByCountry(ctx, country)
@@ -64,17 +84,17 @@ func (s *DailyChallengeService) GenerateDailyChallenge(country string) error {
 	}
 
 	genreCount := make(map[string]int)
-	for _, g := range genres {
-		if _, ok := allowedGenreSet[g]; ok {
-			genreCount[g]++
+	for _, songGenres := range genres {
+		for _, genre := range songGenres {
+			if _, ok := allowedGenreSet[genre]; ok {
+				genreCount[genre]++
+			}
 		}
 	}
 
 	if len(genreCount) == 0 {
 		return errors.New("no allowed genres found for songs")
 	}
-
-	// TODO add hint songs for the genre
 
 	var topGenre string
 	maxCount := 0
@@ -85,9 +105,17 @@ func (s *DailyChallengeService) GenerateDailyChallenge(country string) error {
 		}
 	}
 
+	var hintSongs []string
+	for i, songGenres := range genres {
+		if slices.Contains(songGenres, topGenre) {
+			hintSongs = append(hintSongs, songs[i].Name)
+		}
+	}
+
 	challenge := daily.Challenge{
 		TargetCountry: country,
 		TargetGenre:   topGenre,
+		HintSongs:     hintSongs,
 		Date:          time.Now().Truncate(24 * time.Hour),
 	}
 
