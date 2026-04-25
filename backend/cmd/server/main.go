@@ -10,58 +10,64 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
 func main() {
-	ctx := context.Background()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
 	cfg := config.Load()
 
-	gin.SetMode(cfg.GinMode)
+	if cfg.DatabaseURL == "" {
+		slog.Error("DATABASE_URL is not set in .env or environment variables")
+		os.Exit(1)
+	}
 
-	r := gin.New()
-	r.Use(gin.Logger(), gin.Recovery())
+	ctx := context.Background()
+	dbPool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("Failed to connect to the database", "error", err)
+		os.Exit(1)
+	}
+	defer dbPool.Close()
+	slog.Info("Successfully connected to Supabase")
 
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
+	mux := http.NewServeMux()
 
-	api := r.Group("/api")
-	api.GET("/hello", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Hello from the API"})
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
 	})
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      r,
+		Handler:      mux,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
-	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	go func() {
-		slog.Info("server listening", "addr", srv.Addr)
+		slog.Info("Server listening", "port", cfg.Port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error("server error", "error", err)
+			slog.Error("Server crashed", "error", err)
 			os.Exit(1)
 		}
 	}()
 
 	<-ctx.Done()
-	slog.Info("shutting down server")
+	slog.Info("Shutting down server gracefully...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("shutdown error", "error", err)
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 
-	logger.Info("server stopped")
+	slog.Info("Server stopped cleanly")
 }
