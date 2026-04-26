@@ -7,10 +7,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
+	"unicode"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/track"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
 
+// TODO extract api url to env variable
 const baseURL = "http://ws.audioscrobbler.com/2.0/"
 
 // Client is a simple wrapper around the Last.fm API.
@@ -23,56 +26,48 @@ func NewClient(apiKey string) *Client {
 	return &Client{APIKey: apiKey}
 }
 
-// TODO: Map country codes to names more robustly, maybe using a library or a more comprehensive map
-var codes = map[string]string{
-	"US": "United States",
-	"GB": "United Kingdom",
-	"DE": "Germany",
-	"FR": "France",
-	"IT": "Italy",
-	"ES": "Spain",
-	"CA": "Canada",
-	"AU": "Australia",
-	"BR": "Brazil",
-	"RU": "Russia",
-}
-
-// GetTopTracks fetches the top tracks for a given country code and retrieves their genres.
-func (c *Client) GetTopTracks(ctx context.Context, countryCode string) ([]track.Track, error) {
-	countryName, exists := codes[countryCode]
-	if !exists {
-		return nil, fmt.Errorf("invalid country code: %s", countryCode)
-	}
-
-	topTracksResp, err := c.getTracks(ctx, countryName)
+// GetTopTracksByCountry fetches the top tracks for a given country code from the Last.fm API.
+func (c *Client) GetTopTracksByCountry(ctx context.Context, countryCode string) ([]service.Track, error) {
+	resp, err := c.getTracks(ctx, countryCode)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error fetching top tracks for country %s: %w", countryCode, err)
 	}
 
-	if len(topTracksResp.Tracks.Track) == 0 {
-		return nil, fmt.Errorf("no tracks found for country: %s", countryCode)
-	}
-
-	tracks := []track.Track{}
-	for _, t := range topTracksResp.Tracks.Track {
-		tagsResp, err := c.getTags(ctx, t.Artist.Name, t.Name)
-		if err != nil {
-			return nil, fmt.Errorf("error fetching tags for track %s by %s: %w", t.Name, t.Artist.Name, err)
-		}
-
-		genres := []string{}
-		for _, tag := range tagsResp.Toptags.Tag {
-			genres = append(genres, tag.Name)
-		}
-
-		tracks = append(tracks, track.Track{
+	var tracks []service.Track
+	for _, t := range resp.Tracks.Track {
+		tracks = append(tracks, service.Track{
 			Name:   t.Name,
 			Artist: t.Artist.Name,
-			Genres: genres,
 		})
 	}
-
 	return tracks, nil
+}
+
+// GetSongsGenre fetches the genres for a list of songs using the Last.fm API.
+func (c *Client) GetSongsGenre(ctx context.Context, songs []service.Track) ([][]string, error) {
+	var allGenres [][]string
+	for _, song := range songs {
+		resp, err := c.getTags(ctx, song.Artist, song.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching tags for song %s by artist %s: %w", song.Name, song.Artist, err)
+		}
+
+		var genres []string
+		for _, tag := range resp.Toptags.Tag {
+			// Remove any non-alphanumeric characters and trim whitespace to get a clean genre name
+			formattedTag := strings.Map(func(r rune) rune {
+				if unicode.IsLetter(r) || unicode.IsDigit(r) {
+					return r
+				}
+				return -1
+			}, strings.TrimSpace(tag.Name))
+			genres = append(genres, formattedTag)
+		}
+		allGenres = append(allGenres, genres)
+
+		// To avoid hitting rate limits, we could add a small delay here if needed
+	}
+	return allGenres, nil
 }
 
 func (c *Client) getTracks(ctx context.Context, country string) (*TopTracksResponse, error) {
@@ -81,7 +76,7 @@ func (c *Client) getTracks(ctx context.Context, country string) (*TopTracksRespo
 	params.Add("country", country)
 	params.Add("api_key", c.APIKey)
 	params.Add("format", "json")
-	params.Add("limit", "5")
+	params.Add("limit", "50")
 
 	fullURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
 

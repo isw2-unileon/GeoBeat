@@ -17,6 +17,8 @@ import (
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
+	// TODO: launch chron job to generate daily challenge at midnight UTC
+	ctx := context.Background()
 
 	cfg := config.Load()
 
