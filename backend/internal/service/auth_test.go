@@ -90,6 +90,7 @@ func TestRegisterWithEmail(t *testing.T) {
 				u, exists := r.users["new@mail.com"]
 				if !exists {
 					t.Errorf("user was not saved in the database")
+					return
 				}
 				if u.PasswordHash == nil || *u.PasswordHash != "hash_password123" {
 					t.Errorf("password was not hashed correctly")
