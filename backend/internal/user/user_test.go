@@ -6,121 +6,106 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 )
 
-type userCreationTest struct {
-	name        string
-	create      func() (*user.User, error)
-	expectedErr error
-	verify      func(*testing.T, *user.User)
-}
-
-func runUserCreationTests(t *testing.T, tests []userCreationTest) {
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			u, err := tt.create()
-			if err != tt.expectedErr {
-				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
-			}
-			if tt.verify != nil {
-				tt.verify(t, u)
-			}
-		})
-	}
-}
-
 func TestNewUserFromEmail(t *testing.T) {
-	tests := []userCreationTest{
+	tests := []struct {
+		name         string
+		email        string
+		userName     string
+		passwordHash string
+		expectedErr  error
+	}{
 		{
-			name: "creates user correctly by email",
-			create: func() (*user.User, error) {
-				return user.NewUserFromEmail("internal@test.com", "User Internal", "secure_hashed_password")
-			},
-			expectedErr: nil,
-			verify: func(t *testing.T, u *user.User) {
-				if u == nil {
-					t.Fatal("expected non-nil user")
-				}
+			name:         "creates user correctly by email",
+			email:        "internal@test.com",
+			userName:     "User Internal",
+			passwordHash: "secure_hashed_password",
+			expectedErr:  nil,
+		},
+		{
+			name:         "handles empty password hash",
+			email:        "internal@test.com",
+			userName:     "Empty Password",
+			passwordHash: "",
+			expectedErr:  user.ErrEmptyPasswordHash,
+		},
+		{
+			name:         "handles empty email and username",
+			email:        "",
+			userName:     "",
+			passwordHash: "secure_hashed_password",
+			expectedErr:  user.ErrEmptyEmailOrUsername,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u, err := user.NewUserFromEmail(tt.email, tt.userName, tt.passwordHash)
+
+			if err != tt.expectedErr {
+				t.Errorf("expected error %v, got %v", tt.expectedErr, err)
+				return
+			}
+
+			if tt.expectedErr == nil {
 				if u.Provider != user.ProviderEmail {
 					t.Errorf("expected Provider %v, got %v", user.ProviderEmail, u.Provider)
 				}
 				if u.ProviderID != nil {
 					t.Errorf("expected ProviderID nil, got %v", *u.ProviderID)
 				}
-			},
-		},
-		{
-			name: "handles empty password hash",
-			create: func() (*user.User, error) {
-				return user.NewUserFromEmail("internal@test.com", "Empty Password", "")
-			},
-			expectedErr: user.ErrEmptyPasswordHash,
-		},
-		{
-			name: "handles empty email and username",
-			create: func() (*user.User, error) {
-				return user.NewUserFromEmail("", "", "secure_hashed_password")
-			},
-			expectedErr: user.ErrEmptyEmailOrUsername,
-		},
+			}
+		})
 	}
-
-	runUserCreationTests(t, tests)
 }
 
 func TestNewUserExternal(t *testing.T) {
-	tests := []userCreationTest{
+	tests := []struct {
+		name          string
+		email         string
+		userName      string
+		providerID    string
+		provider      user.AuthProvider
+		emailVerified bool
+		expectedErr   error
+	}{
 		{
-			name: "Email not verified",
-			create: func() (*user.User, error) {
-				return user.NewUserExternal("test@gmail.com", "Test", "g_123", user.ProviderGoogle, false)
-			},
-			expectedErr: user.ErrEmailNotVerified,
+			name:          "Email not verified",
+			email:         "test@gmail.com",
+			userName:      "Test",
+			providerID:    "g_123",
+			provider:      user.ProviderGoogle,
+			emailVerified: false,
+			expectedErr:   user.ErrEmailNotVerified,
 		},
 		{
-			name: "Correct creation from Google with email verified",
-			create: func() (*user.User, error) {
-				return user.NewUserExternal("test@gmail.com", "Test", "g_123", user.ProviderGoogle, true)
-			},
-			expectedErr: nil,
-			verify: func(t *testing.T, u *user.User) {
-				if u == nil {
-					t.Fatal("expected non-nil user")
+			name:          "Correct creation from Google with email verified",
+			email:         "test@gmail.com",
+			userName:      "Test",
+			providerID:    "g_123",
+			provider:      user.ProviderGoogle,
+			emailVerified: true,
+			expectedErr:   nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u, err := user.NewUserExternal(tt.email, tt.userName, tt.providerID, tt.provider, tt.emailVerified)
+
+			if err != tt.expectedErr {
+				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
+			}
+
+			if tt.expectedErr == nil {
+				if u.Provider != tt.provider {
+					t.Errorf("expected Provider %v, got %v", tt.provider, u.Provider)
 				}
-				if u.Provider != user.ProviderGoogle {
-					t.Errorf("expected Provider %v, got %v", user.ProviderGoogle, u.Provider)
-				}
-				if u.ProviderID == nil || *u.ProviderID != "g_123" {
-					t.Errorf("expected ProviderID %v, got %v", "g_123", u.ProviderID)
+				if u.ProviderID == nil || *u.ProviderID != tt.providerID {
+					t.Errorf("expected ProviderID %v, got a different or nil one", tt.providerID)
 				}
 				if u.PasswordHash != nil {
 					t.Errorf("expected PasswordHash nil, got a value")
 				}
-			},
-		},
-	}
-
-	runUserCreationTests(t, tests)
-}
-
-type userMutationTest struct {
-	name        string
-	initial     func() *user.User
-	action      func(*user.User) error
-	expectedErr error
-	verify      func(*testing.T, *user.User)
-}
-
-func runUserMutationTests(t *testing.T, tests []userMutationTest) {
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			u := tt.initial()
-			err := tt.action(u)
-			if err != tt.expectedErr {
-				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
-			}
-			if tt.verify != nil {
-				tt.verify(t, u)
 			}
 		})
 	}
@@ -137,30 +122,38 @@ func TestLinkExternalAccount(t *testing.T) {
 		return u
 	}
 
-	tests := []userMutationTest{
+	tests := []struct {
+		name          string
+		initialUser   *user.User
+		providerID    string
+		provider      user.AuthProvider
+		emailVerified bool
+		expectedErr   error
+		checkState    func(*testing.T, *user.User)
+	}{
 		{
-			name:      "Email not verified",
-			initial:   newUserEmail,
-			action: func(u *user.User) error {
-				return u.LinkExternalAccount("g_123", user.ProviderGoogle, false)
-			},
-			expectedErr: user.ErrEmailNotVerified,
-			verify: func(t *testing.T, u *user.User) {
+			name:          "Email not verified",
+			initialUser:   newUserEmail(),
+			providerID:    "g_123",
+			provider:      user.ProviderGoogle,
+			emailVerified: false,
+			expectedErr:   user.ErrEmailNotVerified,
+			checkState: func(t *testing.T, u *user.User) {
 				if u.ProviderID != nil {
 					t.Errorf("the user state should not have mutated")
 				}
 			},
 		},
 		{
-			name:      "Successful link to Google account with verified email",
-			initial:   newUserEmail,
-			action: func(u *user.User) error {
-				return u.LinkExternalAccount("g_123", user.ProviderGoogle, true)
-			},
-			expectedErr: nil,
-			verify: func(t *testing.T, u *user.User) {
+			name:          "Succesful link to Google account with verified email",
+			initialUser:   newUserEmail(),
+			providerID:    "g_123",
+			provider:      user.ProviderGoogle,
+			emailVerified: true,
+			expectedErr:   nil,
+			checkState: func(t *testing.T, u *user.User) {
 				if u.Provider != user.ProviderGoogle {
-					t.Errorf("expected provider to mutate to %v, got %v", user.ProviderGoogle, u.Provider)
+					t.Errorf("expected provider to mutate to 'google', got %v", u.Provider)
 				}
 				if u.ProviderID == nil || *u.ProviderID != "g_123" {
 					t.Errorf("expected google provider ID to be stored")
@@ -168,32 +161,44 @@ func TestLinkExternalAccount(t *testing.T) {
 			},
 		},
 		{
-			name:      "Same provider and ID is idempotent",
-			initial:   newUserGoogle,
-			action: func(u *user.User) error {
-				return u.LinkExternalAccount("g_123", user.ProviderGoogle, true)
-			},
-			expectedErr: nil,
-			verify: func(t *testing.T, u *user.User) {
-				if u.Provider != user.ProviderGoogle || u.ProviderID == nil || *u.ProviderID != "g_123" {
+			name:          "Same provider and ID is idempotent",
+			initialUser:   newUserGoogle(),
+			providerID:    "g_123",
+			provider:      user.ProviderGoogle,
+			emailVerified: true,
+			expectedErr:   nil,
+			checkState: func(t *testing.T, u *user.User) {
+				if u.Provider != user.ProviderGoogle || *u.ProviderID != "g_123" {
 					t.Errorf("original state was lost after an idempotent link")
 				}
 			},
 		},
 		{
-			name:    "Overwrite attempt with a different provider ID fails",
-			initial: newUserGoogle,
-			action: func(u *user.User) error {
-				return u.LinkExternalAccount("g_999", user.ProviderGoogle, true)
-			},
-			expectedErr: user.ErrAccountAlreadyLinked,
-			verify: func(t *testing.T, u *user.User) {
-				if u.ProviderID == nil || *u.ProviderID != "g_123" {
+			name:          "Overwrite attempt with a different provider ID fails",
+			initialUser:   newUserGoogle(),
+			providerID:    "g_999",
+			provider:      user.ProviderGoogle,
+			emailVerified: true,
+			expectedErr:   user.ErrAccountAlreadyLinked,
+			checkState: func(t *testing.T, u *user.User) {
+				if *u.ProviderID != "g_123" {
 					t.Errorf("original user ID was overwritten by a failed operation")
 				}
 			},
 		},
 	}
 
-	runUserMutationTests(t, tests)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.initialUser.LinkExternalAccount(tt.providerID, tt.provider, tt.emailVerified)
+
+			if err != tt.expectedErr {
+				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
+			}
+
+			if tt.checkState != nil {
+				tt.checkState(t, tt.initialUser)
+			}
+		})
+	}
 }
