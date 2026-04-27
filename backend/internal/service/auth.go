@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"strings"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 )
@@ -35,6 +37,9 @@ type UserRepository interface {
 }
 
 var (
+	ErrUserCreationFailed = errors.New("failed to create user")
+	ErrUserLoginFailed    = errors.New("failed to login user")
+	ErrPasswordTooWeak    = errors.New("password does not meet security requirements")
 	ErrUserAlreadyExists  = errors.New("user with this email already exists")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrInvalidProvider    = user.ErrInvalidProvider
@@ -45,6 +50,7 @@ type AuthService struct {
 	userRepo  UserRepository
 	tokenizer Tokenizer
 	hasher    Hasher
+	logger    *slog.Logger
 }
 
 func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher) *AuthService {
@@ -52,21 +58,28 @@ func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher)
 		userRepo:  userRepo,
 		tokenizer: tokenizer,
 		hasher:    hasher,
+		logger:    slog.Default(),
 	}
 }
 
 func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, password string) error {
 	existingUser, err := s.userRepo.FindByEmail(email)
 	if err != nil && !errors.Is(err, user.ErrNotFound) {
-		return err
+		s.logger.Error("error checking existing user", "email", email, "error", err)
+		return ErrUserCreationFailed
 	}
 	if existingUser != nil {
 		return ErrUserAlreadyExists
 	}
 
+	if !ensurePasswordSecure(password) {
+		return ErrPasswordTooWeak
+	}
+
 	hashedPassword, err := s.hasher.HashPassword(password)
 	if err != nil {
-		return err
+		s.logger.Error("error hashing password", "password", password, "email", email, "error", err)
+		return ErrUserCreationFailed
 	}
 
 	newUser, err := user.NewUserFromEmail(email, userName, hashedPassword)
@@ -74,7 +87,51 @@ func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, pa
 		return err
 	}
 
-	return s.userRepo.Save(newUser)
+	err = s.userRepo.Save(newUser)
+	if err != nil {
+		s.logger.Error("error saving new user", "email", email, "error", err)
+		return ErrUserCreationFailed
+	}
+
+	return nil
+}
+
+func ensurePasswordSecure(password string) bool {
+	if len(password) < 8 {
+		return false
+	}
+	if !containsUpperCase(password) || !containsNumber(password) || !containsSpecialChar(password) {
+		return false
+	}
+	return true
+}
+
+func containsUpperCase(s string) bool {
+	for _, c := range s {
+		if c >= 'A' && c <= 'Z' {
+			return true
+		}
+	}
+	return false
+}
+
+func containsNumber(s string) bool {
+	for _, c := range s {
+		if c >= '0' && c <= '9' {
+			return true
+		}
+	}
+	return false
+}
+
+func containsSpecialChar(s string) bool {
+	specialChars := "!@#$%^&*()-_=+[]{}|;:'\",.<>/?`~"
+	for _, c := range s {
+		if strings.ContainsRune(specialChars, c) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string) (string, error) {
@@ -83,15 +140,12 @@ func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string
 		if errors.Is(err, user.ErrNotFound) {
 			return "", ErrInvalidCredentials
 		}
-		return "", err
+		s.logger.Error("error retrieving user", "email", email, "error", err)
+		return "", ErrUserLoginFailed
 	}
 
 	if storedUser.Provider != user.ProviderEmail {
 		return "", ErrOAuthOnlyAccount
-	}
-
-	if storedUser.PasswordHash == nil {
-		return "", ErrInvalidCredentials
 	}
 
 	err = s.hasher.CompareHashAndPassword(*storedUser.PasswordHash, password)
@@ -105,17 +159,28 @@ func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string
 func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider OAuthProvider) (string, error) {
 	userInfo, err := provider.GetUserInfo(ctx, code)
 	if err != nil {
-		return "", err
+		s.logger.Error("error getting user info from OAuth provider", "error", err)
+		return "", ErrUserLoginFailed
 	}
 
 	existingUser, err := s.userRepo.FindByEmail(userInfo.Email)
 	if err != nil && !errors.Is(err, user.ErrNotFound) {
-		return "", err
+		s.logger.Error("error checking existing user", "email", userInfo.Email, "error", err)
+		return "", ErrUserLoginFailed
 	}
 
 	if existingUser != nil {
-		if existingUser.Provider != provider.GetProviderName() {
+		// Currently, we only support google as an external provider
+		// Therefore, we will never enter this code block, but we leave it here for future extensibility
+		if existingUser.Provider != provider.GetProviderName() && existingUser.Provider != user.ProviderEmail {
 			return "", user.ErrAccountAlreadyLinked
+		}
+		if existingUser.Provider == provider.GetProviderName() {
+			if *existingUser.ProviderID != userInfo.ProviderID {
+				s.logger.Error("provider ID mismatch for existing user", "storedProviderID", existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
+				return "", ErrInvalidCredentials
+			}
+			return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
 		}
 		err = existingUser.LinkExternalAccount(userInfo.ProviderID, provider.GetProviderName(), userInfo.EmailVerified)
 		if err != nil {
@@ -123,7 +188,8 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 		}
 		err = s.userRepo.Update(existingUser)
 		if err != nil {
-			return "", err
+			s.logger.Error("error updating existing user", "email", userInfo.Email, "error", err)
+			return "", ErrUserLoginFailed
 		}
 		return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
 	}
@@ -135,7 +201,8 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 
 	err = s.userRepo.Save(newUser)
 	if err != nil {
-		return "", err
+		s.logger.Error("error saving new user", "email", userInfo.Email, "error", err)
+		return "", ErrUserCreationFailed
 	}
 
 	return s.tokenizer.GenerateToken(int(newUser.ID.ID()))
