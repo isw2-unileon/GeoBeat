@@ -35,13 +35,47 @@ var (
 )
 
 func NewUserFromEmail(email, userName, passwordHash string) (*User, error) {
-	return nil, nil
+	if email == "" || userName == "" {
+		return nil, ErrEmptyEmailOrUsername
+	}
+	if passwordHash == "" {
+		return nil, ErrEmptyPasswordHash
+	}
+	return &User{
+		ID:           uuid.New(),
+		Email:        email,
+		UserName:     userName,
+		PasswordHash: &passwordHash,
+		Provider:     ProviderEmail,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}, nil
 }
 
 func NewUserExternal(email, userName, providerID string, provider AuthProvider, emailVerified bool) (*User, error) {
-	return nil, nil
+	if !emailVerified {
+		return nil, ErrEmailNotVerified
+	}
+	return &User{
+		ID:         uuid.New(),
+		Email:      email,
+		UserName:   userName,
+		Provider:   provider,
+		ProviderID: &providerID,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}, nil
 }
 
 func (u *User) LinkExternalAccount(providerID string, provider AuthProvider, emailVerified bool) error {
+	if !emailVerified {
+		return ErrEmailNotVerified
+	}
+	if u.ProviderID != nil && *u.ProviderID != providerID {
+		return ErrAccountAlreadyLinked
+	}
+	u.Provider = provider
+	u.ProviderID = &providerID
+	u.UpdatedAt = time.Now()
 	return nil
 }
