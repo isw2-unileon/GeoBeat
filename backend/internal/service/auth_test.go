@@ -48,6 +48,10 @@ func (m *mockTokenizer) GenerateToken(userID int) (string, error) {
 	return "jwt_simulated", nil
 }
 
+func (m *mockTokenizer) ValidateToken(token string) (int, error) {
+	return 1, nil
+}
+
 type mockHasher struct {
 	hassingError bool
 }

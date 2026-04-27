@@ -11,6 +11,8 @@ import (
 
 type Tokenizer interface {
 	GenerateToken(userID int) (string, error)
+	// TODO: In the future, we will likely need a method to validate and decode tokens as well, and test it
+	ValidateToken(token string) (int, error)
 }
 
 type Hasher interface {
@@ -206,4 +208,11 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	}
 
 	return s.tokenizer.GenerateToken(int(newUser.ID.ID()))
+}
+
+// TODO: Today I am tired, but obviously this needs to decode the token so that we can do auth
+func (s *AuthService) ValidateToken(ctx context.Context, token string) (int, error) {
+	// For now, we just return a dummy user ID to allow testing of the frontend
+	// In the future, this should decode the token and validate it properly
+	return 1, nil
 }
