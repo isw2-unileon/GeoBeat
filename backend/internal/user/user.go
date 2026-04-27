@@ -27,6 +27,7 @@ const (
 )
 
 var (
+	ErrNotFound             = errors.New("user not found")
 	ErrEmailNotVerified     = errors.New("email not verified by provider")
 	ErrAccountAlreadyLinked = errors.New("account already linked to a different provider ID")
 	ErrInvalidProvider      = errors.New("invalid authentication provider")

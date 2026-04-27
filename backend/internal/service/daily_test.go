@@ -26,7 +26,7 @@ type sessionKey struct {
 	challengeID int
 }
 
-func newMockRepo() *mockDailyRepo {
+func newMockDailyRepo() *mockDailyRepo {
 	return &mockDailyRepo{
 		sessions: make(map[sessionKey]*daily.Session),
 		challenge: &daily.Challenge{
@@ -130,7 +130,7 @@ func TestDaily_GetCurrentStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := newMockRepo()
+			repo := newMockDailyRepo()
 			tt.setupRepo(repo)
 			svc := service.NewService(repo)
 
@@ -232,7 +232,7 @@ func TestDaily_ProcessAttempt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := newMockRepo()
+			repo := newMockDailyRepo()
 			tt.setupRepo(repo)
 			svc := service.NewService(repo)
 
