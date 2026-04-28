@@ -3,24 +3,15 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { AppField } from './components/app-field';
 import { AppDrawer } from './components/app-drawer';
+import { AppDialog } from './components/app-dialog';
 
 import { useState } from 'react';
-
+import type { Feature, Geometry, GeoJsonProperties } from "geojson";
 
 type ViewState = {
   longitude: number;
   latitude: number;
   zoom: number;
-};
-
-const countryLayer: FillLayerSpecification = {
-  id: 'country-layer',
-  type: 'fill',
-  source: 'countries',
-  paint: {
-    'fill-color': '#2d643c',
-    'fill-opacity': 0.4
-  }
 };
 
 export default function App() {
@@ -30,6 +21,7 @@ export default function App() {
   return (
       <main className="relative min-h-screen flex flex-col">
         <DailyModeTitle />
+        <AppDialog />
         <ContentMap setCountry={setCountry}/>
         {/* Desktop */}
         <div className='hidden md:block'>
@@ -39,13 +31,39 @@ export default function App() {
         <div className='md:hidden'>
           <AppDrawer country={country} />
         </div>
+        <Attempts num={5}/>
+        <div className='hidden'>
+          <CorrectPopUp />
+        </div>
       </main>
   )
 }
 
 function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateAction<string>> }) {
 
-   return <Map
+  const [countryFeatures, setCountyFeatures] = useState<Feature<Geometry, GeoJsonProperties>[]>([]);
+
+  const countryLayer: FillLayerSpecification = {
+    id: 'country-layer',
+    type: 'fill',
+    source: 'countries',
+    paint: {
+      'fill-color': '#2d643c',
+      'fill-opacity': 0.4
+    }
+  };
+
+  const selectedCountyLayer: FillLayerSpecification = {
+    id: 'selected-country-layer',
+    type: 'fill',
+    source: 'selection',
+    paint: {
+      'fill-color': '#5145ac',
+      'fill-opacity': 0.4,
+    }
+  }
+
+  return <Map
     initialViewState={{...dailyViewState()}}
     style={{width: '100vw', height: '100vh'}}
     projection={'globe'}
@@ -58,7 +76,14 @@ function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateA
     if (features.length > 0) {
       const country: string = features[0]?.properties.name
       console.log(country);
-      setCountry(country)
+      setCountry(country);
+      setCountyFeatures(
+        features.map((f) => ({
+          type: "Feature",
+          geometry: f.geometry,
+          properties: f.properties ?? {}
+        }))
+      );
     }
   }}
   >
@@ -68,6 +93,16 @@ function ContentMap({ setCountry }: { setCountry: React.Dispatch<React.SetStateA
       data="https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
     >
       <Layer {...countryLayer}/>
+    </Source>
+    <Source
+      id='selection'
+      type='geojson'
+      data={{
+        type: "FeatureCollection",
+        features: countryFeatures
+      }}
+    >
+      <Layer {...selectedCountyLayer} />
     </Source>
   </Map>
 }
@@ -91,4 +126,22 @@ function dailyViewState(): ViewState {
     latitude,
     zoom: 2.5
   }
+}
+
+function Attempts({num}: {num: number}) {
+
+  return (
+    <div className='bg-gray-100 rounded-sm absolute top-30 left-15 flex flex-row'>
+      {[...Array(num)].map((_, i) => (
+        <div key={i} className='bg-gray-200 w-8 h-8 m-2 rounded-sm' />
+      ))}
+    </div>
+  )
+}
+
+function CorrectPopUp() {
+
+  return(
+    <label className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pop-fade text-6xl'>✅</label>
+  )
 }
