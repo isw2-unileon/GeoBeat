@@ -31,6 +31,10 @@ export default function App() {
         <div className='md:hidden'>
           <AppDrawer country={country} />
         </div>
+        <Attempts num={5}/>
+        <div className='hidden'>
+          <CorrectPopUp />
+        </div>
       </main>
   )
 }
@@ -122,4 +126,22 @@ function dailyViewState(): ViewState {
     latitude,
     zoom: 2.5
   }
+}
+
+function Attempts({num}: {num: number}) {
+
+  return (
+    <div className='bg-gray-100 rounded-sm absolute top-30 left-15 flex flex-row'>
+      {[...Array(num)].map((_, i) => (
+        <div key={i} className='bg-gray-200 w-8 h-8 m-2 rounded-sm' />
+      ))}
+    </div>
+  )
+}
+
+function CorrectPopUp() {
+
+  return(
+    <label className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pop-fade text-6xl'>✅</label>
+  )
 }

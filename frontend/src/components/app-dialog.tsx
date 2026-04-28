@@ -1,10 +1,6 @@
-import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -13,6 +9,7 @@ import googleLogo from "@/graphics/google-icon.svg";
 import { User } from "lucide-react"
 import { FieldGroup, Field, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button"
 
 export function AppDialog() {
     return (
@@ -35,6 +32,9 @@ export function AppDialog() {
                     <Field>
                         <FieldLabel> Password </FieldLabel>
                         <Input id="input-password" placeholder="password" />
+                    </Field>
+                        <Button variant={"default"}>Submit</Button>
+                    <Field>
                     </Field>
                     <FieldSeparator />
                     <Field>
