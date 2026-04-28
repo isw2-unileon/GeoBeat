@@ -15,6 +15,15 @@ CREATE TABLE daily_sessions (
     PRIMARY KEY (user_id, challenge_id) 
 );
 
--- Dummy data for testing 
-INSERT INTO daily_challenges (target_country, target_genre, hint_songs) 
-VALUES ('Spain', 'Pop', ARRAY['Song 1', 'Song 2', 'Song 3', 'Song 4', 'Song 5']);
+CREATE TABLE genres (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    normalized_name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE tracks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    artist VARCHAR(255) NOT NULL,
+    genres TEXT[] NOT NULL
+);
