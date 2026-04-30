@@ -8,8 +8,11 @@ import (
 )
 
 // Repository defines the interface for data access related to the daily challenge.
-type Repository interface {
+type ChallengeRepository interface {
 	GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error)
+}
+
+type SessionRepository interface {
 	GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error)
 	CreateSession(ctx context.Context, session *daily.Session) error
 	UpdateSession(ctx context.Context, session *daily.Session) error
@@ -17,28 +20,32 @@ type Repository interface {
 
 // Daily provides methods to manage the daily challenge game logic.
 type Daily struct {
-	repo Repository
+	challengeRepo ChallengeRepository
+	sessionRepo   SessionRepository
 }
 
 // NewService creates a new Daily service with the given Repository.
-func NewService(r Repository) *Daily {
-	return &Daily{repo: r}
+func NewService(challengeRepo ChallengeRepository, sessionRepo SessionRepository) *Daily {
+	return &Daily{
+		challengeRepo: challengeRepo,
+		sessionRepo:   sessionRepo,
+	}
 }
 
 // GetCurrentStatus retrieves the current challenge and session status for a given user.
 func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challenge, *daily.Session, error) {
-	challenge, err := s.repo.GetChallengeByDate(ctx, "today")
+	challenge, err := s.challengeRepo.GetChallengeByDate(ctx, "today")
 	if err != nil {
 		return nil, nil, daily.ErrChallengeNotFound
 	}
 
-	session, err := s.repo.GetSession(ctx, userID, challenge.ID)
+	session, err := s.sessionRepo.GetSession(ctx, userID, challenge.ID)
 	if err != nil {
 		session, err = daily.NewSession(userID, challenge.ID)
 		if err != nil {
 			return nil, nil, err
 		}
-		if err := s.repo.CreateSession(ctx, session); err != nil {
+		if err := s.sessionRepo.CreateSession(ctx, session); err != nil {
 			return nil, nil, errors.New("error while creating session")
 		}
 	}
@@ -58,7 +65,7 @@ func (s *Daily) ProcessAttempt(ctx context.Context, userID int, guess string) (*
 		return nil, err
 	}
 
-	if err := s.repo.UpdateSession(ctx, session); err != nil {
+	if err := s.sessionRepo.UpdateSession(ctx, session); err != nil {
 		return nil, errors.New("error updating session")
 	}
 
