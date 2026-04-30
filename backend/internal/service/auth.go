@@ -39,25 +39,23 @@ type UserRepository interface {
 }
 
 var (
-	ErrUserCreationFailed   = errors.New("failed to create user")
-	ErrUserLoginFailed      = errors.New("failed to login user")
-	ErrPasswordTooWeak      = errors.New("password does not meet security requirements")
-	ErrUserAlreadyExists    = errors.New("user with this email already exists")
-	ErrInvalidCredentials   = errors.New("invalid email or password")
-	ErrInvalidProvider      = user.ErrInvalidProvider
-	ErrOAuthOnlyAccount     = errors.New("email is associated to an account that only supports OAuth login")
-	ErrInvalidOAuthProvider = errors.New("invalid OAuth provider")
+	ErrUserCreationFailed = errors.New("failed to create user")
+	ErrUserLoginFailed    = errors.New("failed to login user")
+	ErrPasswordTooWeak    = errors.New("password does not meet security requirements")
+	ErrUserAlreadyExists  = errors.New("user with this email already exists")
+	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrOAuthOnlyAccount   = errors.New("email is associated to an account that only supports OAuth login")
 )
 
 type AuthService struct {
 	userRepo       UserRepository
 	tokenizer      Tokenizer
 	hasher         Hasher
-	oauthProviders map[string]OAuthProvider
+	oauthProviders map[user.AuthProvider]OAuthProvider
 	logger         *slog.Logger
 }
 
-func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[string]OAuthProvider) *AuthService {
+func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[user.AuthProvider]OAuthProvider) *AuthService {
 	return &AuthService{
 		userRepo:       userRepo,
 		tokenizer:      tokenizer,
@@ -161,11 +159,8 @@ func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string
 	return s.tokenizer.GenerateToken(int(storedUser.ID.ID()))
 }
 
-func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider string) (string, error) {
-	oauthProvider, exists := s.oauthProviders[provider]
-	if !exists {
-		return "", ErrInvalidOAuthProvider
-	}
+func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider user.AuthProvider) (string, error) {
+	oauthProvider := s.oauthProviders[provider]
 
 	userInfo, err := oauthProvider.GetUserInfo(ctx, code)
 	if err != nil {
@@ -180,11 +175,6 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	}
 
 	if existingUser != nil {
-		// Currently, we only support google as an external provider
-		// Therefore, we will never enter this code block, but we leave it here for future extensibility
-		if existingUser.Provider != oauthProvider.GetProviderName() && existingUser.Provider != user.ProviderEmail {
-			return "", user.ErrAccountAlreadyLinked
-		}
 		if existingUser.Provider == oauthProvider.GetProviderName() {
 			if *existingUser.ProviderID != userInfo.ProviderID {
 				s.logger.Error("provider ID mismatch for existing user", "storedProviderID", existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
@@ -192,6 +182,9 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 			}
 			return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
 		}
+		// Currently, we only support google as an external provider
+		// Therefore this code will not return ErrAccountAlreadyLinked
+		// Just here for extensibility
 		err = existingUser.LinkExternalAccount(userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
 		if err != nil {
 			return "", err

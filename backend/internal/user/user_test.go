@@ -26,7 +26,7 @@ func TestNewUserFromEmail(t *testing.T) {
 			email:        "internal@test.com",
 			userName:     "Empty Password",
 			passwordHash: "",
-			expectedErr:  user.ErrEmptyPasswordHash,
+			expectedErr:  user.ErrEmptyPassword,
 		},
 		{
 			name:         "handles empty email and username",

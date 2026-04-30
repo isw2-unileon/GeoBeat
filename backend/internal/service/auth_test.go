@@ -497,9 +497,9 @@ func TestProcessOAuthLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[string]service.OAuthProvider{"google": tt.providerMock})
+			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[user.AuthProvider]service.OAuthProvider{user.ProviderGoogle: tt.providerMock})
 
-			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, "google")
+			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, user.ProviderGoogle)
 			if err != tt.expectedErr {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}

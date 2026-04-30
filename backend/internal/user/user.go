@@ -29,9 +29,8 @@ const (
 var (
 	ErrNotFound             = errors.New("user not found")
 	ErrEmailNotVerified     = errors.New("email not verified by provider")
-	ErrAccountAlreadyLinked = errors.New("account already linked to a different provider ID")
-	ErrInvalidProvider      = errors.New("invalid authentication provider")
-	ErrEmptyPasswordHash    = errors.New("password hash cannot be empty")
+	ErrAccountAlreadyLinked = errors.New("account already linked to a different auth provider")
+	ErrEmptyPassword        = errors.New("password cannot be empty")
 	ErrEmptyEmailOrUsername = errors.New("email and username cannot be empty")
 )
 
@@ -40,7 +39,7 @@ func NewUserFromEmail(email, userName, passwordHash string) (*User, error) {
 		return nil, ErrEmptyEmailOrUsername
 	}
 	if passwordHash == "" {
-		return nil, ErrEmptyPasswordHash
+		return nil, ErrEmptyPassword
 	}
 	return &User{
 		ID:           uuid.New(),
@@ -72,7 +71,7 @@ func (u *User) LinkExternalAccount(providerID string, provider AuthProvider, ema
 	if !emailVerified {
 		return ErrEmailNotVerified
 	}
-	if u.ProviderID != nil && *u.ProviderID != providerID {
+	if u.Provider != ProviderEmail && u.Provider != provider {
 		return ErrAccountAlreadyLinked
 	}
 	u.Provider = provider
