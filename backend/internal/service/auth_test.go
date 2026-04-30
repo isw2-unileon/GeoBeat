@@ -202,7 +202,7 @@ func TestRegisterWithEmail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError))
+			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), nil)
 
 			err := svc.RegisterWithEmail(context.Background(), tt.email, tt.userName, tt.password)
 			if err != tt.expectedErr {
@@ -274,7 +274,7 @@ func TestLoginWithEmail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError))
+			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), nil)
 
 			token, err := svc.LoginWithEmail(context.Background(), tt.email, tt.password)
 
@@ -497,9 +497,9 @@ func TestProcessOAuthLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError))
+			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[string]service.OAuthProvider{"google": tt.providerMock})
 
-			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, tt.providerMock)
+			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, "google")
 			if err != tt.expectedErr {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}

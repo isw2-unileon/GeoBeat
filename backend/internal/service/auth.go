@@ -39,28 +39,31 @@ type UserRepository interface {
 }
 
 var (
-	ErrUserCreationFailed = errors.New("failed to create user")
-	ErrUserLoginFailed    = errors.New("failed to login user")
-	ErrPasswordTooWeak    = errors.New("password does not meet security requirements")
-	ErrUserAlreadyExists  = errors.New("user with this email already exists")
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrInvalidProvider    = user.ErrInvalidProvider
-	ErrOAuthOnlyAccount   = errors.New("email is associated to an account that only supports OAuth login")
+	ErrUserCreationFailed   = errors.New("failed to create user")
+	ErrUserLoginFailed      = errors.New("failed to login user")
+	ErrPasswordTooWeak      = errors.New("password does not meet security requirements")
+	ErrUserAlreadyExists    = errors.New("user with this email already exists")
+	ErrInvalidCredentials   = errors.New("invalid email or password")
+	ErrInvalidProvider      = user.ErrInvalidProvider
+	ErrOAuthOnlyAccount     = errors.New("email is associated to an account that only supports OAuth login")
+	ErrInvalidOAuthProvider = errors.New("invalid OAuth provider")
 )
 
 type AuthService struct {
-	userRepo  UserRepository
-	tokenizer Tokenizer
-	hasher    Hasher
-	logger    *slog.Logger
+	userRepo       UserRepository
+	tokenizer      Tokenizer
+	hasher         Hasher
+	oauthProviders map[string]OAuthProvider
+	logger         *slog.Logger
 }
 
-func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher) *AuthService {
+func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[string]OAuthProvider) *AuthService {
 	return &AuthService{
-		userRepo:  userRepo,
-		tokenizer: tokenizer,
-		hasher:    hasher,
-		logger:    slog.Default(),
+		userRepo:       userRepo,
+		tokenizer:      tokenizer,
+		hasher:         hasher,
+		oauthProviders: oauthProviders,
+		logger:         slog.Default(),
 	}
 }
 
@@ -158,8 +161,13 @@ func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string
 	return s.tokenizer.GenerateToken(int(storedUser.ID.ID()))
 }
 
-func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider OAuthProvider) (string, error) {
-	userInfo, err := provider.GetUserInfo(ctx, code)
+func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider string) (string, error) {
+	oauthProvider, exists := s.oauthProviders[provider]
+	if !exists {
+		return "", ErrInvalidOAuthProvider
+	}
+
+	userInfo, err := oauthProvider.GetUserInfo(ctx, code)
 	if err != nil {
 		s.logger.Error("error getting user info from OAuth provider", "error", err)
 		return "", ErrUserLoginFailed
@@ -174,17 +182,17 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	if existingUser != nil {
 		// Currently, we only support google as an external provider
 		// Therefore, we will never enter this code block, but we leave it here for future extensibility
-		if existingUser.Provider != provider.GetProviderName() && existingUser.Provider != user.ProviderEmail {
+		if existingUser.Provider != oauthProvider.GetProviderName() && existingUser.Provider != user.ProviderEmail {
 			return "", user.ErrAccountAlreadyLinked
 		}
-		if existingUser.Provider == provider.GetProviderName() {
+		if existingUser.Provider == oauthProvider.GetProviderName() {
 			if *existingUser.ProviderID != userInfo.ProviderID {
 				s.logger.Error("provider ID mismatch for existing user", "storedProviderID", existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
 				return "", ErrInvalidCredentials
 			}
 			return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
 		}
-		err = existingUser.LinkExternalAccount(userInfo.ProviderID, provider.GetProviderName(), userInfo.EmailVerified)
+		err = existingUser.LinkExternalAccount(userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
 		if err != nil {
 			return "", err
 		}
@@ -196,7 +204,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 		return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
 	}
 
-	newUser, err := user.NewUserExternal(userInfo.Email, userInfo.UserName, userInfo.ProviderID, provider.GetProviderName(), userInfo.EmailVerified)
+	newUser, err := user.NewUserExternal(userInfo.Email, userInfo.UserName, userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
 	if err != nil {
 		return "", err
 	}
