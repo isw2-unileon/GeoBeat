@@ -1,6 +1,7 @@
 package user_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
@@ -41,7 +42,7 @@ func TestNewUserFromEmail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			u, err := user.NewUserFromEmail(tt.email, tt.userName, tt.passwordHash)
 
-			if err != tt.expectedErr {
+			if !errors.Is(err, tt.expectedErr) {
 				t.Errorf("expected error %v, got %v", tt.expectedErr, err)
 				return
 			}
@@ -92,7 +93,7 @@ func TestNewUserExternal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			u, err := user.NewUserExternal(tt.email, tt.userName, tt.providerID, tt.provider, tt.emailVerified)
 
-			if err != tt.expectedErr {
+			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
 
@@ -145,7 +146,7 @@ func TestLinkExternalAccount(t *testing.T) {
 			},
 		},
 		{
-			name:          "Succesful link to Google account with verified email",
+			name:          "Successful link to Google account with verified email",
 			initialUser:   newUserEmail(),
 			providerID:    "g_123",
 			provider:      user.ProviderGoogle,
@@ -192,7 +193,7 @@ func TestLinkExternalAccount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.initialUser.LinkExternalAccount(tt.providerID, tt.provider, tt.emailVerified)
 
-			if err != tt.expectedErr {
+			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
 

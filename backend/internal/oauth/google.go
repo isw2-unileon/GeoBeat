@@ -19,10 +19,12 @@ type googleUserInfo struct {
 	Picture       string `json:"picture"`
 }
 
+// GoogleOAuthProvider implements the OAuthProvider interface for Google authentication.
 type GoogleOAuthProvider struct {
 	config *oauth2.Config
 }
 
+// NewGoogleOAuthProvider creates a new instance of GoogleOAuthProvider with the given client ID, client secret, and redirect URL.
 func NewGoogleOAuthProvider(clientID, clientSecret, redirectURL string) *GoogleOAuthProvider {
 	return &GoogleOAuthProvider{
 		config: &oauth2.Config{
@@ -35,10 +37,12 @@ func NewGoogleOAuthProvider(clientID, clientSecret, redirectURL string) *GoogleO
 	}
 }
 
+// GetProviderName returns the name of the provider
 func (g *GoogleOAuthProvider) GetProviderName() user.AuthProvider {
 	return user.ProviderGoogle
 }
 
+// GetUserInfo exchanges the authorization code for an access token and retrieves the user's information from Google.
 func (g *GoogleOAuthProvider) GetUserInfo(ctx context.Context, code string) (*service.OAuthUserInfo, error) {
 	token, err := g.config.Exchange(ctx, code)
 	if err != nil {
@@ -65,6 +69,7 @@ func (g *GoogleOAuthProvider) GetUserInfo(ctx context.Context, code string) (*se
 	}, nil
 }
 
+// GetAuthURL generates the Google OAuth authorization URL with the given state parameter.
 func (g *GoogleOAuthProvider) GetAuthURL(state string) string {
 	return g.config.AuthCodeURL(state, oauth2.AccessTypeOffline)
 }

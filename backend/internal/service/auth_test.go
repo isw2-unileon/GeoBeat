@@ -216,7 +216,7 @@ func TestRegisterWithEmail(t *testing.T) {
 			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), nil)
 
 			err := svc.RegisterWithEmail(context.Background(), tt.email, tt.userName, tt.password)
-			if err != tt.expectedErr {
+			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
 			tt.checkUser(t, repo)
@@ -289,7 +289,7 @@ func TestLoginWithEmail(t *testing.T) {
 
 			token, err := svc.LoginWithEmail(context.Background(), tt.email, tt.password)
 
-			if err != tt.expectedErr {
+			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
 			if err == nil && token != "jwt_simulated" {
@@ -378,6 +378,36 @@ func TestProcessOAuthLogin(t *testing.T) {
 			expectedErr: service.ErrInvalidCredentials,
 			checkUser:   func(t *testing.T, r *mockUserRepository) {},
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := newMockUserRepo()
+			tt.setupRepo(repo)
+			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[user.AuthProvider]service.OAuthProvider{user.ProviderGoogle: tt.providerMock})
+
+			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, user.ProviderGoogle)
+			if !errors.Is(err, tt.expectedErr) {
+				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
+			}
+			if err == nil && token != "jwt_simulated" {
+				t.Errorf("unexpected token: %s", token)
+			}
+			tt.checkUser(t, repo)
+		})
+	}
+}
+
+func TestProccessOAuthLogin2(t *testing.T) {
+	tests := []struct {
+		name         string
+		setupRepo    func(*mockUserRepository)
+		hassingError bool
+		code         string
+		providerMock *mockOAuthProvider
+		expectedErr  error
+		checkUser    func(*testing.T, *mockUserRepository)
+	}{
 		{
 			name: "successfully links OAuth account to existing email-only user",
 			setupRepo: func(r *mockUserRepository) {
@@ -511,7 +541,7 @@ func TestProcessOAuthLogin(t *testing.T) {
 			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[user.AuthProvider]service.OAuthProvider{user.ProviderGoogle: tt.providerMock})
 
 			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, user.ProviderGoogle)
-			if err != tt.expectedErr {
+			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
 			if err == nil && token != "jwt_simulated" {

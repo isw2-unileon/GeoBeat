@@ -9,16 +9,19 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 )
 
+// Tokenizer defines the interface for generating and validating authentication tokens
 type Tokenizer interface {
 	GenerateToken(userID int) (string, error)
 	ValidateToken(token string) (int, error)
 }
 
+// Hasher defines the interface for password hashing and verification
 type Hasher interface {
 	HashPassword(password string) (string, error)
 	CompareHashAndPassword(hash, password string) error
 }
 
+// OAuthUserInfo represents the user information retrieved from an OAuth provider
 type OAuthUserInfo struct {
 	Email         string
 	UserName      string
@@ -26,11 +29,13 @@ type OAuthUserInfo struct {
 	EmailVerified bool
 }
 
+// OAuthProvider defines the interface for interacting with an OAuth provider
 type OAuthProvider interface {
 	GetProviderName() user.AuthProvider
 	GetUserInfo(ctx context.Context, code string) (*OAuthUserInfo, error)
 }
 
+// UserRepository defines the interface for user data access
 type UserRepository interface {
 	FindByEmail(email string) (*user.User, error)
 	Save(u *user.User) error
@@ -38,14 +43,21 @@ type UserRepository interface {
 }
 
 var (
+	// ErrUserCreationFailed indicates a failure during user creation
 	ErrUserCreationFailed = errors.New("failed to create user")
-	ErrUserLoginFailed    = errors.New("failed to login user")
-	ErrPasswordTooWeak    = errors.New("password does not meet security requirements")
-	ErrUserAlreadyExists  = errors.New("user with this email already exists")
+	// ErrUserLoginFailed indicates a failure during user login
+	ErrUserLoginFailed = errors.New("failed to login user")
+	// ErrPasswordTooWeak indicates that the provided password does not meet security requirements
+	ErrPasswordTooWeak = errors.New("password does not meet security requirements")
+	// ErrUserAlreadyExists indicates that a user with the provided email already exists
+	ErrUserAlreadyExists = errors.New("user with this email already exists")
+	// ErrInvalidCredentials indicates that the provided credentials are invalid
 	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrOAuthOnlyAccount   = errors.New("email is associated to an account that only supports OAuth login")
+	// ErrOAuthOnlyAccount indicates that the email is associated to an account that only supports OAuth login
+	ErrOAuthOnlyAccount = errors.New("email is associated to an account that only supports OAuth login")
 )
 
+// AuthService provides methods for user authentication and registration
 type AuthService struct {
 	userRepo       UserRepository
 	tokenizer      Tokenizer
@@ -54,6 +66,7 @@ type AuthService struct {
 	logger         *slog.Logger
 }
 
+// NewAuthService creates a new instance of AuthService with the provided dependencies
 func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[user.AuthProvider]OAuthProvider) *AuthService {
 	return &AuthService{
 		userRepo:       userRepo,
@@ -64,6 +77,7 @@ func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher,
 	}
 }
 
+// RegisterWithEmail registers a new user using email and password
 func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, password string) error {
 	existingUser, err := s.userRepo.FindByEmail(email)
 	if err != nil && !errors.Is(err, user.ErrNotFound) {
@@ -151,6 +165,7 @@ func containsSpecialChar(s string) bool {
 	return false
 }
 
+// LoginWithEmail authenticates a user using email and password, returning a token if successful
 func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string) (string, error) {
 	storedUser, err := s.userRepo.FindByEmail(email)
 	if err != nil {
@@ -173,6 +188,7 @@ func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string
 	return s.tokenizer.GenerateToken(int(storedUser.ID.ID()))
 }
 
+// ProcessOAuthLogin processes an OAuth login flow, returning a token if successful
 func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider user.AuthProvider) (string, error) {
 	oauthProvider := s.oauthProviders[provider]
 
@@ -225,6 +241,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	return s.tokenizer.GenerateToken(int(newUser.ID.ID()))
 }
 
+// ValidateToken validates an authentication token and returns the associated user ID if valid
 func (s *AuthService) ValidateToken(ctx context.Context, token string) (int, error) {
 	return s.tokenizer.ValidateToken(token)
 }

@@ -152,7 +152,9 @@ func TestHandleRegister(t *testing.T) {
 
 			var body bytes.Buffer
 			if tt.requestBody != nil {
-				json.NewEncoder(&body).Encode(tt.requestBody)
+				if err := json.NewEncoder(&body).Encode(tt.requestBody); err != nil {
+					t.Fatalf("failed to encode request body: %v", err)
+				}
 			}
 
 			req := httptest.NewRequest("POST", "/api/auth/register", &body)
@@ -244,7 +246,9 @@ func TestHandleLogin(t *testing.T) {
 
 			var body bytes.Buffer
 			if tt.requestBody != nil {
-				json.NewEncoder(&body).Encode(tt.requestBody)
+				if err := json.NewEncoder(&body).Encode(tt.requestBody); err != nil {
+					t.Fatalf("failed to encode request body: %v", err)
+				}
 			}
 
 			req := httptest.NewRequest("POST", "/api/auth/login", &body)
@@ -292,24 +296,30 @@ func TestHandleOAuthLogin(t *testing.T) {
 			}
 
 			if tt.checkRedirect {
-				location := w.Header().Get("Location")
-				if location == "" {
-					t.Errorf("expected redirect location, got empty")
-				}
-				// Check for state cookie
-				cookies := w.Result().Cookies()
-				found := false
-				for _, cookie := range cookies {
-					if strings.HasPrefix(cookie.Name, "oauth_state_") {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Error("expected oauth state cookie to be set")
-				}
+				validateRedirect(t, w)
 			}
 		})
+	}
+}
+
+func validateRedirect(t *testing.T, w *httptest.ResponseRecorder) {
+	t.Helper()
+
+	location := w.Header().Get("Location")
+	if location == "" {
+		t.Errorf("expected redirect location, got empty")
+	}
+	// Check for state cookie
+	cookies := w.Result().Cookies()
+	found := false
+	for _, cookie := range cookies {
+		if strings.HasPrefix(cookie.Name, "oauth_state_") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected oauth state cookie to be set")
 	}
 }
 
@@ -455,7 +465,9 @@ func TestAuthMiddleware(t *testing.T) {
 			// Mock next handler
 			nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("handler called"))
+				if _, err := w.Write([]byte("handler called")); err != nil {
+					t.Fatalf("failed to write response: %v", err)
+				}
 			})
 
 			middleware := handler.AuthMiddleware(nextHandler)

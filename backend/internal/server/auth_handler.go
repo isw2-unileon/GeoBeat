@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,10 +15,12 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 )
 
+// OAuthProvider defines the interface for OAuth providers to generate authentication URLs.
 type OAuthProvider interface {
 	GetAuthURL(state string) string
 }
 
+// AuthService defines the interface for authentication-related operations used by the AuthHandler.
 type AuthService interface {
 	RegisterWithEmail(ctx context.Context, email, username, password string) error
 	LoginWithEmail(ctx context.Context, email, password string) (string, error)
@@ -25,13 +28,17 @@ type AuthService interface {
 	ValidateToken(ctx context.Context, token string) (int, error)
 }
 
+// AuthHandler handles authentication-related HTTP requests, including registration, login, and OAuth flows.
 type AuthHandler struct {
 	authService AuthService
 	providers   map[user.AuthProvider]OAuthProvider
 }
 
-const userIDContextKey = "userID"
+type contextKey string
 
+const userIDContextKey = contextKey("userID")
+
+// NewAuthHandler creates a new AuthHandler with the given authentication service and OAuth providers.
 func NewAuthHandler(authService AuthService, providers map[user.AuthProvider]OAuthProvider) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
@@ -39,6 +46,7 @@ func NewAuthHandler(authService AuthService, providers map[user.AuthProvider]OAu
 	}
 }
 
+// RegisterRoutes registers the authentication-related routes on the provided HTTP mux.
 func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/auth/register", h.handleRegister)
 	mux.HandleFunc("POST /api/auth/login", h.handleLogin)
@@ -139,6 +147,7 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }
 
+// AuthMiddleware is an HTTP middleware that validates the presence and validity of a Bearer token in the Authorization header.
 func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -202,18 +211,18 @@ func clearOAuthStateCookie(w http.ResponseWriter, provider user.AuthProvider, se
 }
 
 func mapErrors(w http.ResponseWriter, err error) {
-	switch err {
-	case user.ErrEmailNotVerified, user.ErrEmptyPassword, user.ErrEmptyEmailOrUsername, user.ErrAccountAlreadyLinked:
+	switch {
+	case errors.Is(err, user.ErrEmailNotVerified), errors.Is(err, user.ErrEmptyPassword), errors.Is(err, user.ErrEmptyEmailOrUsername), errors.Is(err, user.ErrAccountAlreadyLinked):
 		formatError(w, http.StatusBadRequest, err.Error())
-	case service.ErrInvalidCredentials:
+	case errors.Is(err, service.ErrInvalidCredentials):
 		formatError(w, http.StatusUnauthorized, err.Error())
-	case service.ErrPasswordTooWeak:
+	case errors.Is(err, service.ErrPasswordTooWeak):
 		formatError(w, http.StatusBadRequest, err.Error())
-	case service.ErrUserAlreadyExists:
+	case errors.Is(err, service.ErrUserAlreadyExists):
 		formatError(w, http.StatusConflict, service.ErrUserCreationFailed.Error())
-	case service.ErrOAuthOnlyAccount:
+	case errors.Is(err, service.ErrOAuthOnlyAccount):
 		formatError(w, http.StatusConflict, service.ErrUserLoginFailed.Error())
-	case service.ErrUserCreationFailed, service.ErrUserLoginFailed:
+	case errors.Is(err, service.ErrUserCreationFailed), errors.Is(err, service.ErrUserLoginFailed):
 	default:
 		formatError(w, http.StatusInternalServerError, err.Error())
 	}
