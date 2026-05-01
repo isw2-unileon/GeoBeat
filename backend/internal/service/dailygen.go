@@ -7,32 +7,21 @@ import (
 	"time"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/genre"
 )
-
-// Genre represents a music genre.
-type Genre struct {
-	ID             string `json:"id"`
-	Name           string `json:"name"`
-	NormalizedName string `json:"normalized_name"`
-}
 
 // Track represents a music track with its associated genres.
 type Track struct {
-	ID     string  `json:"id"`
-	Name   string  `json:"name"`
-	Artist string  `json:"artist"`
-	Genres []Genre `json:"genres"`
+	ID     string        `json:"id"`
+	Name   string        `json:"name"`
+	Artist string        `json:"artist"`
+	Genres []genre.Genre `json:"genres"`
 }
 
 // MusicProvider defines the interface for fetching music data.
 type MusicProvider interface {
 	GetTopSongsByCountry(ctx context.Context, country string) ([]Track, error)
 	GetSongsGenre(ctx context.Context, songs []Track) ([][]string, error)
-}
-
-// GenreRepository defines the interface for fetching allowed genres.
-type GenreRepository interface {
-	GetAllowedGenres(ctx context.Context) ([]Genre, error)
 }
 
 // DailyChallengeRepository defines the interface for saving daily challenges.
@@ -43,12 +32,12 @@ type DailyChallengeRepository interface {
 // DailyChallengeService is responsible for generating and saving the daily challenge.
 type DailyChallengeService struct {
 	musicProvider MusicProvider
-	genreRepo     GenreRepository
+	genreRepo     genre.GenreRepository
 	dailyRepo     DailyChallengeRepository
 }
 
 // NewDailyChallengeService creates a new instance of DailyChallengeService with the provided dependencies.
-func NewDailyChallengeService(mp MusicProvider, gr GenreRepository, dr DailyChallengeRepository) *DailyChallengeService {
+func NewDailyChallengeService(mp MusicProvider, gr genre.GenreRepository, dr DailyChallengeRepository) *DailyChallengeService {
 	return &DailyChallengeService{
 		musicProvider: mp,
 		genreRepo:     gr,
