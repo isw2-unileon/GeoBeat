@@ -11,7 +11,6 @@ import (
 
 type Tokenizer interface {
 	GenerateToken(userID int) (string, error)
-	// TODO: In the future, we will likely need a method to validate and decode tokens as well, and test it
 	ValidateToken(token string) (int, error)
 }
 
@@ -75,6 +74,10 @@ func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, pa
 		return ErrUserAlreadyExists
 	}
 
+	if !checkEmailFormat(email) {
+		return ErrInvalidCredentials
+	}
+
 	if !ensurePasswordSecure(password) {
 		return ErrPasswordTooWeak
 	}
@@ -97,6 +100,17 @@ func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, pa
 	}
 
 	return nil
+}
+
+func checkEmailFormat(email string) bool {
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return false
+	}
+	if !strings.Contains(parts[1], ".") {
+		return false
+	}
+	return true
 }
 
 func ensurePasswordSecure(password string) bool {
@@ -177,7 +191,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	if existingUser != nil {
 		if existingUser.Provider == oauthProvider.GetProviderName() {
 			if *existingUser.ProviderID != userInfo.ProviderID {
-				s.logger.Error("provider ID mismatch for existing user", "storedProviderID", existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
+				s.logger.Error("provider ID mismatch for existing user", "storedProviderID", *existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
 				return "", ErrInvalidCredentials
 			}
 			return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
@@ -211,9 +225,6 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	return s.tokenizer.GenerateToken(int(newUser.ID.ID()))
 }
 
-// TODO: Today I am tired, but obviously this needs to decode the token so that we can do auth
 func (s *AuthService) ValidateToken(ctx context.Context, token string) (int, error) {
-	// For now, we just return a dummy user ID to allow testing of the frontend
-	// In the future, this should decode the token and validate it properly
-	return 1, nil
+	return s.tokenizer.ValidateToken(token)
 }

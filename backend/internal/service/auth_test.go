@@ -123,8 +123,8 @@ func TestRegisterWithEmail(t *testing.T) {
 			setupRepo: func(r *mockUserRepository) {
 				// No setup needed
 			},
-			email:       "",
-			userName:    "Juan",
+			email:       "new@mail.com",
+			userName:    "",
 			password:    "Password_123",
 			expectedErr: user.ErrEmptyEmailOrUsername,
 			checkUser:   func(t *testing.T, r *mockUserRepository) {},
@@ -138,6 +138,17 @@ func TestRegisterWithEmail(t *testing.T) {
 			userName:    "Intruder",
 			password:    "Password_123",
 			expectedErr: service.ErrUserAlreadyExists,
+			checkUser:   func(t *testing.T, r *mockUserRepository) {},
+		},
+		{
+			name: "fails if email format is invalid",
+			setupRepo: func(r *mockUserRepository) {
+				// No setup needed
+			},
+			email:       "invalid-email-format",
+			userName:    "Juan",
+			password:    "Password_123",
+			expectedErr: service.ErrInvalidCredentials,
 			checkUser:   func(t *testing.T, r *mockUserRepository) {},
 		},
 		{

@@ -2,9 +2,13 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
@@ -17,46 +21,184 @@ type OAuthProvider interface {
 type AuthService interface {
 	RegisterWithEmail(ctx context.Context, email, username, password string) error
 	LoginWithEmail(ctx context.Context, email, password string) (string, error)
-	ProcessOAuthLogin(ctx context.Context, code, provider user.AuthProvider) (string, error)
+	ProcessOAuthLogin(ctx context.Context, code string, provider user.AuthProvider) (string, error)
+	ValidateToken(ctx context.Context, token string) (int, error)
 }
 
 type AuthHandler struct {
-	authService service.AuthService
+	authService AuthService
 	providers   map[user.AuthProvider]OAuthProvider
 }
 
-func NewAuthHandler(authService service.AuthService, providers map[user.AuthProvider]OAuthProvider) *AuthHandler {
+const userIDContextKey = "userID"
+
+func NewAuthHandler(authService AuthService, providers map[user.AuthProvider]OAuthProvider) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		providers:   providers,
 	}
 }
 
-func (h *AuthHandler) RegisterMiddleware(mux *http.ServeMux) {
-	// This is where you would add any middleware for authentication, logging, etc.
-}
-
 func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/auth/register", h.handleRegister)
 	mux.HandleFunc("POST /api/auth/login", h.handleLogin)
 	for provider := range h.providers {
-		mux.HandleFunc("GET /api/auth/login/"+string(provider), func(w http.ResponseWriter, r *http.Request) {
-			h.handleOAuthLogin(w, r, provider)
+		p := provider
+		mux.HandleFunc("GET /api/auth/login/"+string(p), func(w http.ResponseWriter, r *http.Request) {
+			h.handleOAuthLogin(w, r, p)
 		})
-		mux.HandleFunc("GET /api/auth/login/callback/"+string(provider), func(w http.ResponseWriter, r *http.Request) {
-			h.handleOAuthRedirect(w, r, provider)
+		mux.HandleFunc("GET /api/auth/login/callback/"+string(p), func(w http.ResponseWriter, r *http.Request) {
+			h.handleOAuthRedirect(w, r, p)
 		})
 	}
 }
 
-func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {}
+func (h *AuthHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email    string `json:"email"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		formatError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
 
-func (h *AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {}
+	err := h.authService.RegisterWithEmail(r.Context(), req.Email, req.Username, req.Password)
+	if err != nil {
+		mapErrors(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		formatError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	token, err := h.authService.LoginWithEmail(r.Context(), req.Email, req.Password)
+	if err != nil {
+		mapErrors(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"token": token})
+}
 
 func (h *AuthHandler) handleOAuthLogin(w http.ResponseWriter, r *http.Request, provider user.AuthProvider) {
+	oauthProvider := h.providers[provider]
+	stateBytes := make([]byte, 32)
+	if _, err := rand.Read(stateBytes); err != nil {
+		formatError(w, http.StatusInternalServerError, "failed to generate oauth state")
+		return
+	}
+	state := base64.RawURLEncoding.EncodeToString(stateBytes)
+	setOAuthStateCookie(w, state, provider, r.TLS != nil)
+	authURL := oauthProvider.GetAuthURL(state)
+	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
 func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request, provider user.AuthProvider) {
+	if errParam := r.URL.Query().Get("error"); errParam != "" {
+		formatError(w, http.StatusBadRequest, fmt.Sprintf("oauth provider error: %s", errParam))
+		return
+	}
+
+	state := r.URL.Query().Get("state")
+	if state == "" {
+		formatError(w, http.StatusBadRequest, "invalid oauth state")
+		return
+	}
+
+	cookieState, err := getOAuthStateFromCookie(r, provider)
+	if err != nil || cookieState != state {
+		formatError(w, http.StatusBadRequest, "invalid oauth state")
+		return
+	}
+	clearOAuthStateCookie(w, provider, r.TLS != nil)
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		formatError(w, http.StatusBadRequest, "missing oauth code")
+		return
+	}
+
+	token, err := h.authService.ProcessOAuthLogin(r.Context(), code, provider)
+	if err != nil {
+		mapErrors(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"token": token})
+}
+
+func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			formatError(w, http.StatusUnauthorized, "missing authorization header")
+			return
+		}
+
+		parts := strings.Fields(authHeader)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+			formatError(w, http.StatusUnauthorized, "invalid authorization header")
+			return
+		}
+
+		token := parts[1]
+		userID, err := h.authService.ValidateToken(r.Context(), token)
+		if err != nil || userID <= 0 {
+			formatError(w, http.StatusUnauthorized, "invalid or expired token")
+			return
+		}
+
+		r = r.WithContext(context.WithValue(r.Context(), userIDContextKey, userID))
+		next.ServeHTTP(w, r)
+	})
+}
+
+func oauthStateCookieName(provider user.AuthProvider) string {
+	return "oauth_state_" + string(provider)
+}
+
+func setOAuthStateCookie(w http.ResponseWriter, state string, provider user.AuthProvider, secure bool) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     oauthStateCookieName(provider),
+		Value:    state,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   300,
+	})
+}
+
+func getOAuthStateFromCookie(r *http.Request, provider user.AuthProvider) (string, error) {
+	cookie, err := r.Cookie(oauthStateCookieName(provider))
+	if err != nil {
+		return "", err
+	}
+	return cookie.Value, nil
+}
+
+func clearOAuthStateCookie(w http.ResponseWriter, provider user.AuthProvider, secure bool) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     oauthStateCookieName(provider),
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
 }
 
 func mapErrors(w http.ResponseWriter, err error) {
