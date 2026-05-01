@@ -10,25 +10,34 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
 
-type mockDailyRepo struct {
-	mu        sync.RWMutex
-	sessions  map[sessionKey]*daily.Session
-	challenge *daily.Challenge
+type mockSessionRepo struct {
+	mu       sync.RWMutex
+	sessions map[sessionKey]*daily.Session
 
-	getChallengeErr  error
 	getSessionErr    error
 	createSessionErr error
 	updateSessionErr error
 }
 
+type mockChallengeRepo struct {
+	mu        sync.RWMutex
+	challenge *daily.Challenge
+
+	getChallengeErr error
+}
 type sessionKey struct {
 	userID      int
 	challengeID int
 }
 
-func newMockDailyRepo() *mockDailyRepo {
-	return &mockDailyRepo{
+func newSessionMockRepo() *mockSessionRepo {
+	return &mockSessionRepo{
 		sessions: make(map[sessionKey]*daily.Session),
+	}
+}
+
+func newChallengeMockRepo() *mockChallengeRepo {
+	return &mockChallengeRepo{
 		challenge: &daily.Challenge{
 			ID:          1,
 			TargetGenre: "Pop",
@@ -37,14 +46,14 @@ func newMockDailyRepo() *mockDailyRepo {
 	}
 }
 
-func (m *mockDailyRepo) GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error) {
+func (m *mockChallengeRepo) GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error) {
 	if m.getChallengeErr != nil {
 		return nil, m.getChallengeErr
 	}
 	return m.challenge, nil
 }
 
-func (m *mockDailyRepo) GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error) {
+func (m *mockSessionRepo) GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error) {
 	if m.getSessionErr != nil {
 		return nil, m.getSessionErr
 	}
@@ -58,7 +67,7 @@ func (m *mockDailyRepo) GetSession(ctx context.Context, userID, challengeID int)
 	return session, nil
 }
 
-func (m *mockDailyRepo) CreateSession(ctx context.Context, session *daily.Session) error {
+func (m *mockSessionRepo) CreateSession(ctx context.Context, session *daily.Session) error {
 	if m.createSessionErr != nil {
 		return m.createSessionErr
 	}
@@ -69,7 +78,7 @@ func (m *mockDailyRepo) CreateSession(ctx context.Context, session *daily.Sessio
 	return nil
 }
 
-func (m *mockDailyRepo) UpdateSession(ctx context.Context, session *daily.Session) error {
+func (m *mockSessionRepo) UpdateSession(ctx context.Context, session *daily.Session) error {
 	if m.updateSessionErr != nil {
 		return m.updateSessionErr
 	}
@@ -81,10 +90,11 @@ func (m *mockDailyRepo) UpdateSession(ctx context.Context, session *daily.Sessio
 }
 
 type currentStatusTestCase struct {
-	name        string
-	setupRepo   func(*mockDailyRepo)
-	wantSession bool
-	wantErr     error
+	name               string
+	setupSessionRepo   func(*mockSessionRepo)
+	setupChallengeRepo func(*mockChallengeRepo)
+	wantSession        bool
+	wantErr            error
 }
 
 func TestDaily_GetCurrentStatus(t *testing.T) {
@@ -92,7 +102,10 @@ func TestDaily_GetCurrentStatus(t *testing.T) {
 	tests := []currentStatusTestCase{
 		{
 			name: "Fail to get challenge returns error",
-			setupRepo: func(m *mockDailyRepo) {
+			setupSessionRepo: func(m *mockSessionRepo) {
+				// No setup needed for session repo
+			},
+			setupChallengeRepo: func(m *mockChallengeRepo) {
 				m.getChallengeErr = errors.New("DB connection failed")
 			},
 			wantSession: false,
@@ -100,7 +113,7 @@ func TestDaily_GetCurrentStatus(t *testing.T) {
 		},
 		{
 			name: "Existing session is retrieved successfully",
-			setupRepo: func(m *mockDailyRepo) {
+			setupSessionRepo: func(m *mockSessionRepo) {
 				m.sessions[sessionKey{userID, 1}] = &daily.Session{
 					UserID:       userID,
 					ChallengeID:  1,
@@ -108,21 +121,30 @@ func TestDaily_GetCurrentStatus(t *testing.T) {
 					Status:       daily.StatusPlaying,
 				}
 			},
+			setupChallengeRepo: func(m *mockChallengeRepo) {
+				// No setup needed for challenge repo
+			},
 			wantSession: true,
 			wantErr:     nil,
 		},
 		{
 			name: "If session does not exist, it is created and saved automatically",
-			setupRepo: func(m *mockDailyRepo) {
+			setupSessionRepo: func(m *mockSessionRepo) {
 				// No session setup, should trigger creation
+			},
+			setupChallengeRepo: func(m *mockChallengeRepo) {
+				// No setup needed for challenge repo
 			},
 			wantSession: true,
 			wantErr:     nil,
 		},
 		{
 			name: "Error while creating session is handled properly",
-			setupRepo: func(m *mockDailyRepo) {
+			setupSessionRepo: func(m *mockSessionRepo) {
 				m.createSessionErr = errors.New("DB insert failed")
+			},
+			setupChallengeRepo: func(m *mockChallengeRepo) {
+				// No setup needed for challenge repo
 			},
 			wantSession: false,
 			wantErr:     errors.New("error while creating session"),
@@ -130,9 +152,11 @@ func TestDaily_GetCurrentStatus(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := newMockDailyRepo()
-			tt.setupRepo(repo)
-			svc := service.NewService(repo)
+			challengeRepo := newChallengeMockRepo()
+			tt.setupChallengeRepo(challengeRepo)
+			sessionRepo := newSessionMockRepo()
+			tt.setupSessionRepo(sessionRepo)
+			svc := service.NewService(challengeRepo, sessionRepo)
 
 			_, session, err := svc.GetCurrentStatus(context.Background(), userID)
 
@@ -142,7 +166,7 @@ func TestDaily_GetCurrentStatus(t *testing.T) {
 				return
 			}
 
-			assertSessionState(t, tt.wantSession, session, repo, userID)
+			assertSessionState(t, tt.wantSession, session, sessionRepo, userID)
 		})
 	}
 }
@@ -168,7 +192,7 @@ func assertError(t *testing.T, got, want error) {
 }
 
 // assertSessionState isolates state checking to keep cyclomatic complexity extremely low.
-func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, repo *mockDailyRepo, userID int) {
+func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, sessionRepo *mockSessionRepo, userID int) {
 	t.Helper()
 
 	if wantSession {
@@ -177,7 +201,7 @@ func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, 
 		}
 
 		key := sessionKey{userID, 1}
-		if _, exists := repo.sessions[key]; !exists {
+		if _, exists := sessionRepo.sessions[key]; !exists {
 			t.Error("did not persist the session in the database")
 		}
 	} else if session != nil {
@@ -189,15 +213,16 @@ func TestDaily_ProcessAttempt(t *testing.T) {
 	userID := 1
 
 	tests := []struct {
-		name      string
-		guess     string
-		setupRepo func(*mockDailyRepo)
-		wantErr   error
+		name               string
+		guess              string
+		setupSessionRepo   func(*mockSessionRepo)
+		setupChallengeRepo func(*mockChallengeRepo)
+		wantErr            error
 	}{
 		{
 			name:  "1. Successful attempt updates session correctly",
 			guess: "Pop",
-			setupRepo: func(m *mockDailyRepo) {
+			setupSessionRepo: func(m *mockSessionRepo) {
 				m.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
 					UserID:       userID,
 					ChallengeID:  1,
@@ -205,12 +230,15 @@ func TestDaily_ProcessAttempt(t *testing.T) {
 					Status:       daily.StatusPlaying,
 				}
 			},
+			setupChallengeRepo: func(m *mockChallengeRepo) {
+				// No setup needed for challenge repo
+			},
 			wantErr: nil,
 		},
 		{
 			name:  "2. Domain error if game is already over",
 			guess: "Rock",
-			setupRepo: func(m *mockDailyRepo) {
+			setupSessionRepo: func(m *mockSessionRepo) {
 				m.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
 					UserID:       userID,
 					ChallengeID:  1,
@@ -218,13 +246,19 @@ func TestDaily_ProcessAttempt(t *testing.T) {
 					Status:       daily.StatusLost,
 				}
 			},
+			setupChallengeRepo: func(m *mockChallengeRepo) {
+				// No setup needed for challenge repo
+			},
 			wantErr: daily.ErrGameOver,
 		},
 		{
 			name:  "3. Error while updating session is handled properly",
 			guess: "Pop",
-			setupRepo: func(m *mockDailyRepo) {
+			setupSessionRepo: func(m *mockSessionRepo) {
 				m.updateSessionErr = errors.New("db update failed")
+			},
+			setupChallengeRepo: func(m *mockChallengeRepo) {
+				// No setup needed for challenge repo
 			},
 			wantErr: errors.New("error updating session"),
 		},
@@ -232,9 +266,11 @@ func TestDaily_ProcessAttempt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := newMockDailyRepo()
-			tt.setupRepo(repo)
-			svc := service.NewService(repo)
+			challengeRepo := newChallengeMockRepo()
+			tt.setupChallengeRepo(challengeRepo)
+			sessionRepo := newSessionMockRepo()
+			tt.setupSessionRepo(sessionRepo)
+			svc := service.NewService(challengeRepo, sessionRepo)
 
 			_, err := svc.ProcessAttempt(context.Background(), userID, tt.guess)
 

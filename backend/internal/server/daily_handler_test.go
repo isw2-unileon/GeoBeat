@@ -20,29 +20,37 @@ type sessionKey struct {
 	challengeID int
 }
 
-type mockDailyRepo struct {
+type mockSessionRepo struct {
+	mu       sync.RWMutex
+	sessions map[sessionKey]*daily.Session
+}
+
+type mockChallengeRepo struct {
 	mu        sync.RWMutex
-	sessions  map[sessionKey]*daily.Session
 	challenge *daily.Challenge
 }
 
-func newMockDailyRepo() *mockDailyRepo {
-	return &mockDailyRepo{
+func newMockSessionRepo() *mockSessionRepo {
+	return &mockSessionRepo{
 		sessions: make(map[sessionKey]*daily.Session),
+	}
+}
+
+func newMockChallengeRepo() *mockChallengeRepo {
+	return &mockChallengeRepo{
 		challenge: &daily.Challenge{
-			ID:            1,
-			TargetCountry: "Spain",
-			TargetGenre:   "Pop",
-			HintSongs:     []string{"Song 1", "Song 2", "Song 3", "Song 4", "Song 5"},
+			ID:          1,
+			TargetGenre: "Pop",
+			HintSongs:   []string{"Song 1", "Song 2", "Song 3", "Song 4", "Song 5"},
 		},
 	}
 }
 
-func (m *mockDailyRepo) GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error) {
+func (m *mockChallengeRepo) GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error) {
 	return m.challenge, nil
 }
 
-func (m *mockDailyRepo) GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error) {
+func (m *mockSessionRepo) GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -54,7 +62,7 @@ func (m *mockDailyRepo) GetSession(ctx context.Context, userID, challengeID int)
 	return session, nil
 }
 
-func (m *mockDailyRepo) CreateSession(ctx context.Context, session *daily.Session) error {
+func (m *mockSessionRepo) CreateSession(ctx context.Context, session *daily.Session) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -63,7 +71,7 @@ func (m *mockDailyRepo) CreateSession(ctx context.Context, session *daily.Sessio
 	return nil
 }
 
-func (m *mockDailyRepo) UpdateSession(ctx context.Context, session *daily.Session) error {
+func (m *mockSessionRepo) UpdateSession(ctx context.Context, session *daily.Session) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -73,17 +81,18 @@ func (m *mockDailyRepo) UpdateSession(ctx context.Context, session *daily.Sessio
 }
 
 // newTestServer wires up the real service with the in-memory fake repository.
-func newTestServer(t *testing.T) (*http.ServeMux, *mockDailyRepo) {
+func newTestServer(t *testing.T) (*http.ServeMux, *mockSessionRepo, *mockChallengeRepo) {
 	t.Helper()
 
-	repo := newMockDailyRepo()
-	svc := service.NewService(repo)
+	sessionRepo := newMockSessionRepo()
+	challengeRepo := newMockChallengeRepo()
+	svc := service.NewService(challengeRepo, sessionRepo)
 	handler := server.NewHandler(svc)
 
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
 
-	return mux, repo
+	return mux, sessionRepo, challengeRepo
 }
 
 func TestHandler_GetDailyStatus(t *testing.T) {
@@ -111,10 +120,10 @@ func TestHandler_GetDailyStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux, repo := newTestServer(t)
+			mux, sessionRepo, _ := newTestServer(t)
 
 			if tt.seedSession {
-				repo.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
+				sessionRepo.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
 					UserID:       userID,
 					ChallengeID:  1,
 					AttemptsUsed: 3,
@@ -173,10 +182,10 @@ func TestHandler_PostAttempt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux, repo := newTestServer(t)
+			mux, sessionRepo, _ := newTestServer(t)
 
 			// Seed the database with the exact state we want to test
-			repo.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
+			sessionRepo.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
 				UserID:       userID,
 				ChallengeID:  1,
 				AttemptsUsed: tt.seedAttempts,
@@ -196,9 +205,9 @@ func TestHandler_PostAttempt(t *testing.T) {
 }
 
 func TestHandler_PlayFullGameFlow(t *testing.T) {
-	mux, repo := newTestServer(t)
+	mux, _, challengeRepo := newTestServer(t)
 
-	repo.challenge = &daily.Challenge{ID: 1, TargetGenre: "Pop", HintSongs: []string{"H1", "H2", "H3", "H4", "H5"}}
+	challengeRepo.challenge = &daily.Challenge{ID: 1, TargetGenre: "Pop", HintSongs: []string{"H1", "H2", "H3", "H4", "H5"}}
 
 	// 1st Request: Wrong guess
 	req1 := httptest.NewRequest(http.MethodPost, "/api/game/daily/attempt", bytes.NewBufferString(`{"guess":"Rock"}`))
