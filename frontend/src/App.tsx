@@ -5,6 +5,8 @@ import { AppField } from './components/app-field';
 import { AppDrawer } from './components/app-drawer';
 import { AppDialog } from './components/app-dialog';
 
+import { getDaily } from './services/daily';
+
 import { useState } from 'react';
 import type { Feature, Geometry, GeoJsonProperties } from "geojson";
 
@@ -17,6 +19,8 @@ type ViewState = {
 export default function App() {
 
   const [country, setCountry] = useState<string>('(Select a country by clicking on it)')
+
+  getDaily();
 
   return (
       <main className="relative min-h-screen flex flex-col">
