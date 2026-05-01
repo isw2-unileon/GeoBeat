@@ -42,7 +42,6 @@ type Challenge struct {
 
 // Session represents the current state of the player.
 type Session struct {
-	ID           int
 	UserID       int
 	ChallengeID  int
 	AttemptsUsed int
