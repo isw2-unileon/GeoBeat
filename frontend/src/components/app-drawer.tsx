@@ -24,7 +24,7 @@ export function AppDrawer({country}: Props) {
 
     return (
         <Drawer open={isOpen} onOpenChange={setIsOpen}>
-            <DrawerTrigger className="absolute top-10 right-4">
+            <DrawerTrigger className="absolute top-10 right-4" asChild>
                 <Button className="bg-white/80 text-black">Menu</Button>
             </DrawerTrigger>
             <DrawerContent>
@@ -76,8 +76,8 @@ export function AppDrawer({country}: Props) {
                     </div>
                 </div>
                 <DrawerFooter>
-                    <DrawerClose>
-                        <Button variant="outline">Close</Button>
+                    <DrawerClose asChild>
+                        <Button variant="outline" className="mx-auto">Close</Button>
                     </DrawerClose>
                 </DrawerFooter>
             </DrawerContent>
