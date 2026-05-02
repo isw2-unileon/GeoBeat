@@ -1,17 +1,12 @@
-import {Map, Source, Layer, FillLayerSpecification} from '@vis.gl/react-maplibre';
+import { Source, Layer, FillLayerSpecification } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { AppField } from './components/app-field';
 import { AppDrawer } from './components/app-drawer';
 import { AppDialog } from './components/app-dialog';
+import { BaseGlobe } from './components/BaseGlobe';
 
 import { useState } from 'react';
-
-type ViewState = {
-  longitude: number;
-  latitude: number;
-  zoom: number;
-};
 
 type ContentMapProps = {
   country: string;
@@ -26,7 +21,7 @@ export default function App() {
       <main className="relative min-h-screen flex flex-col">
         <DailyModeTitle />
         <AppDialog />
-        <ContentMap country={country} setCountry={setCountry}/>
+        <FreeModeMap country={country} setCountry={setCountry}/>
         {/* Desktop */}
         <div className='hidden md:block'>
           <AppField country={country} />
@@ -43,7 +38,7 @@ export default function App() {
   )
 }
 
-function ContentMap({ country, setCountry }: ContentMapProps) {
+function FreeModeMap({ country, setCountry }: ContentMapProps) {
 
   const countryLayer: FillLayerSpecification = {
     id: 'country-layer',
@@ -66,32 +61,30 @@ function ContentMap({ country, setCountry }: ContentMapProps) {
     }
   }
 
-  return <Map
-    initialViewState={{...dailyViewState()}}
-    style={{width: '100vw', height: '100vh'}}
-    projection={'globe'}
-    mapStyle="https://tiles.openfreemap.org/styles/positron"
-    onClick={(e) => {
-    const features = e.target.queryRenderedFeatures(e.point, {
-      layers: ['country-layer']
-    });
+  return (
+    <BaseGlobe
+      onClick={(e) => {
+        const features = e.target.queryRenderedFeatures(e.point, {
+          layers: ['country-layer']
+        });
 
-    if (features.length > 0) {
-      const country: string = features[0]?.properties.name
-      console.log(country);
-      setCountry(country);
-    }
-  }}
-  >
-    <Source
-      id="countries"
-      type="geojson"
-      data="/data/countries.geojson"
+        if (features.length > 0) {
+          const country: string = features[0]?.properties.name
+          console.log(country);
+          setCountry(country);
+        }
+      }}
     >
-      <Layer {...countryLayer}/>
-      <Layer {...selectedCountyLayer}/>
-    </Source>
-  </Map>
+      <Source
+        id="countries"
+        type="geojson"
+        data="/data/countries.geojson"
+      >
+        <Layer {...countryLayer}/>
+        <Layer {...selectedCountyLayer}/>
+      </Source>
+    </BaseGlobe>
+  )
 }
 
 function DailyModeTitle() {
@@ -102,17 +95,6 @@ function DailyModeTitle() {
     DAILY MODE
   </h1>
   )
-}
-
-function dailyViewState(): ViewState {
-  // Need to retieve daily country and associate country to longitude and latitude
-  const longitude = -100;
-  const latitude = 40;
-  return {
-    longitude,
-    latitude,
-    zoom: 2.5
-  }
 }
 
 function Attempts({num}: {num: number}) {
