@@ -1,4 +1,4 @@
-import {Map, MapLayerMouseEvent} from '@vis.gl/react-maplibre';
+import { Map, MapLayerMouseEvent } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { ReactNode } from 'react';
 
