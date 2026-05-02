@@ -1,19 +1,20 @@
 import { AppField } from './components/app-field';
 import { AppDrawer } from './components/app-drawer';
 import { AppDialog } from './components/app-dialog';
-import { FreeModeMap } from './components/map/FreeModeMap';
+import { DailyModeMap } from './components/map/DailyModeMap';
 
 import { useState } from 'react';
 
 export default function App() {
 
-  const [country, setCountry] = useState<string>('(Select a country by clicking on it)')
+  const [country, setCountry] = useState<string>('Australia')
 
   return (
       <main className="relative min-h-screen flex flex-col">
         <DailyModeTitle />
         <AppDialog />
-        <FreeModeMap country={country} setCountry={setCountry}/>
+        {/* <FreeModeMap country={country} setCountry={setCountry}/> */}
+        <DailyModeMap country={country} />
         {/* Desktop */}
         <div className='hidden md:block'>
           <AppField country={country} />
