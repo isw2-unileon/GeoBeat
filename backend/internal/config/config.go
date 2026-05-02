@@ -13,6 +13,8 @@ type Config struct {
 	CORSAllowOrigin string
 	LastFMAPIKey    string
 	DatabaseURL     string
+	GoogleClientID  string
+	GoogleSecret    string
 }
 
 var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -30,6 +32,8 @@ func Load() *Config {
 		CORSAllowOrigin: getEnv("CORS_ALLOW_ORIGIN", "*"),
 		LastFMAPIKey:    getEnv("LASTFM_API_KEY", ""),
 		DatabaseURL:     getEnv("DATABASE_URL", ""),
+		GoogleClientID:  getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleSecret:    getEnv("GOOGLE_SECRET", ""),
 	}
 }
 
