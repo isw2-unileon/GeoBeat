@@ -12,10 +12,12 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
+// PostgresDailyRepo implements the daily.Repository interface using PostgreSQL as the backend database.
 type PostgresDailyRepo struct {
 	pool *pgxpool.Pool
 }
 
+// NewPostgresDailyRepo creates a new instance of the PostgresDailyRepo with the given database connection pool.
 func NewPostgresDailyRepo(pool *pgxpool.Pool) *PostgresDailyRepo {
 	return &PostgresDailyRepo{pool: pool}
 }
@@ -96,6 +98,7 @@ func (r *PostgresDailyRepo) GetSession(ctx context.Context, userID uuid.UUID, ch
 	return &s, nil
 }
 
+// CreateSession creates a new session for a user and challenge. It returns an error if the session already exists or if there is a database error.
 func (r *PostgresDailyRepo) CreateSession(ctx context.Context, s *daily.Session) error {
 	query := `
 		INSERT INTO daily_sessions (user_id, challenge_id, attempts_used, status, updated_at) 
@@ -115,6 +118,7 @@ func (r *PostgresDailyRepo) CreateSession(ctx context.Context, s *daily.Session)
 	return err
 }
 
+// UpdateSession updates an existing session's attempts used, status, and updated_at timestamp. It returns an error if the session does not exist or if there is a database error.
 func (r *PostgresDailyRepo) UpdateSession(ctx context.Context, s *daily.Session) error {
 	query := `
 		UPDATE daily_sessions 

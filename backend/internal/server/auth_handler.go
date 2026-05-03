@@ -36,6 +36,7 @@ type AuthHandler struct {
 
 type contextKey string
 
+// UserIDContextKey is the context key used to store the authenticated user's ID in the request context.
 const UserIDContextKey = contextKey("userID")
 
 // NewAuthHandler creates a new AuthHandler with the given authentication service and OAuth providers.
