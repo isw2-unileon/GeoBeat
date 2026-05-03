@@ -18,7 +18,7 @@ func newMockUserRepo() *mockUserRepository {
 	return &mockUserRepository{users: make(map[string]*user.User), databaseError: errors.New("database error")}
 }
 
-func (m *mockUserRepository) FindByEmail(email string) (*user.User, error) {
+func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
 	u, exists := m.users[email]
 	if email == "extrange@mail.com" {
 		return nil, m.databaseError
@@ -29,7 +29,7 @@ func (m *mockUserRepository) FindByEmail(email string) (*user.User, error) {
 	return u, nil
 }
 
-func (m *mockUserRepository) Save(u *user.User) error {
+func (m *mockUserRepository) Save(ctx context.Context, u *user.User) error {
 	if u.Email == "dbError@error.com" {
 		return m.databaseError
 	}
@@ -37,7 +37,7 @@ func (m *mockUserRepository) Save(u *user.User) error {
 	return nil
 }
 
-func (m *mockUserRepository) Update(u *user.User) error {
+func (m *mockUserRepository) Update(ctx context.Context, u *user.User) error {
 	m.users[u.Email] = u
 	return nil
 }

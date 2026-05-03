@@ -37,9 +37,9 @@ type OAuthProvider interface {
 
 // UserRepository defines the interface for user data access
 type UserRepository interface {
-	FindByEmail(email string) (*user.User, error)
-	Save(u *user.User) error
-	Update(u *user.User) error
+	FindByEmail(ctx context.Context, email string) (*user.User, error)
+	Save(ctx context.Context, u *user.User) error
+	Update(ctx context.Context, u *user.User) error
 }
 
 var (
@@ -79,7 +79,7 @@ func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher,
 
 // RegisterWithEmail registers a new user using email and password
 func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, password string) error {
-	existingUser, err := s.userRepo.FindByEmail(email)
+	existingUser, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil && !errors.Is(err, user.ErrNotFound) {
 		s.logger.Error("error checking existing user", "email", email, "error", err)
 		return ErrUserCreationFailed
@@ -107,7 +107,7 @@ func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, pa
 		return err
 	}
 
-	err = s.userRepo.Save(newUser)
+	err = s.userRepo.Save(ctx, newUser)
 	if err != nil {
 		s.logger.Error("error saving new user", "email", email, "error", err)
 		return ErrUserCreationFailed
@@ -167,7 +167,7 @@ func containsSpecialChar(s string) bool {
 
 // LoginWithEmail authenticates a user using email and password, returning a token if successful
 func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string) (string, error) {
-	storedUser, err := s.userRepo.FindByEmail(email)
+	storedUser, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, user.ErrNotFound) {
 			return "", ErrInvalidCredentials
@@ -198,7 +198,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 		return "", ErrUserLoginFailed
 	}
 
-	existingUser, err := s.userRepo.FindByEmail(userInfo.Email)
+	existingUser, err := s.userRepo.FindByEmail(ctx, userInfo.Email)
 	if err != nil && !errors.Is(err, user.ErrNotFound) {
 		s.logger.Error("error checking existing user", "email", userInfo.Email, "error", err)
 		return "", ErrUserLoginFailed
@@ -219,7 +219,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 		if err != nil {
 			return "", err
 		}
-		err = s.userRepo.Update(existingUser)
+		err = s.userRepo.Update(ctx, existingUser)
 		if err != nil {
 			s.logger.Error("error updating existing user", "email", userInfo.Email, "error", err)
 			return "", ErrUserLoginFailed
@@ -232,7 +232,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 		return "", err
 	}
 
-	err = s.userRepo.Save(newUser)
+	err = s.userRepo.Save(ctx, newUser)
 	if err != nil {
 		s.logger.Error("error saving new user", "email", userInfo.Email, "error", err)
 		return "", ErrUserCreationFailed

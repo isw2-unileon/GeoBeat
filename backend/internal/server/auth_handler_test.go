@@ -20,17 +20,17 @@ type mockUserRepository struct {
 	users map[string]*user.User
 }
 
-func (m *mockUserRepository) Save(u *user.User) error {
+func (m *mockUserRepository) Save(ctx context.Context, u *user.User) error {
 	m.users[u.Email] = u
 	return nil
 }
 
-func (m *mockUserRepository) Update(u *user.User) error {
+func (m *mockUserRepository) Update(ctx context.Context, u *user.User) error {
 	m.users[u.Email] = u
 	return nil
 }
 
-func (m *mockUserRepository) FindByEmail(email string) (*user.User, error) {
+func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
 	if u, exists := m.users[email]; exists {
 		return u, nil
 	}
