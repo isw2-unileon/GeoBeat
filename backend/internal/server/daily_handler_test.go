@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
@@ -46,7 +47,7 @@ func newMockChallengeRepo() *mockChallengeRepo {
 	}
 }
 
-func (m *mockChallengeRepo) GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error) {
+func (m *mockChallengeRepo) GetChallengeByDate(ctx context.Context, date time.Time) (*daily.Challenge, error) {
 	return m.challenge, nil
 }
 

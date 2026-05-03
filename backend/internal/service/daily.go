@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
@@ -10,7 +11,7 @@ import (
 
 // ChallengeRepository defines the methods required to manage daily challenges.
 type ChallengeRepository interface {
-	GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error)
+	GetChallengeByDate(ctx context.Context, date time.Time) (*daily.Challenge, error)
 }
 
 // SessionRepository defines the methods required to manage user sessions for the daily challenge.
@@ -36,7 +37,7 @@ func NewService(challengeRepo ChallengeRepository, sessionRepo SessionRepository
 
 // GetCurrentStatus retrieves the current challenge and session status for a given user.
 func (s *Daily) GetCurrentStatus(ctx context.Context, userID uuid.UUID) (*daily.Challenge, *daily.Session, error) {
-	challenge, err := s.challengeRepo.GetChallengeByDate(ctx, "today")
+	challenge, err := s.challengeRepo.GetChallengeByDate(ctx, time.Now())
 	if err != nil {
 		return nil, nil, daily.ErrChallengeNotFound
 	}
