@@ -5,31 +5,31 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 )
 
 type mockUserRepository struct {
-	users         map[string]*user.User
+	users         map[string]*geouser.User
 	databaseError error
 }
 
 func newMockUserRepo() *mockUserRepository {
-	return &mockUserRepository{users: make(map[string]*user.User), databaseError: errors.New("database error")}
+	return &mockUserRepository{users: make(map[string]*geouser.User), databaseError: errors.New("database error")}
 }
 
-func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
+func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*geouser.User, error) {
 	u, exists := m.users[email]
 	if email == "extrange@mail.com" {
 		return nil, m.databaseError
 	}
 	if !exists {
-		return nil, user.ErrNotFound
+		return nil, geouser.ErrNotFound
 	}
 	return u, nil
 }
 
-func (m *mockUserRepository) Save(ctx context.Context, u *user.User) error {
+func (m *mockUserRepository) Save(ctx context.Context, u *geouser.User) error {
 	if u.Email == "dbError@error.com" {
 		return m.databaseError
 	}
@@ -37,7 +37,7 @@ func (m *mockUserRepository) Save(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-func (m *mockUserRepository) Update(ctx context.Context, u *user.User) error {
+func (m *mockUserRepository) Update(ctx context.Context, u *geouser.User) error {
 	m.users[u.Email] = u
 	return nil
 }
@@ -79,8 +79,8 @@ type mockOAuthProvider struct {
 	mockErr      error
 }
 
-func (m *mockOAuthProvider) GetProviderName() user.AuthProvider {
-	return user.ProviderGoogle
+func (m *mockOAuthProvider) GetProviderName() geouser.AuthProvider {
+	return geouser.ProviderGoogle
 }
 
 func (m *mockOAuthProvider) GetUserInfo(ctx context.Context, code string) (*service.OAuthUserInfo, error) {
@@ -126,13 +126,13 @@ func TestRegisterWithEmail(t *testing.T) {
 			email:       "new@mail.com",
 			userName:    "",
 			password:    "Password_123",
-			expectedErr: user.ErrEmptyEmailOrUsername,
+			expectedErr: geouser.ErrEmptyEmailOrUsername,
 			checkUser:   func(t *testing.T, r *mockUserRepository) {},
 		},
 		{
 			name: "fails if email is already in use",
 			setupRepo: func(r *mockUserRepository) {
-				r.users["used@mail.com"], _ = user.NewUserFromEmail("used@mail.com", "Pedro", "hash")
+				r.users["used@mail.com"], _ = geouser.NewUserFromEmail("used@mail.com", "Pedro", "hash")
 			},
 			email:       "used@mail.com",
 			userName:    "Intruder",
@@ -236,7 +236,7 @@ func TestLoginWithEmail(t *testing.T) {
 		{
 			name: "successful login",
 			setupRepo: func(r *mockUserRepository) {
-				r.users["test@mail.com"], _ = user.NewUserFromEmail("test@mail.com", "Test", "hash_password123")
+				r.users["test@mail.com"], _ = geouser.NewUserFromEmail("test@mail.com", "Test", "hash_password123")
 			},
 			email:       "test@mail.com",
 			password:    "password123",
@@ -263,7 +263,7 @@ func TestLoginWithEmail(t *testing.T) {
 		{
 			name: "fails with incorrect password",
 			setupRepo: func(r *mockUserRepository) {
-				r.users["test@mail.com"], _ = user.NewUserFromEmail("test@mail.com", "Test", "hash_password123")
+				r.users["test@mail.com"], _ = geouser.NewUserFromEmail("test@mail.com", "Test", "hash_password123")
 			},
 			email:       "test@mail.com",
 			password:    "wrong_password",
@@ -272,7 +272,7 @@ func TestLoginWithEmail(t *testing.T) {
 		{
 			name: "fails if OAuth-only account",
 			setupRepo: func(r *mockUserRepository) {
-				u, _ := user.NewUserExternal("oauth@mail.com", "OAuth User", "g_123", user.ProviderGoogle, true)
+				u, _ := geouser.NewUserExternal("oauth@mail.com", "OAuth User", "g_123", geouser.ProviderGoogle, true)
 				r.users["oauth@mail.com"] = u
 			},
 			email:       "oauth@mail.com",
@@ -329,7 +329,7 @@ func TestProcessOAuthLogin(t *testing.T) {
 				if !exists {
 					t.Fatalf("user not saved")
 				}
-				if u.Provider != user.ProviderGoogle || *u.ProviderID != "g_123" {
+				if u.Provider != geouser.ProviderGoogle || *u.ProviderID != "g_123" {
 					t.Errorf("incorrect provider data")
 				}
 			},
@@ -337,7 +337,7 @@ func TestProcessOAuthLogin(t *testing.T) {
 		{
 			name: "successful OAuth login with existing user",
 			setupRepo: func(r *mockUserRepository) {
-				u, _ := user.NewUserExternal("oauth@mail.com", "OAuth User", "g_123", user.ProviderGoogle, true)
+				u, _ := geouser.NewUserExternal("oauth@mail.com", "OAuth User", "g_123", geouser.ProviderGoogle, true)
 				r.users["oauth@mail.com"] = u
 			},
 			code: "code_123",
@@ -355,7 +355,7 @@ func TestProcessOAuthLogin(t *testing.T) {
 				if !exists {
 					t.Fatalf("user not found")
 				}
-				if u.Provider != user.ProviderGoogle || *u.ProviderID != "g_123" {
+				if u.Provider != geouser.ProviderGoogle || *u.ProviderID != "g_123" {
 					t.Errorf("incorrect provider data")
 				}
 			},
@@ -363,7 +363,7 @@ func TestProcessOAuthLogin(t *testing.T) {
 		{
 			name: "fails if providerID does not match existing user",
 			setupRepo: func(r *mockUserRepository) {
-				u, _ := user.NewUserExternal("oauth@mail.com", "OAuth User", "g_123", user.ProviderGoogle, true)
+				u, _ := geouser.NewUserExternal("oauth@mail.com", "OAuth User", "g_123", geouser.ProviderGoogle, true)
 				r.users["oauth@mail.com"] = u
 			},
 			code: "code_123",
@@ -384,9 +384,9 @@ func TestProcessOAuthLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[user.AuthProvider]service.OAuthProvider{user.ProviderGoogle: tt.providerMock})
+			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[geouser.AuthProvider]service.OAuthProvider{geouser.ProviderGoogle: tt.providerMock})
 
-			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, user.ProviderGoogle)
+			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, geouser.ProviderGoogle)
 			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
@@ -411,7 +411,7 @@ func TestProccessOAuthLogin2(t *testing.T) {
 		{
 			name: "successfully links OAuth account to existing email-only user",
 			setupRepo: func(r *mockUserRepository) {
-				u, _ := user.NewUserFromEmail("oauth@mail.com", "Email User", "hash_password123")
+				u, _ := geouser.NewUserFromEmail("oauth@mail.com", "Email User", "hash_password123")
 				r.users["oauth@mail.com"] = u
 			},
 			code: "code_123",
@@ -429,7 +429,7 @@ func TestProccessOAuthLogin2(t *testing.T) {
 				if !exists {
 					t.Fatalf("user not found")
 				}
-				if u.Provider != user.ProviderGoogle || *u.ProviderID != "g_123" {
+				if u.Provider != geouser.ProviderGoogle || *u.ProviderID != "g_123" {
 					t.Errorf("incorrect provider data")
 				}
 			},
@@ -448,13 +448,13 @@ func TestProccessOAuthLogin2(t *testing.T) {
 					EmailVerified: false,
 				},
 			},
-			expectedErr: user.ErrEmailNotVerified,
+			expectedErr: geouser.ErrEmailNotVerified,
 			checkUser:   func(t *testing.T, r *mockUserRepository) {},
 		},
 		{
 			name: "fails linking if email from OAuth provider is not verified",
 			setupRepo: func(r *mockUserRepository) {
-				u, _ := user.NewUserFromEmail("oauth@mail.com", "Email User", "hash_password123")
+				u, _ := geouser.NewUserFromEmail("oauth@mail.com", "Email User", "hash_password123")
 				r.users["oauth@mail.com"] = u
 			},
 			code: "code_123",
@@ -466,7 +466,7 @@ func TestProccessOAuthLogin2(t *testing.T) {
 					EmailVerified: false,
 				},
 			},
-			expectedErr: user.ErrEmailNotVerified,
+			expectedErr: geouser.ErrEmailNotVerified,
 			checkUser:   func(t *testing.T, r *mockUserRepository) {},
 		},
 		{
@@ -483,7 +483,7 @@ func TestProccessOAuthLogin2(t *testing.T) {
 					EmailVerified: false,
 				},
 			},
-			expectedErr: user.ErrEmailNotVerified,
+			expectedErr: geouser.ErrEmailNotVerified,
 			checkUser:   func(t *testing.T, r *mockUserRepository) {},
 		},
 		{
@@ -538,9 +538,9 @@ func TestProccessOAuthLogin2(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[user.AuthProvider]service.OAuthProvider{user.ProviderGoogle: tt.providerMock})
+			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[geouser.AuthProvider]service.OAuthProvider{geouser.ProviderGoogle: tt.providerMock})
 
-			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, user.ProviderGoogle)
+			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, geouser.ProviderGoogle)
 			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}

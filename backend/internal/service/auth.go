@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 )
 
 // Tokenizer defines the interface for generating and validating authentication tokens
@@ -31,15 +31,15 @@ type OAuthUserInfo struct {
 
 // OAuthProvider defines the interface for interacting with an OAuth provider
 type OAuthProvider interface {
-	GetProviderName() user.AuthProvider
+	GetProviderName() geouser.AuthProvider
 	GetUserInfo(ctx context.Context, code string) (*OAuthUserInfo, error)
 }
 
 // UserRepository defines the interface for user data access
 type UserRepository interface {
-	FindByEmail(ctx context.Context, email string) (*user.User, error)
-	Save(ctx context.Context, u *user.User) error
-	Update(ctx context.Context, u *user.User) error
+	FindByEmail(ctx context.Context, email string) (*geouser.User, error)
+	Save(ctx context.Context, u *geouser.User) error
+	Update(ctx context.Context, u *geouser.User) error
 }
 
 var (
@@ -62,12 +62,12 @@ type AuthService struct {
 	userRepo       UserRepository
 	tokenizer      Tokenizer
 	hasher         Hasher
-	oauthProviders map[user.AuthProvider]OAuthProvider
+	oauthProviders map[geouser.AuthProvider]OAuthProvider
 	logger         *slog.Logger
 }
 
 // NewAuthService creates a new instance of AuthService with the provided dependencies
-func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[user.AuthProvider]OAuthProvider) *AuthService {
+func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[geouser.AuthProvider]OAuthProvider) *AuthService {
 	return &AuthService{
 		userRepo:       userRepo,
 		tokenizer:      tokenizer,
@@ -80,7 +80,7 @@ func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher,
 // RegisterWithEmail registers a new user using email and password
 func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, password string) error {
 	existingUser, err := s.userRepo.FindByEmail(ctx, email)
-	if err != nil && !errors.Is(err, user.ErrNotFound) {
+	if err != nil && !errors.Is(err, geouser.ErrNotFound) {
 		s.logger.Error("error checking existing user", "email", email, "error", err)
 		return ErrUserCreationFailed
 	}
@@ -102,7 +102,7 @@ func (s *AuthService) RegisterWithEmail(ctx context.Context, email, userName, pa
 		return ErrUserCreationFailed
 	}
 
-	newUser, err := user.NewUserFromEmail(email, userName, hashedPassword)
+	newUser, err := geouser.NewUserFromEmail(email, userName, hashedPassword)
 	if err != nil {
 		return err
 	}
@@ -169,14 +169,14 @@ func containsSpecialChar(s string) bool {
 func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string) (string, error) {
 	storedUser, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, user.ErrNotFound) {
+		if errors.Is(err, geouser.ErrNotFound) {
 			return "", ErrInvalidCredentials
 		}
 		s.logger.Error("error retrieving user", "email", email, "error", err)
 		return "", ErrUserLoginFailed
 	}
 
-	if storedUser.Provider != user.ProviderEmail {
+	if storedUser.Provider != geouser.ProviderEmail {
 		return "", ErrOAuthOnlyAccount
 	}
 
@@ -189,7 +189,7 @@ func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string
 }
 
 // ProcessOAuthLogin processes an OAuth login flow, returning a token if successful
-func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider user.AuthProvider) (string, error) {
+func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provider geouser.AuthProvider) (string, error) {
 	oauthProvider := s.oauthProviders[provider]
 
 	userInfo, err := oauthProvider.GetUserInfo(ctx, code)
@@ -199,7 +199,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	}
 
 	existingUser, err := s.userRepo.FindByEmail(ctx, userInfo.Email)
-	if err != nil && !errors.Is(err, user.ErrNotFound) {
+	if err != nil && !errors.Is(err, geouser.ErrNotFound) {
 		s.logger.Error("error checking existing user", "email", userInfo.Email, "error", err)
 		return "", ErrUserLoginFailed
 	}
@@ -227,7 +227,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 		return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
 	}
 
-	newUser, err := user.NewUserExternal(userInfo.Email, userInfo.UserName, userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
+	newUser, err := geouser.NewUserExternal(userInfo.Email, userInfo.UserName, userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
 	if err != nil {
 		return "", err
 	}

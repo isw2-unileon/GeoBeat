@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -20,14 +20,14 @@ func NewPostgresUserRepo(pool *pgxpool.Pool) *PostgresUserRepo {
 }
 
 // FindByEmail retrieves a user by their exact email address.
-func (r *PostgresUserRepo) FindByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *PostgresUserRepo) FindByEmail(ctx context.Context, email string) (*geouser.User, error) {
 	query := `
 		SELECT id, email, user_name, password_hash, provider, provider_id, created_at, updated_at 
 		FROM users 
 		WHERE email = $1
 	`
 
-	var u user.User
+	var u geouser.User
 	err := r.pool.QueryRow(ctx, query, email).Scan(
 		&u.ID,
 		&u.Email,
@@ -49,7 +49,7 @@ func (r *PostgresUserRepo) FindByEmail(ctx context.Context, email string) (*user
 }
 
 // Save inserts a new user into the database and updates the struct with the new ID.
-func (r *PostgresUserRepo) Save(ctx context.Context, u *user.User) error {
+func (r *PostgresUserRepo) Save(ctx context.Context, u *geouser.User) error {
 	query := `
 		INSERT INTO users (id, email, user_name, password_hash, provider, provider_id, created_at, updated_at) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -72,7 +72,7 @@ func (r *PostgresUserRepo) Save(ctx context.Context, u *user.User) error {
 }
 
 // Update modifies an existing user's record based on their ID.
-func (r *PostgresUserRepo) Update(ctx context.Context, u *user.User) error {
+func (r *PostgresUserRepo) Update(ctx context.Context, u *geouser.User) error {
 	query := `
 		UPDATE users 
 		SET provider = $1, provider_id = $2, updated_at = $3 

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/pgdb"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -50,7 +50,7 @@ func TestPostgresUserRepo_SaveAndFindByEmail(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	expectedUser := &user.User{
+	expectedUser := &geouser.User{
 		ID:           uuid.New(),
 		Email:        "test@example.com",
 		UserName:     "testuser",
@@ -104,7 +104,7 @@ func TestPostgresUserRepo_Update(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Microsecond)
 
-	initialUser := &user.User{
+	initialUser := &geouser.User{
 		ID:           uuid.New(),
 		Email:        "update@example.com",
 		UserName:     "updateme",
@@ -143,7 +143,7 @@ func TestPostgresUserRepo_Update(t *testing.T) {
 	}
 
 	// Test Update (Not Found Case)
-	ghostUser := &user.User{
+	ghostUser := &geouser.User{
 		ID:        uuid.New(),
 		Provider:  "email",
 		UpdatedAt: time.Now(),

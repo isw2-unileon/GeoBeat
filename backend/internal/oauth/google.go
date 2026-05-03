@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	user "github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
