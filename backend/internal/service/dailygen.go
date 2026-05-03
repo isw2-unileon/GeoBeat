@@ -32,12 +32,12 @@ type DailyChallengeRepository interface {
 // DailyChallengeService is responsible for generating and saving the daily challenge.
 type DailyChallengeService struct {
 	musicProvider MusicProvider
-	genreRepo     genre.GenreRepository
+	genreRepo     genre.Repository
 	dailyRepo     DailyChallengeRepository
 }
 
 // NewDailyChallengeService creates a new instance of DailyChallengeService with the provided dependencies.
-func NewDailyChallengeService(mp MusicProvider, gr genre.GenreRepository, dr DailyChallengeRepository) *DailyChallengeService {
+func NewDailyChallengeService(mp MusicProvider, gr genre.Repository, dr DailyChallengeRepository) *DailyChallengeService {
 	return &DailyChallengeService{
 		musicProvider: mp,
 		genreRepo:     gr,
