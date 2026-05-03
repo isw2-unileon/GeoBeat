@@ -36,7 +36,7 @@ type AuthHandler struct {
 
 type contextKey string
 
-const userIDContextKey = contextKey("userID")
+const UserIDContextKey = contextKey("userID")
 
 // NewAuthHandler creates a new AuthHandler with the given authentication service and OAuth providers.
 func NewAuthHandler(authService AuthService, providers map[user.AuthProvider]OAuthProvider) *AuthHandler {
@@ -169,7 +169,7 @@ func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), userIDContextKey, userID))
+		r = r.WithContext(context.WithValue(r.Context(), UserIDContextKey, userID))
 		next.ServeHTTP(w, r)
 	})
 }
