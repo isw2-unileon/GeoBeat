@@ -25,6 +25,8 @@ const (
 var (
 	// ErrChallengeNotFound is returned when there is no challenge available for the current day.
 	ErrChallengeNotFound = errors.New("no challenge available for today")
+	// ErrSessionNotFound is returned when there is no session available for the user and challenge.
+	ErrSessionNotFound = errors.New("no session available for this user and challenge")
 	// ErrGameOver is returned when a player tries to make an attempt after the game has already ended.
 	ErrGameOver = errors.New("game is already over")
 	// ErrInvalidInput is returned when the player's guess is invalid (e.g., empty or not a valid genre).
