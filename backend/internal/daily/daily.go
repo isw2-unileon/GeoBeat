@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // GameStatus represents the current state of the game session.
@@ -42,7 +44,7 @@ type Challenge struct {
 
 // Session represents the current state of the player.
 type Session struct {
-	UserID       int
+	UserID       uuid.UUID
 	ChallengeID  int
 	AttemptsUsed int
 	Status       GameStatus
@@ -58,8 +60,8 @@ type AttemptResult struct {
 }
 
 // NewSession creates a new game session for a user and challenge.
-func NewSession(userID, challengeID int) (*Session, error) {
-	if userID <= 0 || challengeID <= 0 {
+func NewSession(userID uuid.UUID, challengeID int) (*Session, error) {
+	if challengeID <= 0 || userID == uuid.Nil {
 		return nil, ErrInvalidID
 	}
 	return &Session{

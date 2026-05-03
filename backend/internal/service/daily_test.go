@@ -6,6 +6,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
@@ -25,7 +26,7 @@ type mockChallengeRepo struct {
 	getChallengeErr error
 }
 type sessionKey struct {
-	userID      int
+	userID      uuid.UUID
 	challengeID int
 }
 
@@ -52,7 +53,7 @@ func (m *mockChallengeRepo) GetChallengeByDate(ctx context.Context, date string)
 	return m.challenge, nil
 }
 
-func (m *mockSessionRepo) GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error) {
+func (m *mockSessionRepo) GetSession(ctx context.Context, userID uuid.UUID, challengeID int) (*daily.Session, error) {
 	if m.getSessionErr != nil {
 		return nil, m.getSessionErr
 	}
@@ -97,7 +98,7 @@ type currentStatusTestCase struct {
 }
 
 func TestDaily_GetCurrentStatus(t *testing.T) {
-	userID := 1
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 	tests := []currentStatusTestCase{
 		{
 			name: "Fail to get challenge returns error",
@@ -191,7 +192,7 @@ func assertError(t *testing.T, got, want error) {
 }
 
 // assertSessionState isolates state checking to keep cyclomatic complexity extremely low.
-func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, sessionRepo *mockSessionRepo, userID int) {
+func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, sessionRepo *mockSessionRepo, userID uuid.UUID) {
 	t.Helper()
 
 	if wantSession {
@@ -209,7 +210,7 @@ func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, 
 }
 
 func TestDaily_ProcessAttempt(t *testing.T) {
-	userID := 1
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
 	tests := []struct {
 		name               string

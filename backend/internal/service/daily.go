@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
@@ -14,7 +15,7 @@ type ChallengeRepository interface {
 
 // SessionRepository defines the methods required to manage user sessions for the daily challenge.
 type SessionRepository interface {
-	GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error)
+	GetSession(ctx context.Context, userID uuid.UUID, challengeID int) (*daily.Session, error)
 	CreateSession(ctx context.Context, session *daily.Session) error
 	UpdateSession(ctx context.Context, session *daily.Session) error
 }
@@ -34,7 +35,7 @@ func NewService(challengeRepo ChallengeRepository, sessionRepo SessionRepository
 }
 
 // GetCurrentStatus retrieves the current challenge and session status for a given user.
-func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challenge, *daily.Session, error) {
+func (s *Daily) GetCurrentStatus(ctx context.Context, userID uuid.UUID) (*daily.Challenge, *daily.Session, error) {
 	challenge, err := s.challengeRepo.GetChallengeByDate(ctx, "today")
 	if err != nil {
 		return nil, nil, daily.ErrChallengeNotFound
@@ -55,7 +56,7 @@ func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challe
 }
 
 // ProcessAttempt processes a user's guess for the daily challenge and updates the session state accordingly.
-func (s *Daily) ProcessAttempt(ctx context.Context, userID int, guess string) (*daily.AttemptResult, error) {
+func (s *Daily) ProcessAttempt(ctx context.Context, userID uuid.UUID, guess string) (*daily.AttemptResult, error) {
 	challenge, session, err := s.GetCurrentStatus(ctx, userID)
 	if err != nil {
 		return nil, err
