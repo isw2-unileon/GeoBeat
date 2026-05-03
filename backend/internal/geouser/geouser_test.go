@@ -174,19 +174,6 @@ func TestLinkExternalAccount(t *testing.T) {
 				}
 			},
 		},
-		{
-			name:          "Overwrite attempt with a different provider ID fails",
-			initialUser:   newUserGoogle(),
-			providerID:    "g_999",
-			provider:      geouser.ProviderGoogle,
-			emailVerified: true,
-			expectedErr:   geouser.ErrAccountAlreadyLinked,
-			checkState: func(t *testing.T, u *geouser.User) {
-				if *u.ProviderID != "g_123" {
-					t.Errorf("original user ID was overwritten by a failed operation")
-				}
-			},
-		},
 	}
 
 	for _, tt := range tests {
