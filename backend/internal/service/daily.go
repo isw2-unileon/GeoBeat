@@ -7,11 +7,12 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
-// Repository defines the interface for data access related to the daily challenge.
+// ChallengeRepository defines the methods required to manage daily challenges.
 type ChallengeRepository interface {
 	GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error)
 }
 
+// SessionRepository defines the methods required to manage user sessions for the daily challenge.
 type SessionRepository interface {
 	GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error)
 	CreateSession(ctx context.Context, session *daily.Session) error

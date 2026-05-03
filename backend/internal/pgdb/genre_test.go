@@ -32,7 +32,7 @@ func TestPostgresGenreRepo_GetAllowedGenres(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		pool.Exec(ctx, "TRUNCATE TABLE genres RESTART IDENTITY CASCADE;")
+		_, _ = pool.Exec(ctx, "TRUNCATE TABLE genres RESTART IDENTITY CASCADE;")
 	})
 
 	seedQuery := `

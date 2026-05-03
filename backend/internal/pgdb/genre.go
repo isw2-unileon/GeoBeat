@@ -7,10 +7,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// PostgresGenreRepo implements the genre.Repository interface.
 type PostgresGenreRepo struct {
 	pool *pgxpool.Pool
 }
 
+// NewPostgresGenreRepo creates a new instance of the repository.
 func NewPostgresGenreRepo(pool *pgxpool.Pool) *PostgresGenreRepo {
 	return &PostgresGenreRepo{pool: pool}
 }

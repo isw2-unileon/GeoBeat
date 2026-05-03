@@ -20,7 +20,6 @@ type mockSessionRepo struct {
 }
 
 type mockChallengeRepo struct {
-	mu        sync.RWMutex
 	challenge *daily.Challenge
 
 	getChallengeErr error
