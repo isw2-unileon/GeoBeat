@@ -10,13 +10,14 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
 
 type sessionKey struct {
-	userID      int
+	userID      uuid.UUID
 	challengeID int
 }
 
@@ -49,7 +50,7 @@ func (m *mockChallengeRepo) GetChallengeByDate(ctx context.Context, date string)
 	return m.challenge, nil
 }
 
-func (m *mockSessionRepo) GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error) {
+func (m *mockSessionRepo) GetSession(ctx context.Context, userID uuid.UUID, challengeID int) (*daily.Session, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -80,7 +81,7 @@ func (m *mockSessionRepo) UpdateSession(ctx context.Context, session *daily.Sess
 }
 
 // newTestServer wires up the real service with the in-memory fake repository.
-func newTestServer(t *testing.T) (*http.ServeMux, *mockSessionRepo, *mockChallengeRepo) {
+func newTestServer(t *testing.T, loggedInUser uuid.UUID) (*http.ServeMux, *mockSessionRepo, *mockChallengeRepo) {
 	t.Helper()
 
 	sessionRepo := newMockSessionRepo()
@@ -89,13 +90,22 @@ func newTestServer(t *testing.T) (*http.ServeMux, *mockSessionRepo, *mockChallen
 	handler := server.NewHandler(svc)
 
 	mux := http.NewServeMux()
-	handler.RegisterRoutes(mux)
+	mockAuthMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// server.UserIDKey must be exported from your server package!
+			ctx := context.WithValue(r.Context(), server.UserIDContextKey, loggedInUser)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+
+	// Inject the mock middleware instead of the real one
+	handler.RegisterRoutes(mux, mockAuthMiddleware)
 
 	return mux, sessionRepo, challengeRepo
 }
 
 func TestHandler_GetDailyStatus(t *testing.T) {
-	userID := 1
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
 	tests := []struct {
 		name           string
@@ -119,7 +129,7 @@ func TestHandler_GetDailyStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux, sessionRepo, _ := newTestServer(t)
+			mux, sessionRepo, _ := newTestServer(t, userID)
 
 			if tt.seedSession {
 				sessionRepo.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
@@ -147,7 +157,7 @@ func TestHandler_GetDailyStatus(t *testing.T) {
 }
 
 func TestHandler_PostAttempt(t *testing.T) {
-	userID := 1
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
 	tests := []struct {
 		name           string
@@ -181,7 +191,7 @@ func TestHandler_PostAttempt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux, sessionRepo, _ := newTestServer(t)
+			mux, sessionRepo, _ := newTestServer(t, userID)
 
 			// Seed the database with the exact state we want to test
 			sessionRepo.sessions[sessionKey{userID: userID, challengeID: 1}] = &daily.Session{
@@ -204,7 +214,8 @@ func TestHandler_PostAttempt(t *testing.T) {
 }
 
 func TestHandler_PlayFullGameFlow(t *testing.T) {
-	mux, _, challengeRepo := newTestServer(t)
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	mux, _, challengeRepo := newTestServer(t, userID)
 
 	challengeRepo.challenge = &daily.Challenge{ID: 1, TargetGenre: "Pop", HintSongs: []string{"H1", "H2", "H3", "H4", "H5"}}
 
