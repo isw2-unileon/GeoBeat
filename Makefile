@@ -1,4 +1,7 @@
-.PHONY: install run-backend run-frontend build-backend build-frontend test lint e2e
+TEST_DB_URL="postgresql://postgres:supersecret@localhost:5433/geobeat_test?sslmode=disable"
+MIGRATION_PATH="backend/internal/database/migrations"
+
+.PHONY: install run-backend run-frontend build-backend build-frontend test lint e2e db-test-up db-test-down migrate-up migrate-down migrate-reset
 
 ## Install all dependencies
 install:
@@ -26,7 +29,7 @@ build-frontend:
 
 ## Run all tests
 test:
-	go test -v -race ./...
+	TEST_DATABASE_URL=$(TEST_DB_URL) go test -v -race ./...
 	cd frontend && npm run test
 
 ## Run linters
@@ -37,3 +40,22 @@ lint:
 ## Run E2E tests (requires backend + frontend running)
 e2e:
 	cd e2e && npx playwright test
+
+## Start the test database in the background
+db-test-up:
+	docker-compose up -d
+
+## Stop and completely remove the test database
+db-test-down:
+	docker-compose down
+
+## Apply all up migrations
+migrate-up:
+	migrate -path $(MIGRATION_PATH) -database $(TEST_DB_URL) up
+
+## Rollback all migrations (Destroys all tables)
+migrate-down:
+	migrate -path $(MIGRATION_PATH) -database $(TEST_DB_URL) down -all
+
+## Nuke the database and rebuild it fresh
+migrate-reset: migrate-down migrate-up

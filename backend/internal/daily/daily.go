@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // GameStatus represents the current state of the game session.
@@ -23,6 +25,8 @@ const (
 var (
 	// ErrChallengeNotFound is returned when there is no challenge available for the current day.
 	ErrChallengeNotFound = errors.New("no challenge available for today")
+	// ErrSessionNotFound is returned when there is no session available for the user and challenge.
+	ErrSessionNotFound = errors.New("no session available for this user and challenge")
 	// ErrGameOver is returned when a player tries to make an attempt after the game has already ended.
 	ErrGameOver = errors.New("game is already over")
 	// ErrInvalidInput is returned when the player's guess is invalid (e.g., empty or not a valid genre).
@@ -42,7 +46,7 @@ type Challenge struct {
 
 // Session represents the current state of the player.
 type Session struct {
-	UserID       int
+	UserID       uuid.UUID
 	ChallengeID  int
 	AttemptsUsed int
 	Status       GameStatus
@@ -58,8 +62,8 @@ type AttemptResult struct {
 }
 
 // NewSession creates a new game session for a user and challenge.
-func NewSession(userID, challengeID int) (*Session, error) {
-	if userID <= 0 || challengeID <= 0 {
+func NewSession(userID uuid.UUID, challengeID int) (*Session, error) {
+	if challengeID <= 0 || userID == uuid.Nil {
 		return nil, ErrInvalidID
 	}
 	return &Session{

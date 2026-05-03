@@ -11,30 +11,30 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 )
 
 type mockUserRepository struct {
-	users map[string]*user.User
+	users map[string]*geouser.User
 }
 
-func (m *mockUserRepository) Save(u *user.User) error {
+func (m *mockUserRepository) Save(ctx context.Context, u *geouser.User) error {
 	m.users[u.Email] = u
 	return nil
 }
 
-func (m *mockUserRepository) Update(u *user.User) error {
+func (m *mockUserRepository) Update(ctx context.Context, u *geouser.User) error {
 	m.users[u.Email] = u
 	return nil
 }
 
-func (m *mockUserRepository) FindByEmail(email string) (*user.User, error) {
+func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*geouser.User, error) {
 	if u, exists := m.users[email]; exists {
 		return u, nil
 	}
-	return nil, user.ErrNotFound
+	return nil, geouser.ErrNotFound
 }
 
 type mockTokenizer struct{}
@@ -73,8 +73,8 @@ func (m *mockOAuthProvider) GetAuthURL(state string) string {
 	return m.authURL + "?state=" + state
 }
 
-func (m *mockOAuthProvider) GetProviderName() user.AuthProvider {
-	return user.ProviderGoogle
+func (m *mockOAuthProvider) GetProviderName() geouser.AuthProvider {
+	return geouser.ProviderGoogle
 }
 
 func (m *mockOAuthProvider) GetUserInfo(ctx context.Context, code string) (*service.OAuthUserInfo, error) {
@@ -142,11 +142,11 @@ func TestHandleRegister(t *testing.T) {
 			mux, repo := newTestAuthServer(t)
 			if tt.name == "user already exists" {
 				hashed := "hashed-ValidPass123!"
-				repo.users["existing@example.com"] = &user.User{
+				repo.users["existing@example.com"] = &geouser.User{
 					Email:        "existing@example.com",
 					UserName:     "existinguser",
 					PasswordHash: &hashed,
-					Provider:     user.ProviderEmail,
+					Provider:     geouser.ProviderEmail,
 				}
 			}
 
@@ -221,26 +221,26 @@ func TestHandleLogin(t *testing.T) {
 			switch tt.name {
 			case "successful login":
 				hashed := "hashed-ValidPass123!"
-				userRepo.users["test@example.com"] = &user.User{
+				userRepo.users["test@example.com"] = &geouser.User{
 					ID:           uuid.New(),
 					Email:        "test@example.com",
 					UserName:     "testuser",
 					PasswordHash: &hashed,
-					Provider:     user.ProviderEmail,
+					Provider:     geouser.ProviderEmail,
 				}
 			case "invalid credentials":
 				hashed := "hashed-ValidPass123!"
-				userRepo.users["test@example.com"] = &user.User{
+				userRepo.users["test@example.com"] = &geouser.User{
 					Email:        "test@example.com",
 					UserName:     "testuser",
 					PasswordHash: &hashed,
-					Provider:     user.ProviderEmail,
+					Provider:     geouser.ProviderEmail,
 				}
 			case "OAuth-only account":
-				userRepo.users["oauth@example.com"] = &user.User{
+				userRepo.users["oauth@example.com"] = &geouser.User{
 					Email:    "oauth@example.com",
 					UserName: "oauthuser",
-					Provider: user.ProviderGoogle,
+					Provider: geouser.ProviderGoogle,
 				}
 			}
 
@@ -383,11 +383,11 @@ func TestHandleOAuthRedirect(t *testing.T) {
 
 			// Setup test data for successful callback
 			if tt.name == "successful OAuth callback" {
-				userRepo.users["oauth@example.com"] = &user.User{
+				userRepo.users["oauth@example.com"] = &geouser.User{
 					ID:       uuid.New(),
 					Email:    "oauth@example.com",
 					UserName: "oauthuser",
-					Provider: user.ProviderGoogle,
+					Provider: geouser.ProviderGoogle,
 					ProviderID: func() *string {
 						id := "provider-id"
 						return &id
@@ -456,7 +456,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			userRepo := &mockUserRepository{users: make(map[string]*user.User)}
+			userRepo := &mockUserRepository{users: make(map[string]*geouser.User)}
 			hasher := &mockHasher{}
 			tokenizer := &mockTokenizer{}
 			authSvc := service.NewAuthService(userRepo, tokenizer, hasher, nil)
@@ -494,7 +494,7 @@ func TestAuthMiddleware(t *testing.T) {
 func newTestAuthServer(t *testing.T) (*http.ServeMux, *mockUserRepository) {
 	t.Helper()
 
-	repo := &mockUserRepository{users: make(map[string]*user.User)}
+	repo := &mockUserRepository{users: make(map[string]*geouser.User)}
 	hasher := &mockHasher{}
 	tokenizer := &mockTokenizer{}
 	provider := &mockOAuthProvider{
@@ -504,11 +504,11 @@ func newTestAuthServer(t *testing.T) (*http.ServeMux, *mockUserRepository) {
 			ProviderID: "provider-id",
 		},
 	}
-	svcProviders := map[user.AuthProvider]service.OAuthProvider{
-		user.ProviderGoogle: provider,
+	svcProviders := map[geouser.AuthProvider]service.OAuthProvider{
+		geouser.ProviderGoogle: provider,
 	}
-	hdlProviders := map[user.AuthProvider]server.OAuthProvider{
-		user.ProviderGoogle: provider,
+	hdlProviders := map[geouser.AuthProvider]server.OAuthProvider{
+		geouser.ProviderGoogle: provider,
 	}
 
 	authSvc := service.NewAuthService(repo, tokenizer, hasher, svcProviders)

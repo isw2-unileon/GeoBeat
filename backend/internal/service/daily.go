@@ -3,42 +3,52 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
-// Repository defines the interface for data access related to the daily challenge.
-type Repository interface {
-	GetChallengeByDate(ctx context.Context, date string) (*daily.Challenge, error)
-	GetSession(ctx context.Context, userID, challengeID int) (*daily.Session, error)
+// ChallengeRepository defines the methods required to manage daily challenges.
+type ChallengeRepository interface {
+	GetChallengeByDate(ctx context.Context, date time.Time) (*daily.Challenge, error)
+}
+
+// SessionRepository defines the methods required to manage user sessions for the daily challenge.
+type SessionRepository interface {
+	GetSession(ctx context.Context, userID uuid.UUID, challengeID int) (*daily.Session, error)
 	CreateSession(ctx context.Context, session *daily.Session) error
 	UpdateSession(ctx context.Context, session *daily.Session) error
 }
 
 // Daily provides methods to manage the daily challenge game logic.
 type Daily struct {
-	repo Repository
+	challengeRepo ChallengeRepository
+	sessionRepo   SessionRepository
 }
 
 // NewService creates a new Daily service with the given Repository.
-func NewService(r Repository) *Daily {
-	return &Daily{repo: r}
+func NewService(challengeRepo ChallengeRepository, sessionRepo SessionRepository) *Daily {
+	return &Daily{
+		challengeRepo: challengeRepo,
+		sessionRepo:   sessionRepo,
+	}
 }
 
 // GetCurrentStatus retrieves the current challenge and session status for a given user.
-func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challenge, *daily.Session, error) {
-	challenge, err := s.repo.GetChallengeByDate(ctx, "today")
+func (s *Daily) GetCurrentStatus(ctx context.Context, userID uuid.UUID) (*daily.Challenge, *daily.Session, error) {
+	challenge, err := s.challengeRepo.GetChallengeByDate(ctx, time.Now())
 	if err != nil {
 		return nil, nil, daily.ErrChallengeNotFound
 	}
 
-	session, err := s.repo.GetSession(ctx, userID, challenge.ID)
+	session, err := s.sessionRepo.GetSession(ctx, userID, challenge.ID)
 	if err != nil {
 		session, err = daily.NewSession(userID, challenge.ID)
 		if err != nil {
 			return nil, nil, err
 		}
-		if err := s.repo.CreateSession(ctx, session); err != nil {
+		if err := s.sessionRepo.CreateSession(ctx, session); err != nil {
 			return nil, nil, errors.New("error while creating session")
 		}
 	}
@@ -47,7 +57,7 @@ func (s *Daily) GetCurrentStatus(ctx context.Context, userID int) (*daily.Challe
 }
 
 // ProcessAttempt processes a user's guess for the daily challenge and updates the session state accordingly.
-func (s *Daily) ProcessAttempt(ctx context.Context, userID int, guess string) (*daily.AttemptResult, error) {
+func (s *Daily) ProcessAttempt(ctx context.Context, userID uuid.UUID, guess string) (*daily.AttemptResult, error) {
 	challenge, session, err := s.GetCurrentStatus(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -58,7 +68,7 @@ func (s *Daily) ProcessAttempt(ctx context.Context, userID int, guess string) (*
 		return nil, err
 	}
 
-	if err := s.repo.UpdateSession(ctx, session); err != nil {
+	if err := s.sessionRepo.UpdateSession(ctx, session); err != nil {
 		return nil, errors.New("error updating session")
 	}
 

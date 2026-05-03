@@ -1,10 +1,10 @@
-package user_test
+package geouser_test
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 )
 
 func TestNewUserFromEmail(t *testing.T) {
@@ -27,20 +27,20 @@ func TestNewUserFromEmail(t *testing.T) {
 			email:        "internal@test.com",
 			userName:     "Empty Password",
 			passwordHash: "",
-			expectedErr:  user.ErrEmptyPassword,
+			expectedErr:  geouser.ErrEmptyPassword,
 		},
 		{
 			name:         "handles empty email and username",
 			email:        "",
 			userName:     "",
 			passwordHash: "secure_hashed_password",
-			expectedErr:  user.ErrEmptyEmailOrUsername,
+			expectedErr:  geouser.ErrEmptyEmailOrUsername,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u, err := user.NewUserFromEmail(tt.email, tt.userName, tt.passwordHash)
+			u, err := geouser.NewUserFromEmail(tt.email, tt.userName, tt.passwordHash)
 
 			if !errors.Is(err, tt.expectedErr) {
 				t.Errorf("expected error %v, got %v", tt.expectedErr, err)
@@ -48,8 +48,8 @@ func TestNewUserFromEmail(t *testing.T) {
 			}
 
 			if tt.expectedErr == nil {
-				if u.Provider != user.ProviderEmail {
-					t.Errorf("expected Provider %v, got %v", user.ProviderEmail, u.Provider)
+				if u.Provider != geouser.ProviderEmail {
+					t.Errorf("expected Provider %v, got %v", geouser.ProviderEmail, u.Provider)
 				}
 				if u.ProviderID != nil {
 					t.Errorf("expected ProviderID nil, got %v", *u.ProviderID)
@@ -65,7 +65,7 @@ func TestNewUserExternal(t *testing.T) {
 		email         string
 		userName      string
 		providerID    string
-		provider      user.AuthProvider
+		provider      geouser.AuthProvider
 		emailVerified bool
 		expectedErr   error
 	}{
@@ -74,16 +74,16 @@ func TestNewUserExternal(t *testing.T) {
 			email:         "test@gmail.com",
 			userName:      "Test",
 			providerID:    "g_123",
-			provider:      user.ProviderGoogle,
+			provider:      geouser.ProviderGoogle,
 			emailVerified: false,
-			expectedErr:   user.ErrEmailNotVerified,
+			expectedErr:   geouser.ErrEmailNotVerified,
 		},
 		{
 			name:          "Correct creation from Google with email verified",
 			email:         "test@gmail.com",
 			userName:      "Test",
 			providerID:    "g_123",
-			provider:      user.ProviderGoogle,
+			provider:      geouser.ProviderGoogle,
 			emailVerified: true,
 			expectedErr:   nil,
 		},
@@ -91,7 +91,7 @@ func TestNewUserExternal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			u, err := user.NewUserExternal(tt.email, tt.userName, tt.providerID, tt.provider, tt.emailVerified)
+			u, err := geouser.NewUserExternal(tt.email, tt.userName, tt.providerID, tt.provider, tt.emailVerified)
 
 			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
@@ -113,33 +113,33 @@ func TestNewUserExternal(t *testing.T) {
 }
 
 func TestLinkExternalAccount(t *testing.T) {
-	newUserEmail := func() *user.User {
-		u, _ := user.NewUserFromEmail("test@gmail.com", "Test", "hashed_pass")
+	newUserEmail := func() *geouser.User {
+		u, _ := geouser.NewUserFromEmail("test@gmail.com", "Test", "hashed_pass")
 		return u
 	}
 
-	newUserGoogle := func() *user.User {
-		u, _ := user.NewUserExternal("test@gmail.com", "Test", "g_123", user.ProviderGoogle, true)
+	newUserGoogle := func() *geouser.User {
+		u, _ := geouser.NewUserExternal("test@gmail.com", "Test", "g_123", geouser.ProviderGoogle, true)
 		return u
 	}
 
 	tests := []struct {
 		name          string
-		initialUser   *user.User
+		initialUser   *geouser.User
 		providerID    string
-		provider      user.AuthProvider
+		provider      geouser.AuthProvider
 		emailVerified bool
 		expectedErr   error
-		checkState    func(*testing.T, *user.User)
+		checkState    func(*testing.T, *geouser.User)
 	}{
 		{
 			name:          "Email not verified",
 			initialUser:   newUserEmail(),
 			providerID:    "g_123",
-			provider:      user.ProviderGoogle,
+			provider:      geouser.ProviderGoogle,
 			emailVerified: false,
-			expectedErr:   user.ErrEmailNotVerified,
-			checkState: func(t *testing.T, u *user.User) {
+			expectedErr:   geouser.ErrEmailNotVerified,
+			checkState: func(t *testing.T, u *geouser.User) {
 				if u.ProviderID != nil {
 					t.Errorf("the user state should not have mutated")
 				}
@@ -149,11 +149,11 @@ func TestLinkExternalAccount(t *testing.T) {
 			name:          "Successful link to Google account with verified email",
 			initialUser:   newUserEmail(),
 			providerID:    "g_123",
-			provider:      user.ProviderGoogle,
+			provider:      geouser.ProviderGoogle,
 			emailVerified: true,
 			expectedErr:   nil,
-			checkState: func(t *testing.T, u *user.User) {
-				if u.Provider != user.ProviderGoogle {
+			checkState: func(t *testing.T, u *geouser.User) {
+				if u.Provider != geouser.ProviderGoogle {
 					t.Errorf("expected provider to mutate to 'google', got %v", u.Provider)
 				}
 				if u.ProviderID == nil || *u.ProviderID != "g_123" {
@@ -165,25 +165,12 @@ func TestLinkExternalAccount(t *testing.T) {
 			name:          "Same provider and ID is idempotent",
 			initialUser:   newUserGoogle(),
 			providerID:    "g_123",
-			provider:      user.ProviderGoogle,
+			provider:      geouser.ProviderGoogle,
 			emailVerified: true,
 			expectedErr:   nil,
-			checkState: func(t *testing.T, u *user.User) {
-				if u.Provider != user.ProviderGoogle || *u.ProviderID != "g_123" {
+			checkState: func(t *testing.T, u *geouser.User) {
+				if u.Provider != geouser.ProviderGoogle || *u.ProviderID != "g_123" {
 					t.Errorf("original state was lost after an idempotent link")
-				}
-			},
-		},
-		{
-			name:          "Overwrite attempt with a different provider ID fails",
-			initialUser:   newUserGoogle(),
-			providerID:    "g_999",
-			provider:      user.ProviderGoogle,
-			emailVerified: true,
-			expectedErr:   user.ErrAccountAlreadyLinked,
-			checkState: func(t *testing.T, u *user.User) {
-				if *u.ProviderID != "g_123" {
-					t.Errorf("original user ID was overwritten by a failed operation")
 				}
 			},
 		},

@@ -4,23 +4,26 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
 func TestNewSession(t *testing.T) {
+	validUserID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+
 	tests := []struct {
 		name        string
-		userID      int
+		userID      uuid.UUID
 		challengeID int
 		want        *daily.Session
 		wantErr     error
 	}{
 		{
 			name:        "Valid session creation",
-			userID:      1,
+			userID:      validUserID,
 			challengeID: 1,
 			want: &daily.Session{
-				UserID:       1,
+				UserID:       validUserID,
 				ChallengeID:  1,
 				AttemptsUsed: 0,
 				Status:       daily.StatusPlaying,
@@ -28,32 +31,36 @@ func TestNewSession(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:        "Invalid user ID",
-			userID:      -1,
+			name:        "Invalid user ID (Nil UUID)",
+			userID:      uuid.Nil,
 			challengeID: 1,
 			want:        nil,
 			wantErr:     daily.ErrInvalidID,
 		},
 		{
 			name:        "Invalid challenge ID",
-			userID:      1,
+			userID:      validUserID,
 			challengeID: -1,
 			want:        nil,
 			wantErr:     daily.ErrInvalidID,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := daily.NewSession(tt.userID, tt.challengeID)
+
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("NewSession() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if tt.wantErr != nil {
 				return
 			}
+
 			if *got != *tt.want {
-				t.Errorf("NewSession() = %v, want %v", got, tt.want)
+				t.Errorf("NewSession() = %+v, want %+v", got, tt.want)
 			}
 		})
 	}
@@ -143,7 +150,7 @@ func TestSession_MakeAttempt(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &daily.Session{
-				UserID:       1,
+				UserID:       uuid.New(),
 				ChallengeID:  1,
 				AttemptsUsed: tt.initialAttmpt,
 				Status:       tt.initialStatus,

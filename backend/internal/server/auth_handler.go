@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
-	"github.com/isw2-unileon/GeoBeat/backend/internal/user"
 )
 
 // OAuthProvider defines the interface for OAuth providers to generate authentication URLs.
@@ -24,22 +24,23 @@ type OAuthProvider interface {
 type AuthService interface {
 	RegisterWithEmail(ctx context.Context, email, username, password string) error
 	LoginWithEmail(ctx context.Context, email, password string) (string, error)
-	ProcessOAuthLogin(ctx context.Context, code string, provider user.AuthProvider) (string, error)
+	ProcessOAuthLogin(ctx context.Context, code string, provider geouser.AuthProvider) (string, error)
 	ValidateToken(ctx context.Context, token string) (int, error)
 }
 
 // AuthHandler handles authentication-related HTTP requests, including registration, login, and OAuth flows.
 type AuthHandler struct {
 	authService AuthService
-	providers   map[user.AuthProvider]OAuthProvider
+	providers   map[geouser.AuthProvider]OAuthProvider
 }
 
 type contextKey string
 
-const userIDContextKey = contextKey("userID")
+// UserIDContextKey is the context key used to store the authenticated user's ID in the request context.
+const UserIDContextKey = contextKey("userID")
 
 // NewAuthHandler creates a new AuthHandler with the given authentication service and OAuth providers.
-func NewAuthHandler(authService AuthService, providers map[user.AuthProvider]OAuthProvider) *AuthHandler {
+func NewAuthHandler(authService AuthService, providers map[geouser.AuthProvider]OAuthProvider) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		providers:   providers,
@@ -100,7 +101,7 @@ func (h *AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }
 
-func (h *AuthHandler) handleOAuthLogin(w http.ResponseWriter, r *http.Request, provider user.AuthProvider) {
+func (h *AuthHandler) handleOAuthLogin(w http.ResponseWriter, r *http.Request, provider geouser.AuthProvider) {
 	oauthProvider := h.providers[provider]
 	stateBytes := make([]byte, 32)
 	if _, err := rand.Read(stateBytes); err != nil {
@@ -113,7 +114,7 @@ func (h *AuthHandler) handleOAuthLogin(w http.ResponseWriter, r *http.Request, p
 	http.Redirect(w, r, authURL, http.StatusFound)
 }
 
-func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request, provider user.AuthProvider) {
+func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request, provider geouser.AuthProvider) {
 	if errParam := r.URL.Query().Get("error"); errParam != "" {
 		formatError(w, http.StatusBadRequest, fmt.Sprintf("oauth provider error: %s", errParam))
 		return
@@ -169,16 +170,16 @@ func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		r = r.WithContext(context.WithValue(r.Context(), userIDContextKey, userID))
+		r = r.WithContext(context.WithValue(r.Context(), UserIDContextKey, userID))
 		next.ServeHTTP(w, r)
 	})
 }
 
-func oauthStateCookieName(provider user.AuthProvider) string {
+func oauthStateCookieName(provider geouser.AuthProvider) string {
 	return "oauth_state_" + string(provider)
 }
 
-func setOAuthStateCookie(w http.ResponseWriter, state string, provider user.AuthProvider, secure bool) {
+func setOAuthStateCookie(w http.ResponseWriter, state string, provider geouser.AuthProvider, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookieName(provider),
 		Value:    state,
@@ -190,7 +191,7 @@ func setOAuthStateCookie(w http.ResponseWriter, state string, provider user.Auth
 	})
 }
 
-func getOAuthStateFromCookie(r *http.Request, provider user.AuthProvider) (string, error) {
+func getOAuthStateFromCookie(r *http.Request, provider geouser.AuthProvider) (string, error) {
 	cookie, err := r.Cookie(oauthStateCookieName(provider))
 	if err != nil {
 		return "", err
@@ -198,7 +199,7 @@ func getOAuthStateFromCookie(r *http.Request, provider user.AuthProvider) (strin
 	return cookie.Value, nil
 }
 
-func clearOAuthStateCookie(w http.ResponseWriter, provider user.AuthProvider, secure bool) {
+func clearOAuthStateCookie(w http.ResponseWriter, provider geouser.AuthProvider, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookieName(provider),
 		Value:    "",
@@ -212,7 +213,7 @@ func clearOAuthStateCookie(w http.ResponseWriter, provider user.AuthProvider, se
 
 func mapErrors(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, user.ErrEmailNotVerified), errors.Is(err, user.ErrEmptyPassword), errors.Is(err, user.ErrEmptyEmailOrUsername), errors.Is(err, user.ErrAccountAlreadyLinked):
+	case errors.Is(err, geouser.ErrEmailNotVerified), errors.Is(err, geouser.ErrEmptyPassword), errors.Is(err, geouser.ErrEmptyEmailOrUsername), errors.Is(err, geouser.ErrAccountAlreadyLinked):
 		formatError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, service.ErrInvalidCredentials):
 		formatError(w, http.StatusUnauthorized, err.Error())

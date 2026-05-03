@@ -7,13 +7,14 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/daily"
 )
 
 // DailyService defines the interface for the daily challenge service.
 type DailyService interface {
-	GetCurrentStatus(ctx context.Context, userID int) (*daily.Challenge, *daily.Session, error)
-	ProcessAttempt(ctx context.Context, userID int, guess string) (*daily.AttemptResult, error)
+	GetCurrentStatus(ctx context.Context, userID uuid.UUID) (*daily.Challenge, *daily.Session, error)
+	ProcessAttempt(ctx context.Context, userID uuid.UUID, guess string) (*daily.AttemptResult, error)
 }
 
 // Handler handles HTTP requests for the daily challenge endpoints.
@@ -27,9 +28,13 @@ func NewHandler(svc DailyService) *Handler {
 }
 
 // RegisterRoutes registers the HTTP routes for the daily challenge endpoints.
-func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/game/daily", h.getDailyStatus)
-	mux.HandleFunc("POST /api/game/daily/attempt", h.postAttempt)
+func (h *Handler) RegisterRoutes(mux *http.ServeMux, authMiddleware func(http.Handler) http.Handler) {
+	getStatusHandler := http.HandlerFunc(h.getDailyStatus)
+	postAttemptHandler := http.HandlerFunc(h.postAttempt)
+
+	// Step 2: Wrap them in the middleware and use mux.Handle (NOT HandleFunc)
+	mux.Handle("GET /api/game/daily", authMiddleware(getStatusHandler))
+	mux.Handle("POST /api/game/daily/attempt", authMiddleware(postAttemptHandler))
 }
 
 // attemptRequest represents the expected request body for making an attempt at the daily challenge.
@@ -46,9 +51,11 @@ type statusResponse struct {
 
 // getDailyStatus handles the GET /api/game/daily endpoint to retrieve the current status of the daily challenge for a user.
 func (h *Handler) getDailyStatus(w http.ResponseWriter, r *http.Request) {
-	// TODO: Obtain userID from middleware context
-	// userID := r.Context().Value("userID").(int)
-	userID := 1 // hardcoded for testing
+	userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "server error: missing user context", http.StatusInternalServerError)
+		return
+	}
 
 	challenge, session, err := h.svc.GetCurrentStatus(r.Context(), userID)
 	if err != nil {
@@ -67,8 +74,11 @@ func (h *Handler) getDailyStatus(w http.ResponseWriter, r *http.Request) {
 
 // postAttempt handles the POST /api/game/daily/attempt endpoint to process a user's guess for the daily challenge.
 func (h *Handler) postAttempt(w http.ResponseWriter, r *http.Request) {
-	// TODO: Obtain userID from middleware context
-	userID := 1
+	userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "server error: missing user context", http.StatusInternalServerError)
+		return
+	}
 
 	var req attemptRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
