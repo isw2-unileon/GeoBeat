@@ -37,15 +37,15 @@ func main() {
 			logger.Warn("could not load .env file, relying on environment variables", "error", err)
 		}
 	}
-	db_url := os.Getenv("DATABASE_URL")
+	dbURL := os.Getenv("DATABASE_URL")
 
-	if db_url == "" {
+	if dbURL == "" {
 		logger.Error("DATABASE_URL is not set in .env or environment variables")
 		os.Exit(1)
 	}
 
 	ctx := context.Background()
-	dbPool, err := pgxpool.New(ctx, db_url)
+	dbPool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		logger.Error("Failed to connect to the database", "error", err)
 		os.Exit(1)
@@ -56,13 +56,11 @@ func main() {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		logger.Error("Failed to read genres.json", "error", err)
-		os.Exit(1)
 	}
 
 	var genresNames []string
 	if err := json.Unmarshal(data, &genresNames); err != nil {
 		logger.Error("Failed to unmarshal genres", "error", err)
-		os.Exit(1)
 	}
 
 	batch := &pgx.Batch{}
