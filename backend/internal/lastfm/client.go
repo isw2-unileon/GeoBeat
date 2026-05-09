@@ -60,7 +60,7 @@ func (c *Client) GetSongsGenre(ctx context.Context, songs []service.Track) ([][]
 					return r
 				}
 				return -1
-			}, strings.TrimSpace(tag.Name))
+			}, strings.ToLower(strings.TrimSpace(tag.Name)))
 			genres = append(genres, formattedTag)
 		}
 		allGenres = append(allGenres, genres)
