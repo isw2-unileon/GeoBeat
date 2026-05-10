@@ -29,15 +29,20 @@ type DailyChallengeRepository interface {
 	SaveDailyChallenge(ctx context.Context, challenge daily.Challenge) error
 }
 
+// GenreRepository defines the interface for managing genres.
+type GenreRepository interface {
+	GetAllowedGenres(ctx context.Context) ([]genre.Genre, error)
+}
+
 // DailyChallengeService is responsible for generating and saving the daily challenge.
 type DailyChallengeService struct {
 	musicProvider MusicProvider
-	genreRepo     genre.Repository
+	genreRepo     GenreRepository
 	dailyRepo     DailyChallengeRepository
 }
 
 // NewDailyChallengeService creates a new instance of DailyChallengeService with the provided dependencies.
-func NewDailyChallengeService(mp MusicProvider, gr genre.Repository, dr DailyChallengeRepository) *DailyChallengeService {
+func NewDailyChallengeService(mp MusicProvider, gr GenreRepository, dr DailyChallengeRepository) *DailyChallengeService {
 	return &DailyChallengeService{
 		musicProvider: mp,
 		genreRepo:     gr,
