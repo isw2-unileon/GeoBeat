@@ -2,22 +2,35 @@ import { AppField } from './components/app-field';
 import { AppDrawer } from './components/app-drawer';
 import { AppDialog } from './components/app-dialog';
 import { DailyModeMap } from './components/map/DailyModeMap';
+import { FreeModeMap } from './components/map/FreeModeMap';
+import { modes } from './data/placeholder-data';
 
 import { useState } from 'react';
 
 export default function App() {
 
-  const [country, setCountry] = useState<string>('Australia')
+  const [country, setCountry] = useState<string>('Algeria')
+  const [mode, setMode] = useState<string>(modes[0])
+
+  let content;
+  switch (mode) {
+    case modes[0]:
+      content = <DailyModeMap country={country} />
+      break;
+
+    case modes[1]:
+      content = <FreeModeMap country={country} setCountry={setCountry}/>
+      break;
+  }
 
   return (
       <main className="relative min-h-screen flex flex-col">
         <DailyModeTitle />
         <AppDialog />
-        {/* <FreeModeMap country={country} setCountry={setCountry}/> */}
-        <DailyModeMap country={country} />
+        {content}
         {/* Desktop */}
         <div className='hidden md:block'>
-          <AppField country={country} />
+          <AppField country={country} setMode={setMode} />
         </div>
         {/* Mobile */}
         <div className='md:hidden'>

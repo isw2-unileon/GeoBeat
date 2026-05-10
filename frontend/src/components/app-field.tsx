@@ -13,9 +13,10 @@ import { modes, genres } from "@/data/placeholder-data";
 
 type Props = {
   country: string;
+  setMode: React.Dispatch<React.SetStateAction<string>>;
 };
 
-export function AppField({country}: Props) {
+export function AppField({country, setMode}: Props) {
     return (
         <FieldSet className="absolute top-4 right-4 p-4 max-w-xs bg-white/80 rounded-md animate-fade-in-left">
             <FieldLegend className="!text-2xl bg-white rounded-md px-2"> GeoBeat </FieldLegend>
@@ -24,7 +25,7 @@ export function AppField({country}: Props) {
                 <FieldSeparator />
                 <Field>
                     <FieldLabel className="text-1xl">Mode selection</FieldLabel>
-                    <Select defaultValue={modes[0]}>
+                    <Select defaultValue={modes[0]} onValueChange={(value) => setMode(value)}>
                         <SelectTrigger className="w-full">
                             <SelectValue />
                         </SelectTrigger>

@@ -27,6 +27,9 @@ export function BaseGlobe({ children, onClick, longitude, latitude }: BaseGlobeP
         projection={'globe'}
         mapStyle="https://tiles.openfreemap.org/styles/positron"
         onClick={onClick}
+        maxZoom={4}
+        minZoom={2.5}
+        dragRotate={false}
       >
         {children}
       </Map>
