@@ -15,6 +15,8 @@ type Config struct {
 	DatabaseURL     string
 	GoogleClientID  string
 	GoogleSecret    string
+	RedirectURL     string
+	FrontendUrl     string
 }
 
 var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -34,6 +36,8 @@ func Load() *Config {
 		DatabaseURL:     getEnv("DATABASE_URL", ""),
 		GoogleClientID:  getEnv("GOOGLE_CLIENT_ID", ""),
 		GoogleSecret:    getEnv("GOOGLE_SECRET", ""),
+		RedirectURL:     getEnv("REDIRECT_URL", ""),
+		FrontendUrl:     getEnv("FRONTEND_URL", ""),
 	}
 }
 

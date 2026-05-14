@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
@@ -32,6 +33,7 @@ type AuthService interface {
 type AuthHandler struct {
 	authService AuthService
 	providers   map[geouser.AuthProvider]OAuthProvider
+	cfg         *config.Config
 }
 
 type contextKey string
@@ -40,10 +42,11 @@ type contextKey string
 const UserIDContextKey = contextKey("userID")
 
 // NewAuthHandler creates a new AuthHandler with the given authentication service and OAuth providers.
-func NewAuthHandler(authService AuthService, providers map[geouser.AuthProvider]OAuthProvider) *AuthHandler {
+func NewAuthHandler(authService AuthService, providers map[geouser.AuthProvider]OAuthProvider, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		providers:   providers,
+		cfg:         cfg,
 	}
 }
 
@@ -145,7 +148,16 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"token": token})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		HttpOnly: true,
+		Secure:   false, // TODO: Set to true in production
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   600, // TODO: Change in production
+	})
+
+	http.Redirect(w, r, h.cfg.FrontendUrl, http.StatusTemporaryRedirect)
 }
 
 // AuthMiddleware is an HTTP middleware that validates the presence and validity of a Bearer token in the Authorization header.

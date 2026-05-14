@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
@@ -79,6 +80,10 @@ func (m *mockOAuthProvider) GetProviderName() geouser.AuthProvider {
 
 func (m *mockOAuthProvider) GetUserInfo(ctx context.Context, code string) (*service.OAuthUserInfo, error) {
 	return m.mockResponse, m.mockErr
+}
+
+var mockCfg = &config.Config{
+	RedirectURL: "fake_url",
 }
 
 func TestHandleRegister(t *testing.T) {
@@ -460,7 +465,7 @@ func TestAuthMiddleware(t *testing.T) {
 			hasher := &mockHasher{}
 			tokenizer := &mockTokenizer{}
 			authSvc := service.NewAuthService(userRepo, tokenizer, hasher, nil)
-			handler := server.NewAuthHandler(authSvc, nil)
+			handler := server.NewAuthHandler(authSvc, nil, mockCfg)
 
 			// Mock next handler
 			nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -512,7 +517,7 @@ func newTestAuthServer(t *testing.T) (*http.ServeMux, *mockUserRepository) {
 	}
 
 	authSvc := service.NewAuthService(repo, tokenizer, hasher, svcProviders)
-	handler := server.NewAuthHandler(authSvc, hdlProviders)
+	handler := server.NewAuthHandler(authSvc, hdlProviders, mockCfg)
 
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)

@@ -11,7 +11,14 @@ import (
 	"time"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/isw2-unileon/GeoBeat/backend/internal/oauth"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/pgdb"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/tools"
 )
 
 func main() {
@@ -45,9 +52,28 @@ func main() {
 		}
 	})
 
+	// ADD ENDPOINTS
+
+	userRepo := pgdb.NewPostgresUserRepo(dbPool)
+	tokenizer := tools.NewJWTTokenizer("sercreto secretisimo")
+	hasher := tools.NewBCryptHasher()
+	google_provider := oauth.NewGoogleOAuthProvider(cfg.GoogleClientID, cfg.GoogleSecret, cfg.RedirectURL+string(geouser.ProviderGoogle))
+	service_providers := map[geouser.AuthProvider]service.OAuthProvider{
+		geouser.ProviderGoogle: google_provider,
+	}
+	server_providers := map[geouser.AuthProvider]server.OAuthProvider{
+		geouser.ProviderGoogle: google_provider,
+	}
+	authService := service.NewAuthService(userRepo, tokenizer, hasher, service_providers)
+	authHandler := server.NewAuthHandler(authService, server_providers, cfg)
+
+	authHandler.RegisterRoutes(mux)
+
+	corsHandler := server.CorsMiddleware(cfg, mux)
+
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      corsHandler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}

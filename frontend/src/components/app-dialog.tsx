@@ -11,6 +11,8 @@ import { FieldGroup, Field, FieldLabel, FieldSeparator } from "@/components/ui/f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button"
 
+const GOOGLE_LOGIN_API = import.meta.env.VITE_GOOGLE_LOGIN
+
 export function AppDialog() {
     return (
         <Dialog>
@@ -38,8 +40,13 @@ export function AppDialog() {
                     </Field>
                     <FieldSeparator />
                     <Field>
-                        <FieldLabel className="text-base"> Login trough third party </FieldLabel>
-                        <Button variant={"outline"}>Google <img src={googleLogo} alt="Google logo" width={12} /></Button>
+                        <FieldLabel className="text-base" > Login trough third party </FieldLabel>
+                        <Button variant={"outline"}
+                            onClick={() => {
+                                window.location.href = GOOGLE_LOGIN_API;
+                            }
+                            }> Google <img src={googleLogo} alt="Google logo" width={12}/>
+                        </Button>
                     </Field>
                 </FieldGroup>
             </DialogContent>

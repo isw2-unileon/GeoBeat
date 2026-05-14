@@ -39,7 +39,6 @@ export function FreeModeMap({ country, setCountry }: FreeMapProps) {
 
         if (features.length > 0) {
           const country: string = features[0]?.properties.name
-          console.log(country);
           setCountry(country);
         }
       }}
