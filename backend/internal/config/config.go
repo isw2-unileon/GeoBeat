@@ -17,6 +17,7 @@ type Config struct {
 	GoogleSecret    string
 	RedirectURL     string
 	FrontendUrl     string
+	JWTToken        string
 }
 
 var logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -38,6 +39,7 @@ func Load() *Config {
 		GoogleSecret:    getEnv("GOOGLE_SECRET", ""),
 		RedirectURL:     getEnv("REDIRECT_URL", ""),
 		FrontendUrl:     getEnv("FRONTEND_URL", ""),
+		JWTToken:        mustGetEnv("JWT_TOKEN"), // TODO: Check if best practice
 	}
 }
 
@@ -46,4 +48,11 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func mustGetEnv(key string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	panic("Missing required environment variable: " + key)
 }

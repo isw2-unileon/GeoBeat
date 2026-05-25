@@ -210,6 +210,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 				s.logger.Error("provider ID mismatch for existing user", "storedProviderID", *existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
 				return "", ErrInvalidCredentials
 			}
+			s.logger.Info("Oauth login processed", "Provider", oauthProvider.GetProviderName(), "ID", existingUser.ID)
 			return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
 		}
 		// Currently, we only support google as an external provider

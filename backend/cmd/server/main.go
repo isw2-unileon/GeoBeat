@@ -52,11 +52,13 @@ func main() {
 		}
 	})
 
-	// ADD ENDPOINTS
+	// --- INITIALIZE DEPENDENCIES ---
 
 	userRepo := pgdb.NewPostgresUserRepo(dbPool)
-	tokenizer := tools.NewJWTTokenizer("sercreto secretisimo")
+	tokenizer := tools.NewJWTTokenizer(cfg.JWTToken)
 	hasher := tools.NewBCryptHasher()
+
+	// PROVIDERS
 	google_provider := oauth.NewGoogleOAuthProvider(cfg.GoogleClientID, cfg.GoogleSecret, cfg.RedirectURL+string(geouser.ProviderGoogle))
 	service_providers := map[geouser.AuthProvider]service.OAuthProvider{
 		geouser.ProviderGoogle: google_provider,
@@ -64,12 +66,15 @@ func main() {
 	server_providers := map[geouser.AuthProvider]server.OAuthProvider{
 		geouser.ProviderGoogle: google_provider,
 	}
+
 	authService := service.NewAuthService(userRepo, tokenizer, hasher, service_providers)
 	authHandler := server.NewAuthHandler(authService, server_providers, cfg)
 
+	// --- ADD ENDPOINTS ---
 	authHandler.RegisterRoutes(mux)
 
-	corsHandler := server.CorsMiddleware(cfg, mux)
+	// --- ADD CORS MIDDLEWARE ---
+	corsHandler := server.CorsMiddleware(cfg, mux) // TODO: Discuss implementation
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
