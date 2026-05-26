@@ -3,6 +3,7 @@ import { AppDrawer } from './components/app-drawer';
 import { AppDialog } from './components/app-dialog';
 import { DailyModeMap } from './components/map/DailyModeMap';
 import { FreeModeMap } from './components/map/FreeModeMap';
+import { Toaster } from './components/ui/sonner';
 import { modes } from './data/placeholder-data';
 
 import { useState } from 'react';
@@ -37,6 +38,7 @@ export default function App() {
           <AppDrawer country={country} />
         </div>
         <Attempts num={5}/>
+        <Toaster position={'top-center'} />
         <div className='hidden'>
           <CorrectPopUp />
         </div>

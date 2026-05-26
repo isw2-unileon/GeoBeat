@@ -68,7 +68,7 @@ export function AppDialog() {
                         <FieldSeparator />
                         <Field>
                             <FieldLabel className="text-base" > Login trough third party </FieldLabel>
-                            <Button variant={"outline"} onClick={googleLogin}>
+                            <Button type="button" variant={"outline"} onClick={googleLogin}>
                                 Google <img src={googleLogo} alt="Google logo" width={12}/>
                             </Button>
                         </Field>
