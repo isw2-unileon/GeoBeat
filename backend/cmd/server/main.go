@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,7 +13,9 @@ import (
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/lastfm"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/robfig/cron/v3"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/oauth"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/pgdb"
@@ -24,7 +27,6 @@ import (
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	// TODO: launch chron job to generate daily challenge at midnight UTC
 
 	cfg := config.Load()
 
@@ -52,7 +54,7 @@ func main() {
 		}
 	})
 
-	// --- INITIALIZE DEPENDENCIES ---
+	// --- AUTH INITIALIZE DEPENDENCIES ---
 
 	userRepo := pgdb.NewPostgresUserRepo(dbPool)
 	tokenizer := tools.NewJWTTokenizer(cfg.JWTToken)
@@ -70,8 +72,34 @@ func main() {
 	authService := service.NewAuthService(userRepo, tokenizer, hasher, service_providers)
 	authHandler := server.NewAuthHandler(authService, server_providers, cfg)
 
+	// --- DAILY INITIALIZE DEPENDENCIES ---
+
+	dailyRepo := pgdb.NewPostgresDailyRepo(dbPool)
+
+	dailyService := service.NewService(dailyRepo, dailyRepo)
+	dailyHandler := server.NewHandler(dailyService)
+
+	// --- DAILYGEN INITIALIZE DEPENDENCIES ---
+	genreRepo := pgdb.NewPostgresGenreRepo(dbPool)
+	musicProvider := lastfm.NewClient(cfg.LastFMAPIKey)
+	dailyChallengeService := service.NewDailyChallengeService(musicProvider, genreRepo, dailyRepo)
+
+	loc := time.UTC
+
+	c := cron.New(cron.WithLocation(loc))
+
+	c.AddFunc("0 0 * * *", func() {
+		if err := dailyChallengeService.GenerateDailyChallenge("ES"); err != nil {
+			log.Printf("daily challenge failed: %v", err)
+		}
+	})
+
+	c.Start()
+	defer c.Stop()
+
 	// --- ADD ENDPOINTS ---
 	authHandler.RegisterRoutes(mux)
+	dailyHandler.RegisterRoutes(mux, authHandler.AuthMiddleware)
 
 	// --- ADD CORS MIDDLEWARE ---
 	corsHandler := server.CorsMiddleware(cfg, mux) // TODO: Discuss implementation

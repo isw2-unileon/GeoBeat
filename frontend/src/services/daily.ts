@@ -1,16 +1,59 @@
+import { notify } from "@/lib/toast";
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
-function getDaily() {
+export type Daily = {
+  country: string;
+  attempts: number;
+  status: string;
+} | null;
 
-  fetch(`${BACKEND_URL}/api/game/daily`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Request failed');
+async function getDaily(): Promise<Daily> {
+
+    const token = localStorage.getItem("token");
+    console.log("TOKEN: ", token);
+
+    if (!token) {
+      notify.error("Couldn't get daily: missing token");
+      return null;
+    }
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/game/daily`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      let data;
+
+      const text = await res.text();
+
+      if (text) {
+        data = JSON.parse(text);
       }
-      return response.json();
-    })
-    .then(data => console.log(data))
-    .catch(error => console.error(error));
+
+      if(!res.ok) {
+        notify.error("Couldn't get daily: " + data.error)
+        return null
+      }
+
+      if(!data) {
+        notify.error("Couldn't get daily no response data")
+        return null
+      }
+
+      notify.info(data)
+      return {
+        country: data.country,
+        attempts: data.attempts_used,
+        status: data.status
+      };
+
+    } catch {
+      notify.error("Network error couldn't retrieve daily")
+      return null
+    }
 }
 
 function doAttempt() {};

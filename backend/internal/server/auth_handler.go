@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
@@ -26,7 +27,7 @@ type AuthService interface {
 	RegisterWithEmail(ctx context.Context, email, username, password string) error
 	LoginWithEmail(ctx context.Context, email, password string) (string, error)
 	ProcessOAuthLogin(ctx context.Context, code string, provider geouser.AuthProvider) (string, error)
-	ValidateToken(ctx context.Context, token string) (int, error)
+	ValidateToken(ctx context.Context, token string) (uuid.UUID, error)
 }
 
 // AuthHandler handles authentication-related HTTP requests, including registration, login, and OAuth flows.
@@ -149,7 +150,7 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_token",
+		Name:     "token",
 		Value:    token,
 		HttpOnly: true,
 		Secure:   false, // TODO: Set to true in production
@@ -177,7 +178,7 @@ func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
 
 		token := parts[1]
 		userID, err := h.authService.ValidateToken(r.Context(), token)
-		if err != nil || userID <= 0 {
+		if err != nil || userID == uuid.Nil {
 			formatError(w, http.StatusUnauthorized, "invalid or expired token")
 			return
 		}

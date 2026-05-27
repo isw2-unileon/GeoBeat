@@ -26,8 +26,8 @@ func NewClient(apiKey string) *Client {
 	return &Client{APIKey: apiKey}
 }
 
-// GetTopTracksByCountry fetches the top tracks for a given country code from the Last.fm API.
-func (c *Client) GetTopTracksByCountry(ctx context.Context, countryCode string) ([]service.Track, error) {
+// GetTopSongsByCountry fetches the top tracks for a given country code from the Last.fm API.
+func (c *Client) GetTopSongsByCountry(ctx context.Context, countryCode string) ([]service.Track, error) {
 	resp, err := c.getTracks(ctx, countryCode)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching top tracks for country %s: %w", countryCode, err)

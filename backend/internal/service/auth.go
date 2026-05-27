@@ -6,13 +6,14 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 )
 
 // Tokenizer defines the interface for generating and validating authentication tokens
 type Tokenizer interface {
-	GenerateToken(userID int) (string, error)
-	ValidateToken(token string) (int, error)
+	GenerateToken(userID uuid.UUID) (string, error)
+	ValidateToken(token string) (uuid.UUID, error)
 }
 
 // Hasher defines the interface for password hashing and verification
@@ -185,7 +186,7 @@ func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string
 		return "", ErrInvalidCredentials
 	}
 
-	return s.tokenizer.GenerateToken(int(storedUser.ID.ID()))
+	return s.tokenizer.GenerateToken(storedUser.ID)
 }
 
 // ProcessOAuthLogin processes an OAuth login flow, returning a token if successful
@@ -211,7 +212,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 				return "", ErrInvalidCredentials
 			}
 			s.logger.Info("Oauth login processed", "Provider", oauthProvider.GetProviderName(), "ID", existingUser.ID)
-			return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
+			return s.tokenizer.GenerateToken(existingUser.ID)
 		}
 		// Currently, we only support google as an external provider
 		// Therefore this code will not return ErrAccountAlreadyLinked
@@ -225,7 +226,7 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 			s.logger.Error("error updating existing user", "email", userInfo.Email, "error", err)
 			return "", ErrUserLoginFailed
 		}
-		return s.tokenizer.GenerateToken(int(existingUser.ID.ID()))
+		return s.tokenizer.GenerateToken(existingUser.ID)
 	}
 
 	newUser, err := geouser.NewUserExternal(userInfo.Email, userInfo.UserName, userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
@@ -239,10 +240,10 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 		return "", ErrUserCreationFailed
 	}
 
-	return s.tokenizer.GenerateToken(int(newUser.ID.ID()))
+	return s.tokenizer.GenerateToken(newUser.ID)
 }
 
 // ValidateToken validates an authentication token and returns the associated user ID if valid
-func (s *AuthService) ValidateToken(ctx context.Context, token string) (int, error) {
+func (s *AuthService) ValidateToken(ctx context.Context, token string) (uuid.UUID, error) {
 	return s.tokenizer.ValidateToken(token)
 }

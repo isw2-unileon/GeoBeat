@@ -1,5 +1,5 @@
 import React from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/toast";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const GOOGLE_LOGIN_API = import.meta.env.VITE_GOOGLE_LOGIN
@@ -20,7 +20,7 @@ async function emailLogin(e: React.FormEvent<HTMLFormElement>) {
     const password = formData.get("input-password");
   
     if (!password || !email) {
-        showError("Missing email or password")
+        notify.error("Missing email or password")
         return
     }
 
@@ -43,14 +43,17 @@ async function emailLogin(e: React.FormEvent<HTMLFormElement>) {
         }
 
         if (!res.ok) {
-            showError("Login failed: " + data.error);
+            notify.error("Login failed: " + data.error);
             return;
         }
+        
+        const token = data.token;
+        localStorage.setItem("token", token);
 
-        console.log("Login success:", data);
+        notify.info("Login success: " + data);
         window.location.reload()
     } catch {
-        showError("Network error");
+        notify.error("Network error");
     }
 }
 
@@ -72,7 +75,7 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
     const password = formData.get("input-password");
 
     if (!username || !email || !password) {
-        showError("Missing values")
+        notify.error("Missing values")
         return
     }
 
@@ -97,24 +100,22 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
         }
 
         if (!res.ok) {
-            showError("Regsiter failed: " + data.error);
+            notify.error("Regsiter failed: " + data.error);
             return;
         }
 
-        console.log("Register success:", data);
+        const token = data.token;
+        localStorage.setItem("token", token);
+
+        notify.info("Register success:" + data);
         window.location.reload()
     } catch {
-        showError("Network error");
+        notify.error("Network error");
     }
 } 
 
 function googleLogin() {
     window.location.href = GOOGLE_LOGIN_API;
-}
-
-function showError(msg: string) {
-    console.log("ERROR on auth: " + msg)
-    toast(msg)
 }
 
 export {emailLogin, emailRegister, googleLogin}

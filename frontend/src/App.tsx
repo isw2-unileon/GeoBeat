@@ -7,11 +7,26 @@ import { Toaster } from './components/ui/sonner';
 import { modes } from './data/placeholder-data';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
+import { getDaily } from './services/daily';
+import { Attempts } from './components/attempts';
+import { Daily } from './services/daily';
 
 export default function App() {
 
-  const [country, setCountry] = useState<string>('Algeria')
-  const [mode, setMode] = useState<string>(modes[0])
+  const [mode, setMode] = useState<string>(modes[0]);
+  const [daily, setDaily] = useState<Daily>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await getDaily();
+      setDaily(data);
+    };
+
+    load();
+  }, []);
+
+  const [country, setCountry] = useState<string>(daily?.country ?? "Spain");
 
   let content;
   switch (mode) {
@@ -37,7 +52,7 @@ export default function App() {
         <div className='md:hidden'>
           <AppDrawer country={country} />
         </div>
-        <Attempts num={5}/>
+        <Attempts props={daily} />
         <Toaster position={'top-center'} />
         <div className='hidden'>
           <CorrectPopUp />
@@ -53,17 +68,6 @@ function DailyModeTitle() {
                 text-2xl text-center text-blue-600 font-semibold font-[sans] animate-fade-in-down z-1">
     DAILY MODE
   </h1>
-  )
-}
-
-function Attempts({num}: {num: number}) {
-
-  return (
-    <div className='bg-gray-100 rounded-sm absolute top-30 left-15 flex flex-row'>
-      {[...Array(num)].map((_, i) => (
-        <div key={i} className='bg-gray-200 w-8 h-8 m-2 rounded-sm' />
-      ))}
-    </div>
   )
 }
 
