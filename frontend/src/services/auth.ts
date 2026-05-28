@@ -1,8 +1,8 @@
 import React from "react";
 import { notify } from "@/lib/toast";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
-const GOOGLE_LOGIN_API = import.meta.env.VITE_GOOGLE_LOGIN
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const GOOGLE_LOGIN_API = import.meta.env.VITE_GOOGLE_LOGIN;
 
 /**
  * Handles email login form submission.
@@ -12,49 +12,49 @@ const GOOGLE_LOGIN_API = import.meta.env.VITE_GOOGLE_LOGIN
  * - input-password
  */
 async function emailLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
-    
-    const email = formData.get("input-email");
-    const password = formData.get("input-password");
-  
-    if (!password || !email) {
-        notify.error("Missing email or password")
-        return
+  const formData = new FormData(e.currentTarget);
+
+  const email = formData.get("input-email");
+  const password = formData.get("input-password");
+
+  if (!password || !email) {
+    notify.error("Missing email or password");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: String(email),
+        password: String(password),
+      }),
+    });
+
+    let data = null;
+
+    const text = await res.text();
+
+    if (text) {
+      data = JSON.parse(text);
     }
 
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                email: String(email),
-                password: String(password),
-            }),
-        });
-
-        let data = null;
-
-        const text = await res.text();
-
-        if (text) {
-            data = JSON.parse(text);
-        }
-
-        if (!res.ok) {
-            notify.error("Login failed: " + data.error);
-            return;
-        }
-        
-        const token = data.token;
-        localStorage.setItem("token", token);
-
-        notify.info("Login success: " + data);
-        window.location.reload()
-    } catch {
-        notify.error("Network error");
+    if (!res.ok) {
+      notify.error("Login failed: " + data.error);
+      return;
     }
+
+    const token = data.token;
+    localStorage.setItem("token", token);
+
+    notify.info("Login success: " + data);
+    window.location.reload();
+  } catch {
+    notify.error("Network error");
+  }
 }
 
 /**
@@ -66,56 +66,55 @@ async function emailLogin(e: React.FormEvent<HTMLFormElement>) {
  * - input-password
  */
 async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
+  const formData = new FormData(e.currentTarget);
 
-    const username = formData.get("input-username");
-    const email = formData.get("input-email");
-    const password = formData.get("input-password");
+  const username = formData.get("input-username");
+  const email = formData.get("input-email");
+  const password = formData.get("input-password");
 
-    if (!username || !email || !password) {
-        notify.error("Missing values")
-        return
+  if (!username || !email || !password) {
+    notify.error("Missing values");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: String(email),
+        username: String(username),
+        password: String(password),
+      }),
+    });
+
+    let data = null;
+
+    const text = await res.text();
+
+    if (text) {
+      data = JSON.parse(text);
     }
 
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                email: String(email),
-                username: String(username),
-                password: String(password),
-            }),
-        });
-
-
-        let data = null;
-
-        const text = await res.text();
-
-        if (text) {
-            data = JSON.parse(text);
-        }
-
-        if (!res.ok) {
-            notify.error("Regsiter failed: " + data.error);
-            return;
-        }
-
-        const token = data.token;
-        localStorage.setItem("token", token);
-
-        notify.info("Register success:" + data);
-        window.location.reload()
-    } catch {
-        notify.error("Network error");
+    if (!res.ok) {
+      notify.error("Regsiter failed: " + data.error);
+      return;
     }
-} 
 
-function googleLogin() {
-    window.location.href = GOOGLE_LOGIN_API;
+    const token = data.token;
+    localStorage.setItem("token", token);
+
+    notify.info("Register success:" + data);
+    window.location.reload();
+  } catch {
+    notify.error("Network error");
+  }
 }
 
-export {emailLogin, emailRegister, googleLogin}
+function googleLogin() {
+  window.location.href = GOOGLE_LOGIN_API;
+}
+
+export { emailLogin, emailRegister, googleLogin };

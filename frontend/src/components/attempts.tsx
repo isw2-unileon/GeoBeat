@@ -1,32 +1,33 @@
+import { GameStatus } from "@/App";
 
 type Props = {
-    attempts: number,
-    status: string,
-} | null
+  gameStatus: GameStatus;
+};
 
-export function Attempts({ props }: { props: Props }) {
-
-    const attempts = props?.attempts ?? 0;
-    const status = props?.status ?? "";
-
-    return (
-        <div className='bg-gray-100 rounded-sm absolute top-30 left-15 flex flex-row'>
-            <GameSquares attempts={attempts} />
-        </div>
-    )
+export function Attempts({ gameStatus }: Props) {
+  return (
+    <div className="bg-gray-100 rounded-sm absolute top-30 left-15 flex flex-row">
+      <GameSquares attempts={gameStatus.attempts} status={gameStatus.status} />
+    </div>
+  );
 }
 
-function GameSquares({ attempts }: { attempts: number }) {
-    return (
-        <>
-            {[...Array(5)].map((_, i) => (
-                <div
-                    key={i}
-                    className={`w-8 h-8 m-2 rounded-sm ${
-                        i < attempts ? "bg-yellow-200" : "bg-gray-200"
-                    }`}
-                />
-            ))}
-        </>
-    );
+// TODO
+function GameSquares({ attempts, status }: GameStatus) {
+  return (
+    <>
+      {[...Array(5)].map((_, i) => (
+        <div
+          key={i}
+          className={`w-8 h-8 m-2 rounded-sm ${
+            i < attempts
+              ? i === attempts - 1 && status === "won"
+                ? "bg-green-200"
+                : "bg-yellow-200"
+              : "bg-gray-200"
+          }`}
+        />
+      ))}
+    </>
+  );
 }

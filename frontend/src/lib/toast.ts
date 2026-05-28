@@ -1,13 +1,13 @@
 import { toast } from "sonner";
 
 export const notify = {
-    error: (msg: string) => {
-        console.log("[ERROR]", msg)
-        toast(msg)
-    },
+  error: (msg: string) => {
+    console.log("[ERROR]", msg);
+    toast(msg);
+  },
 
-    // Info is not displayed to user
-    info: (msg: string) => {
-        console.log("[INFO]", msg)
-    }
-}
+  // Info is not displayed to user
+  info: (msg: string) => {
+    console.log("[INFO]", msg);
+  },
+};
