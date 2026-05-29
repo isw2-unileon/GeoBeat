@@ -1,12 +1,7 @@
 import { notify } from "@/lib/toast";
+import { Daily, Status, STATUS } from "@/types/game";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
-export type Daily = {
-  country: string;
-  attempts: number;
-  status: string;
-} | null;
 
 async function getDaily(): Promise<Daily> {
   const token = localStorage.getItem("token");
@@ -38,6 +33,11 @@ async function getDaily(): Promise<Daily> {
 
     if (!data) {
       notify.error("Couldn't get daily no response data");
+      return null;
+    }
+
+    if (!Object.values(STATUS).includes(data.status as Status)) {
+      notify.error("The structure of the data received was not the expected");
       return null;
     }
 

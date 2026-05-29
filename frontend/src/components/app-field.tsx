@@ -26,18 +26,26 @@ import {
 import { Button } from "@/components/ui/button";
 import { modes, genres } from "@/data/placeholder-data";
 import { makeAttempt, getDaily } from "@/services/daily";
-import { useState } from "react";
+import React, { useState } from "react";
 import { notify } from "@/lib/toast";
-import { GameStatus } from "@/App";
+import { GameStatus, STATUS } from "@/types/game";
+import { PopUp } from "./attempts-popup";
 
 type Props = {
   country: string;
   setMode: React.Dispatch<React.SetStateAction<string>>;
+  gameStatus: GameStatus;
   setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
 };
 
-export function AppField({ country, setMode, setGameStatus }: Props) {
+export function AppField({
+  country,
+  setMode,
+  gameStatus,
+  setGameStatus,
+}: Props) {
   const [genre, setGenre] = useState<string | null>(null);
+  const [popUpKey, setPopUpKey] = useState(0);
 
   const handleGuess = async () => {
     if (!genre) {
@@ -52,66 +60,73 @@ export function AppField({ country, setMode, setGameStatus }: Props) {
         attempts: daily.attempts,
         status: daily.status,
       });
+      setPopUpKey((prev) => prev + 1);
     }
   };
 
   return (
-    <FieldSet className="absolute top-4 right-4 p-4 max-w-xs bg-white/80 rounded-md animate-fade-in-left">
-      <FieldLegend className="!text-2xl bg-white rounded-md px-2">
-        {" "}
-        GeoBeat{" "}
-      </FieldLegend>
-      <FieldDescription>
-        The not so hit music genre guessing game
-      </FieldDescription>
-      <FieldGroup>
-        <FieldSeparator />
-        <Field>
-          <FieldLabel className="text-1xl">Mode selection</FieldLabel>
-          <Select
-            defaultValue={modes[0]}
-            onValueChange={(value) => setMode(value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {modes.map((mode) => (
-                  <SelectItem key={mode} value={mode}>
-                    {mode}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </Field>
-        <FieldSeparator />
-        <Field>
-          <FieldLabel className="text-1xl">
-            ¿What is the most popular genre of?
-          </FieldLabel>
-          <FieldLabel>{country}</FieldLabel>
-          <Combobox items={genres} value={genre} onValueChange={setGenre}>
-            <ComboboxInput placeholder="Select a genre" />
-            <ComboboxContent>
-              <ComboboxEmpty>No genres available</ComboboxEmpty>
-              <ComboboxList>
-                {(item: string) => (
-                  <ComboboxItem key={item} value={item}>
-                    {item}
-                  </ComboboxItem>
-                )}
-              </ComboboxList>
-            </ComboboxContent>
-          </Combobox>
-        </Field>
-        <Field>
-          <Button type="button" onClick={handleGuess}>
-            Guess
-          </Button>
-        </Field>
-      </FieldGroup>
-    </FieldSet>
+    <>
+      <FieldSet className="absolute top-4 right-4 p-4 max-w-xs bg-white/80 rounded-md animate-fade-in-left">
+        <FieldLegend className="!text-2xl bg-white rounded-md px-2">
+          GeoBeat
+        </FieldLegend>
+        <FieldDescription>
+          The not so hit music genre guessing game
+        </FieldDescription>
+        <FieldGroup>
+          <FieldSeparator />
+          <Field>
+            <FieldLabel className="text-1xl">Mode selection</FieldLabel>
+            <Select
+              defaultValue={modes[0]}
+              onValueChange={(value) => setMode(value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {modes.map((mode) => (
+                    <SelectItem key={mode} value={mode}>
+                      {mode}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+          <FieldSeparator />
+          <Field>
+            <FieldLabel className="text-1xl">
+              ¿What is the most popular genre of?
+            </FieldLabel>
+            <FieldLabel>{country}</FieldLabel>
+            <Combobox items={genres} value={genre} onValueChange={setGenre}>
+              <ComboboxInput placeholder="Select a genre" />
+              <ComboboxContent>
+                <ComboboxEmpty>No genres available</ComboboxEmpty>
+                <ComboboxList>
+                  {(item: string) => (
+                    <ComboboxItem key={item} value={item}>
+                      {item}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+          </Field>
+          <Field>
+            {gameStatus.status !== STATUS.WON ? (
+              <Button type="button" onClick={handleGuess}>
+                Guess
+              </Button>
+            ) : (
+              <Button disabled>Guess</Button>
+            )}
+          </Field>
+        </FieldGroup>
+      </FieldSet>
+      {popUpKey != 0 && <PopUp key={popUpKey} status={gameStatus.status} />}
+    </>
   );
 }

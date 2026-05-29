@@ -1,4 +1,4 @@
-import { GameStatus } from "@/App";
+import { GameStatus, STATUS } from "@/types/game";
 
 type Props = {
   gameStatus: GameStatus;
@@ -12,7 +12,6 @@ export function Attempts({ gameStatus }: Props) {
   );
 }
 
-// TODO
 function GameSquares({ attempts, status }: GameStatus) {
   return (
     <>
@@ -21,7 +20,7 @@ function GameSquares({ attempts, status }: GameStatus) {
           key={i}
           className={`w-8 h-8 m-2 rounded-sm ${
             i < attempts
-              ? i === attempts - 1 && status === "won"
+              ? i === attempts - 1 && status === STATUS.WON
                 ? "bg-green-200"
                 : "bg-yellow-200"
               : "bg-gray-200"

@@ -4,20 +4,14 @@ import { AppDialog } from "./components/app-dialog";
 import { DailyModeMap } from "./components/map/DailyModeMap";
 import { FreeModeMap } from "./components/map/FreeModeMap";
 import { Toaster } from "./components/ui/sonner";
-import { modes } from "./data/placeholder-data";
 
+import { modes } from "./data/placeholder-data";
 import { useState } from "react";
 import { useEffect } from "react";
 import { getDaily } from "./services/daily";
 import { Attempts } from "./components/attempts";
-import { Daily } from "./services/daily";
+import { Daily, GameStatus, STATUS } from "@/types/game";
 import getCountryData from "./lib/getCountryData";
-
-export type GameStatus = {
-  // TODO where is defined
-  attempts: number;
-  status: string;
-};
 
 export default function App() {
   const [mode, setMode] = useState<string>(modes[0]);
@@ -41,7 +35,7 @@ export default function App() {
 
   const [gameStatus, setGameStatus] = useState<GameStatus>({
     attempts: 0,
-    status: "none",
+    status: STATUS.PLAYING,
   });
   useEffect(() => {
     if (daily?.attempts) {
@@ -77,6 +71,7 @@ export default function App() {
         <AppField
           country={country}
           setMode={setMode}
+          gameStatus={gameStatus}
           setGameStatus={setGameStatus}
         />
       </div>
@@ -86,9 +81,6 @@ export default function App() {
       </div>
       <Attempts gameStatus={gameStatus} />
       <Toaster position={"top-center"} />
-      <div className="hidden">
-        <CorrectPopUp />
-      </div>
     </main>
   );
 }
@@ -102,13 +94,5 @@ function DailyModeTitle() {
     >
       DAILY MODE
     </h1>
-  );
-}
-
-function CorrectPopUp() {
-  return (
-    <label className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pop-fade text-6xl">
-      ✅
-    </label>
   );
 }
