@@ -13,7 +13,7 @@ import { Attempts } from "./components/attempts";
 import { Daily, GameStatus, STATUS } from "@/types/gameTypes";
 import getCountryData from "./lib/getCountryData";
 import { PopUp } from "./components/attempts-popup";
-import { GuessProvider } from "./context/GuessContext";
+import { GuessProvider } from "./context/GuessProvider";
 import { DailyModeTitle } from "./components/daily-title";
 
 export default function App() {

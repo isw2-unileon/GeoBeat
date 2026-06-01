@@ -2,7 +2,6 @@ import { notify } from "@/lib/notifier";
 import {
   AttemptResult,
   Daily,
-  GameStatus,
   MAX_ATTEMPTS,
   Status,
   STATUS,
