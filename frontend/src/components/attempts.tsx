@@ -1,4 +1,9 @@
-import { GameStatus, STATUS } from "@/types/game";
+import { GameStatus, MAX_ATTEMPTS, STATUS } from "@/types/gameTypes";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 type Props = {
   gameStatus: GameStatus;
@@ -6,8 +11,12 @@ type Props = {
 
 export function Attempts({ gameStatus }: Props) {
   return (
-    <div className="bg-gray-100 rounded-sm absolute top-30 left-15 flex flex-row">
+    <div className="bg-gray-100 rounded-sm absolute md:top-30 md:left-15 top-15 left-5 flex flex-row">
       <GameSquares attempts={gameStatus.attempts} status={gameStatus.status} />
+      <HoverCard>
+        <HoverCardTrigger></HoverCardTrigger>
+        <HoverCardContent></HoverCardContent>
+      </HoverCard>
     </div>
   );
 }
@@ -15,18 +24,40 @@ export function Attempts({ gameStatus }: Props) {
 function GameSquares({ attempts, status }: GameStatus) {
   return (
     <>
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className={`w-8 h-8 m-2 rounded-sm ${
-            i < attempts
-              ? i === attempts - 1 && status === STATUS.WON
-                ? "bg-green-200"
-                : "bg-yellow-200"
-              : "bg-gray-200"
-          }`}
-        />
-      ))}
+      {[...Array(MAX_ATTEMPTS)].map((_, i) => {
+        if (i >= attempts) {
+          return <div key={i} className="w-8 h-8 m-2 rounded-sm bg-gray-200" />;
+        }
+
+        return (
+          <HoverCard key={i}>
+            <HoverCardTrigger>
+              <div
+                className={`w-8 h-8 m-2 rounded-sm ${
+                  i === attempts - 1 && status === STATUS.WON
+                    ? "bg-green-200"
+                    : "bg-yellow-200"
+                }`}
+              />
+            </HoverCardTrigger>
+            <HoverCardContent className="w-fit">
+              <div>
+                <strong>Guess: </strong> {localStorage.getItem(`guess${i + 1}`)}
+              </div>
+              <div>
+                {localStorage.getItem(`hint${i + 1}`) !== null ? (
+                  <>
+                    <strong>Hint: </strong>
+                    {localStorage.getItem(`hint${i + 1}`)}
+                  </>
+                ) : (
+                  ""
+                )}
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        );
+      })}
     </>
   );
 }

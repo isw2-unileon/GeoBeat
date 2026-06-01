@@ -10,4 +10,8 @@ export const notify = {
   info: (msg: string) => {
     console.log("[INFO]", msg);
   },
+
+  news: (msg: string) => {
+    toast(msg);
+  },
 };

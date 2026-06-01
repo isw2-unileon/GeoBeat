@@ -10,8 +10,11 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { getDaily } from "./services/daily";
 import { Attempts } from "./components/attempts";
-import { Daily, GameStatus, STATUS } from "@/types/game";
+import { Daily, GameStatus, STATUS } from "@/types/gameTypes";
 import getCountryData from "./lib/getCountryData";
+import { PopUp } from "./components/attempts-popup";
+import { GuessProvider } from "./context/GuessContext";
+import { DailyModeTitle } from "./components/daily-title";
 
 export default function App() {
   const [mode, setMode] = useState<string>(modes[0]);
@@ -56,7 +59,7 @@ export default function App() {
 
     case modes[1]:
       content = (
-        <FreeModeMap countryISO={countryISO} setCountry={setCountryISO} />
+        <FreeModeMap countryISO={countryISO} setCountryISO={setCountryISO} />
       );
       break;
   }
@@ -66,33 +69,31 @@ export default function App() {
       <DailyModeTitle />
       <AppDialog />
       {content}
-      {/* Desktop */}
-      <div className="hidden md:block">
-        <AppField
-          country={country}
-          setMode={setMode}
-          gameStatus={gameStatus}
-          setGameStatus={setGameStatus}
-        />
-      </div>
-      {/* Mobile */}
-      <div className="md:hidden">
-        <AppDrawer country={country} />
-      </div>
-      <Attempts gameStatus={gameStatus} />
+      <GuessProvider>
+        {/* Desktop */}
+        <div className="hidden md:block">
+          <AppField
+            country={country}
+            mode={mode}
+            setMode={setMode}
+            gameStatus={gameStatus}
+            setGameStatus={setGameStatus}
+          />
+        </div>
+        {/* Mobile */}
+        <div className="md:hidden">
+          <AppDrawer
+            country={country}
+            mode={mode}
+            setMode={setMode}
+            gameStatus={gameStatus}
+            setGameStatus={setGameStatus}
+          />
+        </div>
+        <PopUp status={gameStatus.status} />
+        <Attempts gameStatus={gameStatus} />
+      </GuessProvider>
       <Toaster position={"top-center"} />
     </main>
-  );
-}
-
-function DailyModeTitle() {
-  return (
-    <h1
-      className="md:absolute md:top-6 md:left-14 md:text-5xl md:translate-x-0
-                absolute top-2 left-1/2 -translate-x-1/2 text-outline
-                text-2xl text-center text-blue-600 font-semibold font-[sans] animate-fade-in-down z-1"
-    >
-      DAILY MODE
-    </h1>
   );
 }

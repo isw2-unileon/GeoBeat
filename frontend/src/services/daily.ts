@@ -1,5 +1,12 @@
-import { notify } from "@/lib/toast";
-import { Daily, Status, STATUS } from "@/types/game";
+import { notify } from "@/lib/notifier";
+import {
+  AttemptResult,
+  Daily,
+  GameStatus,
+  MAX_ATTEMPTS,
+  Status,
+  STATUS,
+} from "@/types/gameTypes";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -53,7 +60,7 @@ async function getDaily(): Promise<Daily> {
   }
 }
 
-async function makeAttempt(guess: string) {
+async function makeAttempt(guess: string): Promise<AttemptResult> {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -73,8 +80,8 @@ async function makeAttempt(guess: string) {
       }),
     });
 
-    let data;
     const text = await res.text();
+    let data;
 
     if (text) {
       data = JSON.parse(text);
@@ -82,9 +89,25 @@ async function makeAttempt(guess: string) {
 
     if (!res.ok) {
       notify.error("Couldn't make attempt: " + data.error);
+      return null;
     }
+
+    if (!Object.values(STATUS).includes(data.status as Status)) {
+      notify.error("The structure of the data received was not the expected");
+      return null;
+    }
+
+    notify.info(data);
+    return {
+      gameStatus: {
+        attempts: MAX_ATTEMPTS - data.attempts_remaining,
+        status: data.status,
+      },
+      hint: data.hint,
+    };
   } catch {
     notify.error("Network error couldn't make attempt");
+    return null;
   }
 }
 

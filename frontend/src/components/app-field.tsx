@@ -25,14 +25,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { modes, genres } from "@/data/placeholder-data";
-import { makeAttempt, getDaily } from "@/services/daily";
 import React, { useState } from "react";
-import { notify } from "@/lib/toast";
-import { GameStatus, STATUS } from "@/types/game";
-import { PopUp } from "./attempts-popup";
+import { GameStatus, STATUS } from "@/types/gameTypes";
+import { useHandleGuess } from "@/hooks/handleGuess";
 
 type Props = {
   country: string;
+  mode: string;
   setMode: React.Dispatch<React.SetStateAction<string>>;
   gameStatus: GameStatus;
   setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
@@ -40,29 +39,13 @@ type Props = {
 
 export function AppField({
   country,
+  mode,
   setMode,
   gameStatus,
   setGameStatus,
 }: Props) {
   const [genre, setGenre] = useState<string | null>(null);
-  const [popUpKey, setPopUpKey] = useState(0);
-
-  const handleGuess = async () => {
-    if (!genre) {
-      notify.error("Please enter a valid genre");
-      return;
-    }
-
-    await makeAttempt(genre);
-    const daily = await getDaily();
-    if (daily) {
-      setGameStatus({
-        attempts: daily.attempts,
-        status: daily.status,
-      });
-      setPopUpKey((prev) => prev + 1);
-    }
-  };
+  const handleGuess = useHandleGuess();
 
   return (
     <>
@@ -78,7 +61,7 @@ export function AppField({
           <Field>
             <FieldLabel className="text-1xl">Mode selection</FieldLabel>
             <Select
-              defaultValue={modes[0]}
+              defaultValue={mode}
               onValueChange={(value) => setMode(value)}
             >
               <SelectTrigger className="w-full">
@@ -116,8 +99,12 @@ export function AppField({
             </Combobox>
           </Field>
           <Field>
-            {gameStatus.status !== STATUS.WON ? (
-              <Button type="button" onClick={handleGuess}>
+            {gameStatus.status !== STATUS.WON &&
+            gameStatus.status !== STATUS.LOST ? (
+              <Button
+                type="button"
+                onClick={() => handleGuess(genre, setGameStatus)}
+              >
                 Guess
               </Button>
             ) : (
@@ -126,7 +113,6 @@ export function AppField({
           </Field>
         </FieldGroup>
       </FieldSet>
-      {popUpKey != 0 && <PopUp key={popUpKey} status={gameStatus.status} />}
     </>
   );
 }

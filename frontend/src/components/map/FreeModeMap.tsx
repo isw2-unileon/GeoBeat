@@ -4,10 +4,10 @@ import getCountryData from "@/lib/getCountryData";
 
 type FreeMapProps = {
   countryISO: string;
-  setCountry: React.Dispatch<React.SetStateAction<string>>;
+  setCountryISO: React.Dispatch<React.SetStateAction<string>>;
 };
 
-export function FreeModeMap({ countryISO, setCountry }: FreeMapProps) {
+export function FreeModeMap({ countryISO, setCountryISO }: FreeMapProps) {
   const countryLayer: FillLayerSpecification = {
     id: "country-layer",
     type: "fill",
@@ -37,8 +37,9 @@ export function FreeModeMap({ countryISO, setCountry }: FreeMapProps) {
         });
 
         if (features.length > 0) {
-          const country: string = features[0]?.properties.name;
-          setCountry(country);
+          const country: string =
+            features[0]?.properties?.["ISO3166-1-Alpha-2"];
+          setCountryISO(country);
         }
       }}
     >

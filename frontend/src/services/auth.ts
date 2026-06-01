@@ -1,5 +1,5 @@
 import React from "react";
-import { notify } from "@/lib/toast";
+import { notify } from "@/lib/notifier";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const GOOGLE_LOGIN_API = import.meta.env.VITE_GOOGLE_LOGIN;
