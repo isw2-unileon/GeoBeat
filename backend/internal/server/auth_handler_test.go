@@ -40,15 +40,15 @@ func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*ge
 
 type mockTokenizer struct{}
 
-func (m *mockTokenizer) GenerateToken(userID int) (string, error) {
+func (m *mockTokenizer) GenerateToken(userID uuid.UUID) (string, error) {
 	return "mock-jwt-token", nil
 }
 
-func (m *mockTokenizer) ValidateToken(token string) (int, error) {
+func (m *mockTokenizer) ValidateToken(token string) (uuid.UUID, error) {
 	if token == "mock-jwt-token" {
-		return 1, nil
+		return uuid.New(), nil
 	}
-	return 0, errors.New("invalid token")
+	return uuid.Nil, errors.New("invalid token")
 }
 
 type mockHasher struct{}
@@ -83,6 +83,7 @@ func (m *mockOAuthProvider) GetUserInfo(ctx context.Context, code string) (*serv
 }
 
 var mockCfg = &config.Config{
+	FrontendURL: "https://fake_frontend_url",
 	RedirectURL: "fake_url",
 }
 
@@ -342,8 +343,8 @@ func TestHandleOAuthRedirect(t *testing.T) {
 				"code":  "auth-code",
 				"state": "valid-state",
 			},
-			expectedStatus: http.StatusOK,
-			expectedBody:   `"token"`,
+			expectedStatus: http.StatusTemporaryRedirect,
+			expectedBody:   "<a href=\"https://fake_frontend_url\">Temporary Redirect</a>",
 			setupCookies: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{Name: "oauth_state_google", Value: "valid-state", Path: "/"})
 			},
@@ -355,7 +356,7 @@ func TestHandleOAuthRedirect(t *testing.T) {
 				"state": "invalid-state",
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `"error"`,
+			expectedBody:   "",
 			setupCookies: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{Name: "oauth_state_google", Value: "valid-state", Path: "/"})
 			},

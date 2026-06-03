@@ -16,7 +16,7 @@ type Config struct {
 	GoogleClientID  string
 	GoogleSecret    string
 	RedirectURL     string
-	FrontendUrl     string
+	FrontendURL     string
 	JWTToken        string
 }
 
@@ -38,7 +38,7 @@ func Load() *Config {
 		GoogleClientID:  getEnv("GOOGLE_CLIENT_ID", ""),
 		GoogleSecret:    getEnv("GOOGLE_SECRET", ""),
 		RedirectURL:     getEnv("REDIRECT_URL", ""),
-		FrontendUrl:     getEnv("FRONTEND_URL", ""),
+		FrontendURL:     getEnv("FRONTEND_URL", ""),
 		JWTToken:        mustGetEnv("JWT_TOKEN"), // TODO: Check if best practice
 	}
 }

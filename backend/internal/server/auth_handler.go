@@ -153,12 +153,12 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 		Name:     "token",
 		Value:    token,
 		HttpOnly: true,
-		Secure:   false, // TODO: Set to true in production
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   600, // TODO: Change in production
 	})
 
-	http.Redirect(w, r, h.cfg.FrontendUrl, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, h.cfg.FrontendURL, http.StatusTemporaryRedirect)
 }
 
 // AuthMiddleware is an HTTP middleware that validates the presence and validity of a Bearer token in the Authorization header.

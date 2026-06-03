@@ -6,6 +6,7 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 )
 
+// CorsMiddleware adds CORS headers to the response and handles preflight requests.
 func CorsMiddleware(cfg *config.Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", cfg.CORSAllowOrigin)
