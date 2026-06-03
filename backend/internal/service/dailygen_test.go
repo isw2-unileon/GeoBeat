@@ -43,7 +43,7 @@ func (m *mockGenreRepository) GetAllowedGenres(ctx context.Context) ([]genre.Gen
 
 type mockDailyChallengeRepository struct{}
 
-func (m *mockDailyChallengeRepository) SaveDailyChallenge(ctx context.Context, challenge daily.Challenge) error {
+func (m *mockDailyChallengeRepository) SaveDailyChallenge(ctx context.Context, challenge *daily.Challenge) error {
 	return nil
 }
 

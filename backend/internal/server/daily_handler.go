@@ -51,8 +51,8 @@ type statusResponse struct {
 
 // getDailyStatus handles the GET /api/game/daily endpoint to retrieve the current status of the daily challenge for a user.
 func (h *Handler) getDailyStatus(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
-	if !ok {
+	userID := r.Context().Value(UserIDContextKey).(uuid.UUID)
+	if userID == uuid.Nil {
 		http.Error(w, "server error: missing user context", http.StatusInternalServerError)
 		return
 	}
@@ -86,6 +86,7 @@ func (h *Handler) postAttempt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Result contains status
 	result, err := h.svc.ProcessAttempt(r.Context(), userID, req.Guess)
 	if err != nil {
 		dailyError(w, err)

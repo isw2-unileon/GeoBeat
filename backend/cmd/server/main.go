@@ -11,22 +11,29 @@ import (
 	"time"
 
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/lastfm"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/oauth"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/pgdb"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/tools"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	// TODO: launch chron job to generate daily challenge at midnight UTC
 
 	cfg := config.Load()
-
 	if cfg.DatabaseURL == "" {
 		slog.Error("DATABASE_URL is not set in .env or environment variables")
 		os.Exit(1)
 	}
 
 	ctx := context.Background()
+
 	dbPool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		slog.Error("Failed to connect to the database", "error", err)
@@ -35,28 +42,100 @@ func main() {
 	defer dbPool.Close()
 	slog.Info("Successfully connected to Supabase")
 
-	mux := http.NewServeMux()
+	mux := setupRoutes(dbPool, cfg)
 
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-
-		if _, err := w.Write([]byte(`{"status":"ok"}`)); err != nil {
-			slog.Error("Failed to write health check response", "error", err)
-		}
-	})
-
+	corsHandler := server.CorsMiddleware(cfg, mux)
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
-		Handler:      mux,
+		Handler:      corsHandler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
+	startDailyChallengeJob(dbPool, cfg)
+
+	runServer(srv, cfg.Port)
+}
+
+// setupRoutes wires all handlers and returns a fully configured ServeMux.
+func setupRoutes(dbPool *pgxpool.Pool, cfg *config.Config) *http.ServeMux {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /health", healthHandler)
+
+	authHandler := buildAuthHandler(dbPool, cfg)
+	dailyHandler := buildDailyHandler(dbPool)
+
+	authHandler.RegisterRoutes(mux)
+	dailyHandler.RegisterRoutes(mux, authHandler.AuthMiddleware)
+
+	return mux
+}
+
+// buildAuthHandler constructs the auth handler and its dependencies.
+func buildAuthHandler(dbPool *pgxpool.Pool, cfg *config.Config) *server.AuthHandler {
+	userRepo := pgdb.NewPostgresUserRepo(dbPool)
+	tokenizer := tools.NewJWTTokenizer(cfg.JWTToken)
+	hasher := tools.NewBCryptHasher()
+
+	googleProvider := oauth.NewGoogleOAuthProvider(
+		cfg.GoogleClientID,
+		cfg.GoogleSecret,
+		cfg.RedirectURL+string(geouser.ProviderGoogle),
+	)
+
+	authService := service.NewAuthService(userRepo, tokenizer, hasher,
+		map[geouser.AuthProvider]service.OAuthProvider{
+			geouser.ProviderGoogle: googleProvider,
+		},
+	)
+
+	return server.NewAuthHandler(authService,
+		map[geouser.AuthProvider]server.OAuthProvider{
+			geouser.ProviderGoogle: googleProvider,
+		},
+		cfg,
+	)
+}
+
+// buildDailyHandler constructs the daily challenge handler and its dependencies.
+func buildDailyHandler(dbPool *pgxpool.Pool) *server.Handler {
+	dailyRepo := pgdb.NewPostgresDailyRepo(dbPool)
+	return server.NewHandler(service.NewService(dailyRepo, dailyRepo))
+}
+
+// startDailyChallengeJob schedules the daily challenge generation at midnight UTC.
+func startDailyChallengeJob(dbPool *pgxpool.Pool, cfg *config.Config) {
+	genreRepo := pgdb.NewPostgresGenreRepo(dbPool)
+	musicProvider := lastfm.NewClient(cfg.LastFMAPIKey)
+	dailyRepo := pgdb.NewPostgresDailyRepo(dbPool)
+	challengeService := service.NewDailyChallengeService(musicProvider, genreRepo, dailyRepo)
+
+	c := cron.New(cron.WithLocation(time.UTC))
+	_, err := c.AddFunc("0 0 * * *", func() {
+		slog.Info("Running daily challenge generation", "country", "ES")
+		if err := challengeService.GenerateDailyChallenge("ES"); err != nil {
+			slog.Error("Daily challenge generation failed", "error", err)
+		} else {
+			slog.Info("Daily challenge generation succeeded", "country", "ES")
+		}
+	})
+	if err != nil {
+		slog.Error("Failed to schedule daily challenge job", "error", err)
+		os.Exit(1)
+	}
+
+	c.Start()
+	slog.Info("Daily challenge cron job scheduled", "schedule", "0 0 * * * (UTC)")
+}
+
+// runServer starts the HTTP server and blocks until an OS signal triggers a graceful shutdown.
+func runServer(srv *http.Server, port string) {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	go func() {
-		slog.Info("Server listening", "port", cfg.Port)
+		slog.Info("Server listening", "port", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("Server crashed", "error", err)
 			os.Exit(1)
@@ -74,4 +153,12 @@ func main() {
 	}
 
 	slog.Info("Server stopped cleanly")
+}
+
+// healthHandler responds with a simple JSON status check.
+func healthHandler(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte(`{"status":"ok"}`)); err != nil {
+		slog.Error("Failed to write health check response", "error", err)
+	}
 }

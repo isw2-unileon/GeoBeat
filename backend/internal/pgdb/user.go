@@ -40,7 +40,7 @@ func (r *PostgresUserRepo) FindByEmail(ctx context.Context, email string) (*geou
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, errors.New("user not found")
+			return nil, geouser.ErrNotFound
 		}
 		return nil, err
 	}

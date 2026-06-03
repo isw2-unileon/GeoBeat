@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
@@ -44,12 +45,12 @@ func (m *mockUserRepository) Update(ctx context.Context, u *geouser.User) error 
 
 type mockTokenizer struct{}
 
-func (m *mockTokenizer) GenerateToken(userID int) (string, error) {
+func (m *mockTokenizer) GenerateToken(userID uuid.UUID) (string, error) {
 	return "jwt_simulated", nil
 }
 
-func (m *mockTokenizer) ValidateToken(token string) (int, error) {
-	return 1, nil
+func (m *mockTokenizer) ValidateToken(token string) (uuid.UUID, error) {
+	return uuid.New(), nil
 }
 
 type mockHasher struct {

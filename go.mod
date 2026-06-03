@@ -7,7 +7,10 @@ require (
 	github.com/joho/godotenv v1.5.1
 )
 
-require cloud.google.com/go/compute/metadata v0.3.0 // indirect
+require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
+)
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1

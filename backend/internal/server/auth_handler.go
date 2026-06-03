@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
@@ -25,13 +27,14 @@ type AuthService interface {
 	RegisterWithEmail(ctx context.Context, email, username, password string) error
 	LoginWithEmail(ctx context.Context, email, password string) (string, error)
 	ProcessOAuthLogin(ctx context.Context, code string, provider geouser.AuthProvider) (string, error)
-	ValidateToken(ctx context.Context, token string) (int, error)
+	ValidateToken(ctx context.Context, token string) (uuid.UUID, error)
 }
 
 // AuthHandler handles authentication-related HTTP requests, including registration, login, and OAuth flows.
 type AuthHandler struct {
 	authService AuthService
 	providers   map[geouser.AuthProvider]OAuthProvider
+	cfg         *config.Config
 }
 
 type contextKey string
@@ -40,10 +43,11 @@ type contextKey string
 const UserIDContextKey = contextKey("userID")
 
 // NewAuthHandler creates a new AuthHandler with the given authentication service and OAuth providers.
-func NewAuthHandler(authService AuthService, providers map[geouser.AuthProvider]OAuthProvider) *AuthHandler {
+func NewAuthHandler(authService AuthService, providers map[geouser.AuthProvider]OAuthProvider, cfg *config.Config) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 		providers:   providers,
+		cfg:         cfg,
 	}
 }
 
@@ -145,7 +149,16 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"token": token})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   600, // TODO: Change in production
+	})
+
+	http.Redirect(w, r, h.cfg.FrontendURL, http.StatusTemporaryRedirect)
 }
 
 // AuthMiddleware is an HTTP middleware that validates the presence and validity of a Bearer token in the Authorization header.
@@ -165,7 +178,7 @@ func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
 
 		token := parts[1]
 		userID, err := h.authService.ValidateToken(r.Context(), token)
-		if err != nil || userID <= 0 {
+		if err != nil || userID == uuid.Nil {
 			formatError(w, http.StatusUnauthorized, "invalid or expired token")
 			return
 		}

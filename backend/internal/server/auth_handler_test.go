@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
@@ -39,15 +40,15 @@ func (m *mockUserRepository) FindByEmail(ctx context.Context, email string) (*ge
 
 type mockTokenizer struct{}
 
-func (m *mockTokenizer) GenerateToken(userID int) (string, error) {
+func (m *mockTokenizer) GenerateToken(userID uuid.UUID) (string, error) {
 	return "mock-jwt-token", nil
 }
 
-func (m *mockTokenizer) ValidateToken(token string) (int, error) {
+func (m *mockTokenizer) ValidateToken(token string) (uuid.UUID, error) {
 	if token == "mock-jwt-token" {
-		return 1, nil
+		return uuid.New(), nil
 	}
-	return 0, errors.New("invalid token")
+	return uuid.Nil, errors.New("invalid token")
 }
 
 type mockHasher struct{}
@@ -79,6 +80,11 @@ func (m *mockOAuthProvider) GetProviderName() geouser.AuthProvider {
 
 func (m *mockOAuthProvider) GetUserInfo(ctx context.Context, code string) (*service.OAuthUserInfo, error) {
 	return m.mockResponse, m.mockErr
+}
+
+var mockCfg = &config.Config{
+	FrontendURL: "https://fake_frontend_url",
+	RedirectURL: "fake_url",
 }
 
 func TestHandleRegister(t *testing.T) {
@@ -337,8 +343,8 @@ func TestHandleOAuthRedirect(t *testing.T) {
 				"code":  "auth-code",
 				"state": "valid-state",
 			},
-			expectedStatus: http.StatusOK,
-			expectedBody:   `"token"`,
+			expectedStatus: http.StatusTemporaryRedirect,
+			expectedBody:   "<a href=\"https://fake_frontend_url\">Temporary Redirect</a>",
 			setupCookies: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{Name: "oauth_state_google", Value: "valid-state", Path: "/"})
 			},
@@ -350,7 +356,7 @@ func TestHandleOAuthRedirect(t *testing.T) {
 				"state": "invalid-state",
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `"error"`,
+			expectedBody:   "",
 			setupCookies: func(req *http.Request) {
 				req.AddCookie(&http.Cookie{Name: "oauth_state_google", Value: "valid-state", Path: "/"})
 			},
@@ -460,7 +466,7 @@ func TestAuthMiddleware(t *testing.T) {
 			hasher := &mockHasher{}
 			tokenizer := &mockTokenizer{}
 			authSvc := service.NewAuthService(userRepo, tokenizer, hasher, nil)
-			handler := server.NewAuthHandler(authSvc, nil)
+			handler := server.NewAuthHandler(authSvc, nil, mockCfg)
 
 			// Mock next handler
 			nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -512,7 +518,7 @@ func newTestAuthServer(t *testing.T) (*http.ServeMux, *mockUserRepository) {
 	}
 
 	authSvc := service.NewAuthService(repo, tokenizer, hasher, svcProviders)
-	handler := server.NewAuthHandler(authSvc, hdlProviders)
+	handler := server.NewAuthHandler(authSvc, hdlProviders, mockCfg)
 
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)

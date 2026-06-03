@@ -1,37 +1,34 @@
-import { Source, Layer, FillLayerSpecification } from '@vis.gl/react-maplibre';
-import { BaseGlobe } from './base/BaseGlobe';
-import positions from '@/data/country-centroids.json';
+import { Source, Layer, FillLayerSpecification } from "@vis.gl/react-maplibre";
+import { BaseGlobe } from "./base/BaseGlobe";
+import getCountryData from "@/lib/getCountryData";
 
 type DailyMapProps = {
-  country: string;
-}
+  countryISO: string;
+};
 
+export function DailyModeMap({ countryISO }: DailyMapProps) {
+  const country_data = getCountryData(countryISO);
+  // notify.info(country_data); TODO Check why it triggers two times
 
-export function DailyModeMap({ country }: DailyMapProps) {
-
-    const selectedCountyLayer: FillLayerSpecification = {
-    id: 'selected-country-layer',
-    type: 'fill',
-    source: 'countries',
-    filter: ['==', ['get', 'name'], country],
+  const selectedCountyLayer: FillLayerSpecification = {
+    id: "selected-country-layer",
+    type: "fill",
+    source: "countries",
+    filter: ["==", ["get", "name"], country_data.name],
     paint: {
-      'fill-color': '#5145ac',
-      'fill-opacity': 0.4,
-    }
-  }
-
-  const pos = positions.find(item => item.name == country) ?? {longitude: 0, latitude: 0}
-  console.log(pos)
+      "fill-color": "#5145ac",
+      "fill-opacity": 0.4,
+    },
+  };
 
   return (
-    <BaseGlobe longitude={pos.longitude} latitude={pos.latitude}>
-      <Source
-        id="countries"
-        type="geojson"
-        data="/data/countries.geojson"
-      >
-        <Layer {...selectedCountyLayer}/>
+    <BaseGlobe
+      longitude={country_data.longitude}
+      latitude={country_data.latitude}
+    >
+      <Source id="countries" type="geojson" data="/data/countries.geojson">
+        <Layer {...selectedCountyLayer} />
       </Source>
     </BaseGlobe>
-  )
+  );
 }

@@ -26,7 +26,7 @@ type MusicProvider interface {
 
 // DailyChallengeRepository defines the interface for saving daily challenges.
 type DailyChallengeRepository interface {
-	SaveDailyChallenge(ctx context.Context, challenge daily.Challenge) error
+	SaveDailyChallenge(ctx context.Context, challenge *daily.Challenge) error
 }
 
 // GenreRepository defines the interface for managing genres.
@@ -113,5 +113,5 @@ func (s *DailyChallengeService) GenerateDailyChallenge(country string) error {
 		Date:          time.Now().Truncate(24 * time.Hour),
 	}
 
-	return s.dailyRepo.SaveDailyChallenge(ctx, challenge)
+	return s.dailyRepo.SaveDailyChallenge(ctx, &challenge)
 }
