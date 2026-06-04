@@ -193,6 +193,7 @@ func oauthStateCookieName(provider geouser.AuthProvider) string {
 }
 
 func setOAuthStateCookie(w http.ResponseWriter, state string, provider geouser.AuthProvider, secure bool) {
+	// #nosec G124 - Secure flag is dynamically configured based on deployment environment environment
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookieName(provider),
 		Value:    state,
@@ -213,6 +214,7 @@ func getOAuthStateFromCookie(r *http.Request, provider geouser.AuthProvider) (st
 }
 
 func clearOAuthStateCookie(w http.ResponseWriter, provider geouser.AuthProvider, secure bool) {
+	// #nosec G124 - Secure flag is dynamically configured based on deployment environment environment
 	http.SetCookie(w, &http.Cookie{
 		Name:     oauthStateCookieName(provider),
 		Value:    "",

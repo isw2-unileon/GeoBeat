@@ -113,11 +113,17 @@ func startDailyChallengeJob(dbPool *pgxpool.Pool, cfg *config.Config) {
 
 	c := cron.New(cron.WithLocation(time.UTC))
 	_, err := c.AddFunc("0 0 * * *", func() {
-		slog.Info("Running daily challenge generation", "country", "ES")
-		if err := challengeService.GenerateDailyChallenge("ES"); err != nil {
+		slog.Info("Running daily challenge generation", "country", "spain")
+		if err := challengeService.GenerateDailyChallenge("spain"); err != nil {
 			slog.Error("Daily challenge generation failed", "error", err)
 		} else {
-			slog.Info("Daily challenge generation succeeded", "country", "ES")
+			slog.Info("Daily challenge generation succeeded", "country", "spain")
+		}
+		slog.Info("Running inverse daily challenge generation", "country", "spain")
+		if err := challengeService.GenerateInverseChallenge("spain"); err != nil {
+			slog.Error("Inverse daily challenge generation failed", "error", err)
+		} else {
+			slog.Info("Inverse daily challenge generation succeeded", "country", "spain")
 		}
 	})
 	if err != nil {
