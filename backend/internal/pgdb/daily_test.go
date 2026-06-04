@@ -87,6 +87,51 @@ func TestPostgresDailyRepo_Challenges(t *testing.T) {
 	})
 }
 
+func TestPostgresDailyRepo_InverseChallenges(t *testing.T) {
+	pool := setupDailyTestDB(t)
+	repo := pgdb.NewPostgresDailyRepo(pool)
+	ctx := context.Background()
+
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+
+	challenge := &daily.InverseChallenge{
+		GivenSongName: "All Star",
+		TargetCountry: "spain",
+		Date:          today,
+	}
+
+	t.Run("SaveInverseChallenge", func(t *testing.T) {
+		err := repo.SaveInverseChallenge(ctx, challenge)
+		if err != nil {
+			t.Fatalf("Failed to save inverse challenge: %v", err)
+		}
+
+		if challenge.ID == 0 {
+			t.Errorf("Expected ID to be populated by RETURNING clause, got 0")
+		}
+	})
+
+	t.Run("GetInverseChallengeByDate_Success", func(t *testing.T) {
+		fetched, err := repo.GetInverseChallengeByDate(ctx, today)
+		if err != nil {
+			t.Fatalf("Failed to fetch inverse challenge: %v", err)
+		}
+
+		if fetched.GivenSongName != challenge.GivenSongName {
+			t.Errorf("Expected song name %s, got %s", challenge.GivenSongName, fetched.GivenSongName)
+		}
+	})
+
+	t.Run("GetInverseChallengeByDate_NotFound", func(t *testing.T) {
+		tomorrow := today.AddDate(0, 0, 1)
+		_, err := repo.GetInverseChallengeByDate(ctx, tomorrow)
+
+		if err == nil {
+			t.Errorf("Expected error for non-existent inverse challenge, got nil")
+		}
+	})
+}
+
 func TestPostgresDailyRepo_Sessions(t *testing.T) {
 	pool := setupDailyTestDB(t)
 	repo := pgdb.NewPostgresDailyRepo(pool)
