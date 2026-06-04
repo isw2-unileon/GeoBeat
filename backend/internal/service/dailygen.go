@@ -27,6 +27,7 @@ type MusicProvider interface {
 // DailyChallengeRepository defines the interface for saving daily challenges.
 type DailyChallengeRepository interface {
 	SaveDailyChallenge(ctx context.Context, challenge *daily.Challenge) error
+	SaveInverseChallenge(ctx context.Context, challenge *daily.InverseChallenge) error
 }
 
 // GenreRepository defines the interface for managing genres.
@@ -114,4 +115,25 @@ func (s *DailyChallengeService) GenerateDailyChallenge(country string) error {
 	}
 
 	return s.dailyRepo.SaveDailyChallenge(ctx, &challenge)
+}
+
+// GenerateInverseChallenge generates a new inverse daily challenge based on the top song of a specified country and saves it to the repository.
+func (s *DailyChallengeService) GenerateInverseChallenge(country string) error {
+	ctx := context.Background()
+	songs, err := s.musicProvider.GetTopSongsByCountry(ctx, country)
+	if err != nil {
+		return err
+	}
+
+	if len(songs) == 0 {
+		return errors.New("no songs found for the specified country")
+	}
+
+	challenge := daily.InverseChallenge{
+		GivenSongName: songs[0].Name,
+		TargetCountry: country,
+		Date:          time.Now().Truncate(24 * time.Hour),
+	}
+
+	return s.dailyRepo.SaveInverseChallenge(ctx, &challenge)
 }

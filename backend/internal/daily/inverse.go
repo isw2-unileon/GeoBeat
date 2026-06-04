@@ -20,7 +20,7 @@ type InverseAttemptResult struct {
 	Attempts int        `json:"attempts_remaining"`
 }
 
-// MakeAttempt processes a player's guess and updates the session state accordingly.
+// MakeInverseAttempt processes a player's guess and updates the session state accordingly.
 func (s *Session) MakeInverseAttempt(guess string, challenge *InverseChallenge) (*InverseAttemptResult, error) {
 	if s.Status != StatusPlaying {
 		return nil, ErrGameOver

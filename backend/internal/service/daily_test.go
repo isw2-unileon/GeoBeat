@@ -287,7 +287,7 @@ func assertSessionState(t *testing.T, wantSession bool, session *daily.Session, 
 			t.Fatal("expected a session but got nil")
 		}
 
-		key := sessionKey{userID, 1}
+		key := sessionKey{userID, session.ChallengeID}
 		if _, exists := sessionRepo.sessions[key]; !exists {
 			t.Error("did not persist the session in the database")
 		}
