@@ -48,27 +48,10 @@ func TestNewSession(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := timetrial.NewSession(tt.userID, tt.challengeID)
 
-			if !errors.Is(err, tt.wantErr) {
-				t.Fatalf("NewSession() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			assertError(t, err, tt.wantErr)
 
 			if tt.wantErr == nil {
-				// Assert initialized state
-				if got.UserID != tt.userID {
-					t.Errorf("Expected UserID %v, got %v", tt.userID, got.UserID)
-				}
-				if got.ChallengeID != tt.challengeID {
-					t.Errorf("Expected ChallengeID %v, got %v", tt.challengeID, got.ChallengeID)
-				}
-				if got.CurrentIndex != 0 {
-					t.Errorf("Expected initial CurrentIndex to be 0, got %d", got.CurrentIndex)
-				}
-				if got.Status != timetrial.StatusPlaying {
-					t.Errorf("Expected initial Status to be playing, got %v", got.Status)
-				}
-				if got.StartTime.IsZero() {
-					t.Error("Expected StartTime to be initialized, but got zero time")
-				}
+				assertInitialSession(t, got, tt.userID, tt.challengeID)
 			}
 		})
 	}
@@ -83,7 +66,7 @@ func TestSession_MakeAttempt(t *testing.T) {
 	}
 
 	validUserID := uuid.New()
-	baseStartTime := time.Now().UTC().Add(-1 * time.Minute) // Simulate game started 1 min ago
+	baseStartTime := time.Now().UTC().Add(-1 * time.Minute)
 
 	tests := []struct {
 		name          string
@@ -130,7 +113,7 @@ func TestSession_MakeAttempt(t *testing.T) {
 			initialState: &timetrial.Session{
 				UserID:       validUserID,
 				ChallengeID:  1,
-				CurrentIndex: 1, // On France
+				CurrentIndex: 1,
 				Status:       timetrial.StatusPlaying,
 				StartTime:    baseStartTime,
 			},
@@ -145,14 +128,14 @@ func TestSession_MakeAttempt(t *testing.T) {
 			initialState: &timetrial.Session{
 				UserID:       validUserID,
 				ChallengeID:  1,
-				CurrentIndex: 2, // On Japan (Last country)
+				CurrentIndex: 2,
 				Status:       timetrial.StatusPlaying,
 				StartTime:    baseStartTime,
 			},
 			guess:         "J-Pop",
 			wantCorrect:   true,
 			wantStatus:    timetrial.StatusCompleted,
-			wantNext:      "", // No next country
+			wantNext:      "",
 			wantErr:       nil,
 			checkDuration: true,
 		},
@@ -175,7 +158,7 @@ func TestSession_MakeAttempt(t *testing.T) {
 			initialState: &timetrial.Session{
 				UserID:       validUserID,
 				ChallengeID:  1,
-				CurrentIndex: 5, // Invalid index manually set
+				CurrentIndex: 5,
 				Status:       timetrial.StatusPlaying,
 				StartTime:    baseStartTime,
 			},
@@ -189,48 +172,86 @@ func TestSession_MakeAttempt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gotResult, gotErr := tt.initialState.MakeAttempt(tt.guess, mockChallenge)
 
-			// Assert Error
+			assertError(t, gotErr, tt.wantErr)
+
+			// If we expected an error and got it, there is no result to evaluate.
 			if tt.wantErr != nil {
-				if gotErr == nil {
-					t.Fatalf("Expected error %v, got nil", tt.wantErr)
-				}
-				if gotErr.Error() != tt.wantErr.Error() && !errors.Is(gotErr, tt.wantErr) {
-					t.Fatalf("Expected error %v, got %v", tt.wantErr, gotErr)
-				}
-				return // If we expect an error, we don't evaluate the AttemptResult
+				return
 			}
 
-			if gotErr != nil {
-				t.Fatalf("Unexpected error: %v", gotErr)
-			}
-
-			// Assert DTO Result
-			if gotResult.Correct != tt.wantCorrect {
-				t.Errorf("Expected Correct %v, got %v", tt.wantCorrect, gotResult.Correct)
-			}
-			if gotResult.Status != tt.wantStatus {
-				t.Errorf("Expected Status %v, got %v", tt.wantStatus, gotResult.Status)
-			}
-			if gotResult.NextCountry != tt.wantNext {
-				t.Errorf("Expected NextCountry %q, got %q", tt.wantNext, gotResult.NextCountry)
-			}
-
-			// Assert Internal Session State Mutation
-			if tt.initialState.Status != tt.wantStatus {
-				t.Errorf("Expected Session.Status to mutate to %v, got %v", tt.wantStatus, tt.initialState.Status)
-			}
+			assertMakeAttemptResult(t, gotResult, tt.wantCorrect, tt.wantStatus, tt.wantNext)
+			assertSessionMutation(t, tt.initialState, tt.wantStatus)
 
 			if tt.checkDuration {
-				if tt.initialState.EndTime.IsZero() {
-					t.Error("Expected Session.EndTime to be set, got zero time")
-				}
-				if tt.initialState.Duration <= 0 {
-					t.Errorf("Expected Session.Duration to be calculated (>0), got %v", tt.initialState.Duration)
-				}
-				if gotResult.Duration != tt.initialState.Duration {
-					t.Errorf("Expected DTO duration %v to match Session duration %v", gotResult.Duration, tt.initialState.Duration)
-				}
+				assertDuration(t, tt.initialState, gotResult)
 			}
 		})
+	}
+}
+
+func assertError(t *testing.T, got, want error) {
+	t.Helper()
+	if want == nil {
+		if got != nil {
+			t.Fatalf("Expected no error, got %v", got)
+		}
+		return
+	}
+	if got == nil {
+		t.Fatalf("Expected error %v, got nil", want)
+	}
+	if got.Error() != want.Error() && !errors.Is(got, want) {
+		t.Fatalf("Expected error %v, got %v", want, got)
+	}
+}
+
+func assertInitialSession(t *testing.T, got *timetrial.Session, expectedUser uuid.UUID, expectedChallenge int) {
+	t.Helper()
+	if got.UserID != expectedUser {
+		t.Errorf("Expected UserID %v, got %v", expectedUser, got.UserID)
+	}
+	if got.ChallengeID != expectedChallenge {
+		t.Errorf("Expected ChallengeID %v, got %v", expectedChallenge, got.ChallengeID)
+	}
+	if got.CurrentIndex != 0 {
+		t.Errorf("Expected initial CurrentIndex to be 0, got %d", got.CurrentIndex)
+	}
+	if got.Status != timetrial.StatusPlaying {
+		t.Errorf("Expected initial Status to be playing, got %v", got.Status)
+	}
+	if got.StartTime.IsZero() {
+		t.Error("Expected StartTime to be initialized, but got zero time")
+	}
+}
+
+func assertMakeAttemptResult(t *testing.T, got *timetrial.AttemptResult, wantCorrect bool, wantStatus timetrial.GameStatus, wantNext string) {
+	t.Helper()
+	if got.Correct != wantCorrect {
+		t.Errorf("Expected Correct %v, got %v", wantCorrect, got.Correct)
+	}
+	if got.Status != wantStatus {
+		t.Errorf("Expected Status %v, got %v", wantStatus, got.Status)
+	}
+	if got.NextCountry != wantNext {
+		t.Errorf("Expected NextCountry %q, got %q", wantNext, got.NextCountry)
+	}
+}
+
+func assertSessionMutation(t *testing.T, session *timetrial.Session, wantStatus timetrial.GameStatus) {
+	t.Helper()
+	if session.Status != wantStatus {
+		t.Errorf("Expected Session.Status to mutate to %v, got %v", wantStatus, session.Status)
+	}
+}
+
+func assertDuration(t *testing.T, session *timetrial.Session, result *timetrial.AttemptResult) {
+	t.Helper()
+	if session.EndTime.IsZero() {
+		t.Error("Expected Session.EndTime to be set, got zero time")
+	}
+	if session.Duration <= 0 {
+		t.Errorf("Expected Session.Duration to be calculated (>0), got %v", session.Duration)
+	} else if result.Duration != session.Duration {
+		t.Errorf("Expected DTO duration %v to match Session duration %v", result.Duration, session.Duration)
 	}
 }
