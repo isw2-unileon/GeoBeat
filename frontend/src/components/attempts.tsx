@@ -11,12 +11,8 @@ type Props = {
 
 export function Attempts({ gameStatus }: Props) {
   return (
-    <div className="bg-gray-100 rounded-sm absolute md:top-30 md:left-15 top-15 left-5 flex flex-row">
+    <div className="bg-gray-100 rounded-sm absolute md:top-30 md:left-15 top-20 left-3 flex flex-row">
       <GameSquares attempts={gameStatus.attempts} status={gameStatus.status} />
-      <HoverCard>
-        <HoverCardTrigger></HoverCardTrigger>
-        <HoverCardContent></HoverCardContent>
-      </HoverCard>
     </div>
   );
 }

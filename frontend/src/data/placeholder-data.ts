@@ -1,4 +1,4 @@
-export const modes = ["Daily Mode", "Free Mode"] as const;
+export const modes = ["Daily Mode", "Guess the country"] as const;
 export const genres = [
   "Rock",
   "pop",

@@ -2,7 +2,7 @@ import { AppField } from "./components/app-field";
 import { AppDrawer } from "./components/app-drawer";
 import { AppDialog } from "./components/app-dialog";
 import { DailyModeMap } from "./components/map/DailyModeMap";
-import { FreeModeMap } from "./components/map/FreeModeMap";
+import { InverseModeMap } from "./components/map/InverseModeMap";
 import { Toaster } from "./components/ui/sonner";
 
 import { modes } from "./data/placeholder-data";
@@ -11,14 +11,22 @@ import { useEffect } from "react";
 import { getDaily } from "./services/daily";
 import { Attempts } from "./components/attempts";
 import { Daily, GameStatus, STATUS } from "@/types/gameTypes";
-import getCountryData from "./lib/getCountryData";
+import { getDataFromISO } from "./lib/getCountryData";
 import { PopUp } from "./components/attempts-popup";
 import { GuessProvider } from "./context/GuessProvider";
 import { DailyModeTitle } from "./components/daily-title";
+import { InverseModeTitle } from "./components/inverse-title";
+import { LoadingText } from "./components/loading-text";
+import { getInverse } from "./services/inverse";
 
 export default function App() {
   const [mode, setMode] = useState<string>(modes[0]);
   const [daily, setDaily] = useState<Daily>(null);
+  const [countryISO, setCountryISO] = useState<string>("UNKOWN");
+  const [gameStatus, setGameStatus] = useState<GameStatus>({
+    attempts: 0,
+    status: STATUS.PLAYING,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -29,19 +37,9 @@ export default function App() {
     load();
   }, []);
 
-  const [countryISO, setCountryISO] = useState<string>("ES");
   useEffect(() => {
-    if (daily?.country) {
+    if (daily) {
       setCountryISO(daily.country);
-    }
-  }, [daily]);
-
-  const [gameStatus, setGameStatus] = useState<GameStatus>({
-    attempts: 0,
-    status: STATUS.PLAYING,
-  });
-  useEffect(() => {
-    if (daily?.attempts) {
       setGameStatus({
         attempts: daily.attempts,
         status: daily.status,
@@ -49,24 +47,55 @@ export default function App() {
     }
   }, [daily]);
 
-  const country = getCountryData(countryISO).name;
+  const country = getDataFromISO(countryISO).name;
+
+  const [forceLoad, setForceLoad] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForceLoad(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const ready = countryISO !== "UNKOWN" || forceLoad;
 
   let content;
   switch (mode) {
     case modes[0]:
-      content = <DailyModeMap countryISO={countryISO} />;
+      if (ready) {
+        content = (
+          <>
+            <DailyModeTitle />
+            <DailyModeMap countryISO={countryISO} />
+          </>
+        );
+      } else {
+        content = (
+          <>
+            <DailyModeTitle />
+            <LoadingText />
+          </>
+        );
+      }
+
       break;
 
     case modes[1]:
       content = (
-        <FreeModeMap countryISO={countryISO} setCountryISO={setCountryISO} />
+        <>
+          <InverseModeTitle />
+          <InverseModeMap
+            countryISO={countryISO}
+            setCountryISO={setCountryISO}
+          />
+        </>
       );
       break;
   }
 
   return (
     <main className="relative min-h-screen flex flex-col">
-      <DailyModeTitle />
       <AppDialog />
       {content}
       <GuessProvider>

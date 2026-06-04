@@ -9,7 +9,7 @@ import {
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-async function getDaily(): Promise<Daily> {
+export async function getDaily(): Promise<Daily> {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -54,12 +54,12 @@ async function getDaily(): Promise<Daily> {
       status: data.status,
     };
   } catch {
-    notify.error("Network error couldn't retrieve daily");
+    notify.error("Failed, couldn't retrieve daily");
     return null;
   }
 }
 
-async function makeAttempt(guess: string): Promise<AttemptResult> {
+export async function makeAttempt(guess: string): Promise<AttemptResult> {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -105,9 +105,7 @@ async function makeAttempt(guess: string): Promise<AttemptResult> {
       hint: data.hint,
     };
   } catch {
-    notify.error("Network error couldn't make attempt");
+    notify.error("Failed, couldn't make attempt");
     return null;
   }
 }
-
-export { getDaily, makeAttempt };

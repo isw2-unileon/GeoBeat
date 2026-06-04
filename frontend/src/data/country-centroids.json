@@ -3,389 +3,389 @@
     "name": "Andorra",
     "latitude": 42.546245,
     "longitude": 1.601554,
-    "ISO_name": "AD"
+    "ISO_name": "andorra"
   },
   {
     "name": "United Arab Emirates",
     "latitude": 23.424076,
     "longitude": 53.847818,
-    "ISO_name": "AE"
+    "ISO_name": "united arab emirates"
   },
   {
     "name": "Afghanistan",
     "latitude": 33.93911,
     "longitude": 67.709953,
-    "ISO_name": "AF"
+    "ISO_name": "afghanistan"
   },
   {
     "name": "Antigua and Barbuda",
     "latitude": 17.060816,
     "longitude": -61.796428,
-    "ISO_name": "AG"
+    "ISO_name": "antigua and barbuda"
   },
   {
     "name": "Anguilla",
     "latitude": 18.220554,
     "longitude": -63.068615,
-    "ISO_name": "AI"
+    "ISO_name": "anguilla"
   },
   {
     "name": "Albania",
     "latitude": 41.153332,
     "longitude": 20.168331,
-    "ISO_name": "AL"
+    "ISO_name": "albania"
   },
   {
     "name": "Armenia",
     "latitude": 40.069099,
     "longitude": 45.038189,
-    "ISO_name": "AM"
+    "ISO_name": "armenia"
   },
   {
     "name": "Netherlands Antilles",
     "latitude": 12.226079,
     "longitude": -69.060087,
-    "ISO_name": ""
+    "ISO_name": "netherlands antilles"
   },
   {
     "name": "Angola",
     "latitude": -11.202692,
     "longitude": 17.873887,
-    "ISO_name": "AO"
+    "ISO_name": "angola"
   },
   {
     "name": "Antarctica",
     "latitude": -75.250973,
     "longitude": -0.071389,
-    "ISO_name": "AQ"
+    "ISO_name": "antarctica"
   },
   {
     "name": "Argentina",
     "latitude": -38.416097,
     "longitude": -63.616672,
-    "ISO_name": "AR"
+    "ISO_name": "argentina"
   },
   {
     "name": "American Samoa",
     "latitude": -14.270972,
     "longitude": -170.132217,
-    "ISO_name": "AS"
+    "ISO_name": "american samoa"
   },
   {
     "name": "Austria",
     "latitude": 47.516231,
     "longitude": 14.550072,
-    "ISO_name": "AT"
+    "ISO_name": "austria"
   },
   {
     "name": "Australia",
     "latitude": -25.274398,
     "longitude": 133.775136,
-    "ISO_name": "AU"
+    "ISO_name": "australia"
   },
   {
     "name": "Aruba",
     "latitude": 12.52111,
     "longitude": -69.968338,
-    "ISO_name": "AW"
+    "ISO_name": "aruba"
   },
   {
     "name": "Azerbaijan",
     "latitude": 40.143105,
     "longitude": 47.576927,
-    "ISO_name": "AZ"
+    "ISO_name": "azerbaijan"
   },
   {
     "name": "Bosnia and Herzegovina",
     "latitude": 43.915886,
     "longitude": 17.679076,
-    "ISO_name": "BA"
+    "ISO_name": "bosnia and herzegovina"
   },
   {
     "name": "Barbados",
     "latitude": 13.193887,
     "longitude": -59.543198,
-    "ISO_name": "BB"
+    "ISO_name": "barbados"
   },
   {
     "name": "Bangladesh",
     "latitude": 23.684994,
     "longitude": 90.356331,
-    "ISO_name": "BD"
+    "ISO_name": "bangladesh"
   },
   {
     "name": "Belgium",
     "latitude": 50.503887,
     "longitude": 4.469936,
-    "ISO_name": "BE"
+    "ISO_name": "belgium"
   },
   {
     "name": "Burkina Faso",
     "latitude": 12.238333,
     "longitude": -1.561593,
-    "ISO_name": "BF"
+    "ISO_name": "burkina faso"
   },
   {
     "name": "Bulgaria",
     "latitude": 42.733883,
     "longitude": 25.48583,
-    "ISO_name": "BG"
+    "ISO_name": "bulgaria"
   },
   {
     "name": "Bahrain",
     "latitude": 25.930414,
     "longitude": 50.637772,
-    "ISO_name": "BH"
+    "ISO_name": "bahrain"
   },
   {
     "name": "Burundi",
     "latitude": -3.373056,
     "longitude": 29.918886,
-    "ISO_name": "BI"
+    "ISO_name": "burundi"
   },
   {
     "name": "Benin",
     "latitude": 9.30769,
     "longitude": 2.315834,
-    "ISO_name": "BJ"
+    "ISO_name": "benin"
   },
   {
     "name": "Bermuda",
     "latitude": 32.321384,
     "longitude": -64.75737,
-    "ISO_name": "BM"
+    "ISO_name": "bermuda"
   },
   {
     "name": "Brunei",
     "latitude": 4.535277,
     "longitude": 114.727669,
-    "ISO_name": ""
+    "ISO_name": "brunei"
   },
   {
     "name": "Bolivia",
     "latitude": -16.290154,
     "longitude": -63.588653,
-    "ISO_name": "BO"
+    "ISO_name": "bolivia"
   },
   {
     "name": "Brazil",
     "latitude": -14.235004,
     "longitude": -51.92528,
-    "ISO_name": "BR"
+    "ISO_name": "brazil"
   },
   {
     "name": "Bahamas",
     "latitude": 25.03428,
     "longitude": -77.39628,
-    "ISO_name": "BS"
+    "ISO_name": "bahamas"
   },
   {
     "name": "Bhutan",
     "latitude": 27.514162,
     "longitude": 90.433601,
-    "ISO_name": "BT"
+    "ISO_name": "bhutan"
   },
   {
     "name": "Bouvet Island",
     "latitude": -54.423199,
     "longitude": 3.413194,
-    "ISO_name": "BV"
+    "ISO_name": "bouvet island"
   },
   {
     "name": "Botswana",
     "latitude": -22.328474,
     "longitude": 24.684866,
-    "ISO_name": "BW"
+    "ISO_name": "botswana"
   },
   {
     "name": "Belarus",
     "latitude": 53.709807,
     "longitude": 27.953389,
-    "ISO_name": "BY"
+    "ISO_name": "belarus"
   },
   {
     "name": "Belize",
     "latitude": 17.189877,
     "longitude": -88.49765,
-    "ISO_name": "BZ"
+    "ISO_name": "belize"
   },
   {
     "name": "Canada",
     "latitude": 56.130366,
     "longitude": -106.346771,
-    "ISO_name": "CA"
+    "ISO_name": "canada"
   },
   {
     "name": "Cocos [Keeling] Islands",
     "latitude": -12.164165,
     "longitude": 96.870956,
-    "ISO_name": ""
+    "ISO_name": "cocos [keeling] islands"
   },
   {
     "name": "Democratic Republic of the Congo",
     "latitude": -4.038333,
     "longitude": 21.758664,
-    "ISO_name": ""
+    "ISO_name": "congo"
   },
   {
     "name": "Central African Republic",
     "latitude": 6.611111,
     "longitude": 20.939444,
-    "ISO_name": "CF"
+    "ISO_name": "central african republic"
   },
   {
     "name": "Republic of the Congo",
     "latitude": -0.228021,
     "longitude": 15.827659,
-    "ISO_name": ""
+    "ISO_name": "congo, democratic republic of the"
   },
   {
     "name": "Switzerland",
     "latitude": 46.818188,
     "longitude": 8.227512,
-    "ISO_name": "CH"
+    "ISO_name": "switzerland"
   },
   {
-    "name": "C\u00f4te d'Ivoire",
+    "name": "Côte d'Ivoire",
     "latitude": 7.539989,
     "longitude": -5.54708,
-    "ISO_name": "CI"
+    "ISO_name": "côte d'ivoire"
   },
   {
     "name": "Cook Islands",
     "latitude": -21.236736,
     "longitude": -159.777671,
-    "ISO_name": "CK"
+    "ISO_name": "cook islands"
   },
   {
     "name": "Chile",
     "latitude": -35.675147,
     "longitude": -71.542969,
-    "ISO_name": "CL"
+    "ISO_name": "chile"
   },
   {
     "name": "Cameroon",
     "latitude": 7.369722,
     "longitude": 12.354722,
-    "ISO_name": "CM"
+    "ISO_name": "cameroon"
   },
   {
     "name": "China",
     "latitude": 35.86166,
     "longitude": 104.195397,
-    "ISO_name": "CN"
+    "ISO_name": "china"
   },
   {
     "name": "Colombia",
     "latitude": 4.570868,
     "longitude": -74.297333,
-    "ISO_name": "CO"
+    "ISO_name": "colombia"
   },
   {
     "name": "Costa Rica",
     "latitude": 9.748917,
     "longitude": -83.753428,
-    "ISO_name": "CR"
+    "ISO_name": "costa rica"
   },
   {
     "name": "Cuba",
     "latitude": 21.521757,
     "longitude": -77.781167,
-    "ISO_name": "CU"
+    "ISO_name": "cuba"
   },
   {
     "name": "Cape Verde",
     "latitude": 16.002082,
     "longitude": -24.013197,
-    "ISO_name": ""
+    "ISO_name": "cape verde"
   },
   {
     "name": "Christmas Island",
     "latitude": -10.447525,
     "longitude": 105.690449,
-    "ISO_name": "CX"
+    "ISO_name": "christmas island"
   },
   {
     "name": "Cyprus",
     "latitude": 35.126413,
     "longitude": 33.429859,
-    "ISO_name": "CY"
+    "ISO_name": "cyprus"
   },
   {
-    "name": "Czech Republic",
+    "name": "Czechia",
     "latitude": 49.817492,
     "longitude": 15.472962,
-    "ISO_name": "CZ"
+    "ISO_name": "czechia"
   },
   {
     "name": "Germany",
     "latitude": 51.165691,
     "longitude": 10.451526,
-    "ISO_name": "DE"
+    "ISO_name": "germany"
   },
   {
     "name": "Djibouti",
     "latitude": 11.825138,
     "longitude": 42.590275,
-    "ISO_name": "DJ"
+    "ISO_name": "djibouti"
   },
   {
     "name": "Denmark",
     "latitude": 56.26392,
     "longitude": 9.501785,
-    "ISO_name": "DK"
+    "ISO_name": "denmark"
   },
   {
     "name": "Dominica",
     "latitude": 15.414999,
     "longitude": -61.370976,
-    "ISO_name": "DM"
+    "ISO_name": "dominica"
   },
   {
     "name": "Dominican Republic",
     "latitude": 18.735693,
     "longitude": -70.162651,
-    "ISO_name": "DO"
+    "ISO_name": "dominican republic"
   },
   {
     "name": "Algeria",
     "latitude": 28.033886,
     "longitude": 1.659626,
-    "ISO_name": "DZ"
+    "ISO_name": "algeria"
   },
   {
     "name": "Ecuador",
     "latitude": -1.831239,
     "longitude": -78.183406,
-    "ISO_name": "EC"
+    "ISO_name": "ecuador"
   },
   {
     "name": "Estonia",
     "latitude": 58.595272,
     "longitude": 25.013607,
-    "ISO_name": "EE"
+    "ISO_name": "estonia"
   },
   {
     "name": "Egypt",
     "latitude": 26.820553,
     "longitude": 30.802498,
-    "ISO_name": "EG"
+    "ISO_name": "egypt"
   },
   {
     "name": "Western Sahara",
     "latitude": 24.215527,
     "longitude": -12.885834,
-    "ISO_name": "EH"
+    "ISO_name": "western sahara"
   },
   {
     "name": "Eritrea",
     "latitude": 15.179384,
     "longitude": 39.782334,
-    "ISO_name": "ER"
+    "ISO_name": "eritrea"
   },
   {
     "name": "Spain",
-    "ISO_name": "ES",
+    "ISO_name": "spain",
     "latitude": 40.463667,
     "longitude": -3.74922
   },
@@ -393,1080 +393,1080 @@
     "name": "Ethiopia",
     "latitude": 9.145,
     "longitude": 40.489673,
-    "ISO_name": "ET"
+    "ISO_name": "ethiopia"
   },
   {
     "name": "Finland",
     "latitude": 61.92411,
     "longitude": 25.748151,
-    "ISO_name": "FI"
+    "ISO_name": "finland"
   },
   {
     "name": "Fiji",
     "latitude": -16.578193,
     "longitude": 179.414413,
-    "ISO_name": "FJ"
+    "ISO_name": "fiji"
   },
   {
     "name": "Falkland Islands [Islas Malvinas]",
     "latitude": -51.796253,
     "longitude": -59.523613,
-    "ISO_name": ""
+    "ISO_name": "falkland islands [islas malvinas]"
   },
   {
     "name": "Micronesia",
     "latitude": 7.425554,
     "longitude": 150.550812,
-    "ISO_name": ""
+    "ISO_name": "micronesia"
   },
   {
     "name": "Faroe Islands",
     "latitude": 61.892635,
     "longitude": -6.911806,
-    "ISO_name": "FO"
+    "ISO_name": "faroe islands"
   },
   {
     "name": "France",
     "latitude": 46.227638,
     "longitude": 2.213749,
-    "ISO_name": "FR"
+    "ISO_name": "france"
   },
   {
     "name": "Gabon",
     "latitude": -0.803689,
     "longitude": 11.609444,
-    "ISO_name": "GA"
+    "ISO_name": "gabon"
   },
   {
     "name": "United Kingdom",
     "latitude": 55.378051,
     "longitude": -3.435973,
-    "ISO_name": "GB"
+    "ISO_name": "united kingdom"
   },
   {
     "name": "Grenada",
     "latitude": 12.262776,
     "longitude": -61.604171,
-    "ISO_name": "GD"
+    "ISO_name": "grenada"
   },
   {
     "name": "Georgia",
     "latitude": 42.315407,
     "longitude": 43.356892,
-    "ISO_name": "GE"
+    "ISO_name": "georgia"
   },
   {
     "name": "French Guiana",
     "latitude": 3.933889,
     "longitude": -53.125782,
-    "ISO_name": "GF"
+    "ISO_name": "french guiana"
   },
   {
     "name": "Guernsey",
     "latitude": 49.465691,
     "longitude": -2.585278,
-    "ISO_name": "GG"
+    "ISO_name": "guernsey"
   },
   {
     "name": "Ghana",
     "latitude": 7.946527,
     "longitude": -1.023194,
-    "ISO_name": "GH"
+    "ISO_name": "ghana"
   },
   {
     "name": "Gibraltar",
     "latitude": 36.137741,
     "longitude": -5.345374,
-    "ISO_name": "GI"
+    "ISO_name": "gibraltar"
   },
   {
     "name": "Greenland",
     "latitude": 71.706936,
     "longitude": -42.604303,
-    "ISO_name": "GL"
+    "ISO_name": "greenland"
   },
   {
     "name": "Gambia",
     "latitude": 13.443182,
     "longitude": -15.310139,
-    "ISO_name": "GM"
+    "ISO_name": "gambia"
   },
   {
     "name": "Guinea",
     "latitude": 9.945587,
     "longitude": -9.696645,
-    "ISO_name": "GN"
+    "ISO_name": "guinea"
   },
   {
     "name": "Guadeloupe",
     "latitude": 16.995971,
     "longitude": -62.067641,
-    "ISO_name": "GP"
+    "ISO_name": "guadeloupe"
   },
   {
     "name": "Equatorial Guinea",
     "latitude": 1.650801,
     "longitude": 10.267895,
-    "ISO_name": "GQ"
+    "ISO_name": "equatorial guinea"
   },
   {
     "name": "Greece",
     "latitude": 39.074208,
     "longitude": 21.824312,
-    "ISO_name": "GR"
+    "ISO_name": "greece"
   },
   {
     "name": "South Georgia and the South Sandwich Islands",
     "latitude": -54.429579,
     "longitude": -36.587909,
-    "ISO_name": "GS"
+    "ISO_name": "south georgia and the south sandwich islands"
   },
   {
     "name": "Guatemala",
     "latitude": 15.783471,
     "longitude": -90.230759,
-    "ISO_name": "GT"
+    "ISO_name": "guatemala"
   },
   {
     "name": "Guam",
     "latitude": 13.444304,
     "longitude": 144.793731,
-    "ISO_name": "GU"
+    "ISO_name": "guam"
   },
   {
     "name": "Guinea-Bissau",
     "latitude": 11.803749,
     "longitude": -15.180413,
-    "ISO_name": "GW"
+    "ISO_name": "guinea-bissau"
   },
   {
     "name": "Guyana",
     "latitude": 4.860416,
     "longitude": -58.93018,
-    "ISO_name": "GY"
+    "ISO_name": "guyana"
   },
   {
     "name": "Gaza Strip",
     "latitude": 31.354676,
     "longitude": 34.308825,
-    "ISO_name": ""
+    "ISO_name": "gaza strip"
   },
   {
     "name": "Hong Kong",
     "latitude": 22.396428,
     "longitude": 114.109497,
-    "ISO_name": "HK"
+    "ISO_name": "hong kong"
   },
   {
     "name": "Heard Island and McDonald Islands",
     "latitude": -53.08181,
     "longitude": 73.504158,
-    "ISO_name": "HM"
+    "ISO_name": "heard island and mcdonald islands"
   },
   {
     "name": "Honduras",
     "latitude": 15.199999,
     "longitude": -86.241905,
-    "ISO_name": "HN"
+    "ISO_name": "honduras"
   },
   {
     "name": "Croatia",
     "latitude": 45.1,
     "longitude": 15.2,
-    "ISO_name": "HR"
+    "ISO_name": "croatia"
   },
   {
     "name": "Haiti",
     "latitude": 18.971187,
     "longitude": -72.285215,
-    "ISO_name": "HT"
+    "ISO_name": "haiti"
   },
   {
     "name": "Hungary",
     "latitude": 47.162494,
     "longitude": 19.503304,
-    "ISO_name": "HU"
+    "ISO_name": "hungary"
   },
   {
     "name": "Indonesia",
     "latitude": -0.789275,
     "longitude": 113.921327,
-    "ISO_name": "ID"
+    "ISO_name": "indonesia"
   },
   {
     "name": "Ireland",
     "latitude": 53.41291,
     "longitude": -8.24389,
-    "ISO_name": "IE"
+    "ISO_name": "ireland"
   },
   {
     "name": "Israel",
     "latitude": 31.046051,
     "longitude": 34.851612,
-    "ISO_name": "IL"
+    "ISO_name": "israel"
   },
   {
     "name": "Isle of Man",
     "latitude": 54.236107,
     "longitude": -4.548056,
-    "ISO_name": "IM"
+    "ISO_name": "isle of man"
   },
   {
     "name": "India",
     "latitude": 20.593684,
     "longitude": 78.96288,
-    "ISO_name": "IN"
+    "ISO_name": "india"
   },
   {
     "name": "British Indian Ocean Territory",
     "latitude": -6.343194,
     "longitude": 71.876519,
-    "ISO_name": "IO"
+    "ISO_name": "british indian ocean territory"
   },
   {
     "name": "Iraq",
     "latitude": 33.223191,
     "longitude": 43.679291,
-    "ISO_name": "IQ"
+    "ISO_name": "iraq"
   },
   {
     "name": "Iran",
     "latitude": 32.427908,
     "longitude": 53.688046,
-    "ISO_name": ""
+    "ISO_name": "iran"
   },
   {
     "name": "Iceland",
     "latitude": 64.963051,
     "longitude": -19.020835,
-    "ISO_name": "IS"
+    "ISO_name": "iceland"
   },
   {
     "name": "Italy",
     "latitude": 41.87194,
     "longitude": 12.56738,
-    "ISO_name": "IT"
+    "ISO_name": "italy"
   },
   {
     "name": "Jersey",
     "latitude": 49.214439,
     "longitude": -2.13125,
-    "ISO_name": "JE"
+    "ISO_name": "jersey"
   },
   {
     "name": "Jamaica",
     "latitude": 18.109581,
     "longitude": -77.297508,
-    "ISO_name": "JM"
+    "ISO_name": "jamaica"
   },
   {
     "name": "Jordan",
     "latitude": 30.585164,
     "longitude": 36.238414,
-    "ISO_name": "JO"
+    "ISO_name": "jordan"
   },
   {
     "name": "Japan",
     "latitude": 36.204824,
     "longitude": 138.252924,
-    "ISO_name": "JP"
+    "ISO_name": "japan"
   },
   {
     "name": "Kenya",
     "latitude": -0.023559,
     "longitude": 37.906193,
-    "ISO_name": "KE"
+    "ISO_name": "kenya"
   },
   {
     "name": "Kyrgyzstan",
     "latitude": 41.20438,
     "longitude": 74.766098,
-    "ISO_name": "KG"
+    "ISO_name": "kyrgyzstan"
   },
   {
     "name": "Cambodia",
     "latitude": 12.565679,
     "longitude": 104.990963,
-    "ISO_name": "KH"
+    "ISO_name": "cambodia"
   },
   {
     "name": "Kiribati",
     "latitude": -3.370417,
     "longitude": -168.734039,
-    "ISO_name": "KI"
+    "ISO_name": "kiribati"
   },
   {
     "name": "Comoros",
     "latitude": -11.875001,
     "longitude": 43.872219,
-    "ISO_name": "KM"
+    "ISO_name": "comoros"
   },
   {
     "name": "Saint Kitts and Nevis",
     "latitude": 17.357822,
     "longitude": -62.782998,
-    "ISO_name": "KN"
+    "ISO_name": "saint kitts and nevis"
   },
   {
     "name": "North Korea",
     "latitude": 40.339852,
     "longitude": 127.510093,
-    "ISO_name": ""
+    "ISO_name": "north korea"
   },
   {
     "name": "South Korea",
     "latitude": 35.907757,
     "longitude": 127.766922,
-    "ISO_name": ""
+    "ISO_name": "south korea"
   },
   {
     "name": "Kuwait",
     "latitude": 29.31166,
     "longitude": 47.481766,
-    "ISO_name": "KW"
+    "ISO_name": "kuwait"
   },
   {
     "name": "Cayman Islands",
     "latitude": 19.513469,
     "longitude": -80.566956,
-    "ISO_name": "KY"
+    "ISO_name": "cayman islands"
   },
   {
     "name": "Kazakhstan",
     "latitude": 48.019573,
     "longitude": 66.923684,
-    "ISO_name": "KZ"
+    "ISO_name": "kazakhstan"
   },
   {
     "name": "Laos",
     "latitude": 19.85627,
     "longitude": 102.495496,
-    "ISO_name": ""
+    "ISO_name": "laos"
   },
   {
     "name": "Lebanon",
     "latitude": 33.854721,
     "longitude": 35.862285,
-    "ISO_name": "LB"
+    "ISO_name": "lebanon"
   },
   {
     "name": "Saint Lucia",
     "latitude": 13.909444,
     "longitude": -60.978893,
-    "ISO_name": "LC"
+    "ISO_name": "saint lucia"
   },
   {
     "name": "Liechtenstein",
     "latitude": 47.166,
     "longitude": 9.555373,
-    "ISO_name": "LI"
+    "ISO_name": "liechtenstein"
   },
   {
     "name": "Sri Lanka",
     "latitude": 7.873054,
     "longitude": 80.771797,
-    "ISO_name": "LK"
+    "ISO_name": "sri lanka"
   },
   {
     "name": "Liberia",
     "latitude": 6.428055,
     "longitude": -9.429499,
-    "ISO_name": "LR"
+    "ISO_name": "liberia"
   },
   {
     "name": "Lesotho",
     "latitude": -29.609988,
     "longitude": 28.233608,
-    "ISO_name": "LS"
+    "ISO_name": "lesotho"
   },
   {
     "name": "Lithuania",
     "latitude": 55.169438,
     "longitude": 23.881275,
-    "ISO_name": "LT"
+    "ISO_name": "lithuania"
   },
   {
     "name": "Luxembourg",
     "latitude": 49.815273,
     "longitude": 6.129583,
-    "ISO_name": "LU"
+    "ISO_name": "luxembourg"
   },
   {
     "name": "Latvia",
     "latitude": 56.879635,
     "longitude": 24.603189,
-    "ISO_name": "LV"
+    "ISO_name": "latvia"
   },
   {
     "name": "Libya",
     "latitude": 26.3351,
     "longitude": 17.228331,
-    "ISO_name": "LY"
+    "ISO_name": "libya"
   },
   {
     "name": "Morocco",
     "latitude": 31.791702,
     "longitude": -7.09262,
-    "ISO_name": "MA"
+    "ISO_name": "morocco"
   },
   {
     "name": "Monaco",
     "latitude": 43.750298,
     "longitude": 7.412841,
-    "ISO_name": "MC"
+    "ISO_name": "monaco"
   },
   {
     "name": "Moldova",
     "latitude": 47.411631,
     "longitude": 28.369885,
-    "ISO_name": "MD"
+    "ISO_name": "moldova"
   },
   {
     "name": "Montenegro",
     "latitude": 42.708678,
     "longitude": 19.37439,
-    "ISO_name": "ME"
+    "ISO_name": "montenegro"
   },
   {
     "name": "Madagascar",
     "latitude": -18.766947,
     "longitude": 46.869107,
-    "ISO_name": "MG"
+    "ISO_name": "madagascar"
   },
   {
     "name": "Marshall Islands",
     "latitude": 7.131474,
     "longitude": 171.184478,
-    "ISO_name": "MH"
+    "ISO_name": "marshall islands"
   },
   {
-    "name": "Macedonia [FYROM]",
+    "name": "North Macedonia",
     "latitude": 41.608635,
     "longitude": 21.745275,
-    "ISO_name": ""
+    "ISO_name": "north macedonia"
   },
   {
     "name": "Mali",
     "latitude": 17.570692,
     "longitude": -3.996166,
-    "ISO_name": "ML"
+    "ISO_name": "mali"
   },
   {
     "name": "Myanmar [Burma]",
     "latitude": 21.913965,
     "longitude": 95.956223,
-    "ISO_name": ""
+    "ISO_name": "myanmar [burma]"
   },
   {
     "name": "Mongolia",
     "latitude": 46.862496,
     "longitude": 103.846656,
-    "ISO_name": "MN"
+    "ISO_name": "mongolia"
   },
   {
     "name": "Macau",
     "latitude": 22.198745,
     "longitude": 113.543873,
-    "ISO_name": ""
+    "ISO_name": "macau"
   },
   {
     "name": "Northern Mariana Islands",
     "latitude": 17.33083,
     "longitude": 145.38469,
-    "ISO_name": "MP"
+    "ISO_name": "northern mariana islands"
   },
   {
     "name": "Martinique",
     "latitude": 14.641528,
     "longitude": -61.024174,
-    "ISO_name": "MQ"
+    "ISO_name": "martinique"
   },
   {
     "name": "Mauritania",
     "latitude": 21.00789,
     "longitude": -10.940835,
-    "ISO_name": "MR"
+    "ISO_name": "mauritania"
   },
   {
     "name": "Montserrat",
     "latitude": 16.742498,
     "longitude": -62.187366,
-    "ISO_name": "MS"
+    "ISO_name": "montserrat"
   },
   {
     "name": "Malta",
     "latitude": 35.937496,
     "longitude": 14.375416,
-    "ISO_name": "MT"
+    "ISO_name": "malta"
   },
   {
     "name": "Mauritius",
     "latitude": -20.348404,
     "longitude": 57.552152,
-    "ISO_name": "MU"
+    "ISO_name": "mauritius"
   },
   {
     "name": "Maldives",
     "latitude": 3.202778,
     "longitude": 73.22068,
-    "ISO_name": "MV"
+    "ISO_name": "maldives"
   },
   {
     "name": "Malawi",
     "latitude": -13.254308,
     "longitude": 34.301525,
-    "ISO_name": "MW"
+    "ISO_name": "malawi"
   },
   {
     "name": "Mexico",
     "latitude": 23.634501,
     "longitude": -102.552784,
-    "ISO_name": "MX"
+    "ISO_name": "mexico"
   },
   {
     "name": "Malaysia",
     "latitude": 4.210484,
     "longitude": 101.975766,
-    "ISO_name": "MY"
+    "ISO_name": "malaysia"
   },
   {
     "name": "Mozambique",
     "latitude": -18.665695,
     "longitude": 35.529562,
-    "ISO_name": "MZ"
+    "ISO_name": "mozambique"
   },
   {
     "name": "Namibia",
     "latitude": -22.95764,
     "longitude": 18.49041,
-    "ISO_name": "NA"
+    "ISO_name": "namibia"
   },
   {
     "name": "New Caledonia",
     "latitude": -20.904305,
     "longitude": 165.618042,
-    "ISO_name": "NC"
+    "ISO_name": "new caledonia"
   },
   {
     "name": "Niger",
     "latitude": 17.607789,
     "longitude": 8.081666,
-    "ISO_name": "NE"
+    "ISO_name": "niger"
   },
   {
     "name": "Norfolk Island",
     "latitude": -29.040835,
     "longitude": 167.954712,
-    "ISO_name": "NF"
+    "ISO_name": "norfolk island"
   },
   {
     "name": "Nigeria",
     "latitude": 9.081999,
     "longitude": 8.675277,
-    "ISO_name": "NG"
+    "ISO_name": "nigeria"
   },
   {
     "name": "Nicaragua",
     "latitude": 12.865416,
     "longitude": -85.207229,
-    "ISO_name": "NI"
+    "ISO_name": "nicaragua"
   },
   {
     "name": "Netherlands",
     "latitude": 52.132633,
     "longitude": 5.291266,
-    "ISO_name": "NL"
+    "ISO_name": "netherlands"
   },
   {
     "name": "Norway",
     "latitude": 60.472024,
     "longitude": 8.468946,
-    "ISO_name": "NO"
+    "ISO_name": "norway"
   },
   {
     "name": "Nepal",
     "latitude": 28.394857,
     "longitude": 84.124008,
-    "ISO_name": "NP"
+    "ISO_name": "nepal"
   },
   {
     "name": "Nauru",
     "latitude": -0.522778,
     "longitude": 166.931503,
-    "ISO_name": "NR"
+    "ISO_name": "nauru"
   },
   {
     "name": "Niue",
     "latitude": -19.054445,
     "longitude": -169.867233,
-    "ISO_name": "NU"
+    "ISO_name": "niue"
   },
   {
     "name": "New Zealand",
     "latitude": -40.900557,
     "longitude": 174.885971,
-    "ISO_name": "NZ"
+    "ISO_name": "new zealand"
   },
   {
     "name": "Oman",
     "latitude": 21.512583,
     "longitude": 55.923255,
-    "ISO_name": "OM"
+    "ISO_name": "oman"
   },
   {
     "name": "Panama",
     "latitude": 8.537981,
     "longitude": -80.782127,
-    "ISO_name": "PA"
+    "ISO_name": "panama"
   },
   {
     "name": "Peru",
     "latitude": -9.189967,
     "longitude": -75.015152,
-    "ISO_name": "PE"
+    "ISO_name": "peru"
   },
   {
     "name": "French Polynesia",
     "latitude": -17.679742,
     "longitude": -149.406843,
-    "ISO_name": "PF"
+    "ISO_name": "french polynesia"
   },
   {
     "name": "Papua New Guinea",
     "latitude": -6.314993,
     "longitude": 143.95555,
-    "ISO_name": "PG"
+    "ISO_name": "papua new guinea"
   },
   {
     "name": "Philippines",
     "latitude": 12.879721,
     "longitude": 121.774017,
-    "ISO_name": "PH"
+    "ISO_name": "philippines"
   },
   {
     "name": "Pakistan",
     "latitude": 30.375321,
     "longitude": 69.345116,
-    "ISO_name": "PK"
+    "ISO_name": "pakistan"
   },
   {
     "name": "Poland",
     "latitude": 51.919438,
     "longitude": 19.145136,
-    "ISO_name": "PL"
+    "ISO_name": "poland"
   },
   {
     "name": "Saint Pierre and Miquelon",
     "latitude": 46.941936,
     "longitude": -56.27111,
-    "ISO_name": "PM"
+    "ISO_name": "saint pierre and miquelon"
   },
   {
     "name": "Pitcairn Islands",
     "latitude": -24.703615,
     "longitude": -127.439308,
-    "ISO_name": ""
+    "ISO_name": "pitcairn islands"
   },
   {
     "name": "Puerto Rico",
     "latitude": 18.220833,
     "longitude": -66.590149,
-    "ISO_name": "PR"
+    "ISO_name": "puerto rico"
   },
   {
     "name": "Palestinian Territories",
     "latitude": 31.952162,
     "longitude": 35.233154,
-    "ISO_name": ""
+    "ISO_name": "palestinian territories"
   },
   {
     "name": "Portugal",
     "latitude": 39.399872,
     "longitude": -8.224454,
-    "ISO_name": "PT"
+    "ISO_name": "portugal"
   },
   {
     "name": "Palau",
     "latitude": 7.51498,
     "longitude": 134.58252,
-    "ISO_name": "PW"
+    "ISO_name": "palau"
   },
   {
     "name": "Paraguay",
     "latitude": -23.442503,
     "longitude": -58.443832,
-    "ISO_name": "PY"
+    "ISO_name": "paraguay"
   },
   {
     "name": "Qatar",
     "latitude": 25.354826,
     "longitude": 51.183884,
-    "ISO_name": "QA"
+    "ISO_name": "qatar"
   },
   {
-    "name": "R\u00e9union",
+    "name": "Réunion",
     "latitude": -21.115141,
     "longitude": 55.536384,
-    "ISO_name": "RE"
+    "ISO_name": "réunion"
   },
   {
     "name": "Romania",
     "latitude": 45.943161,
     "longitude": 24.96676,
-    "ISO_name": "RO"
+    "ISO_name": "romania"
   },
   {
     "name": "Republic of Serbia",
     "latitude": 44.016521,
     "longitude": 21.005859,
-    "ISO_name": "RS"
+    "ISO_name": "serbia"
   },
   {
     "name": "Russia",
     "latitude": 61.52401,
     "longitude": 105.318756,
-    "ISO_name": ""
+    "ISO_name": "russia"
   },
   {
     "name": "Rwanda",
     "latitude": -1.940278,
     "longitude": 29.873888,
-    "ISO_name": "RW"
+    "ISO_name": "rwanda"
   },
   {
     "name": "Saudi Arabia",
     "latitude": 23.885942,
     "longitude": 45.079162,
-    "ISO_name": "SA"
+    "ISO_name": "saudi arabia"
   },
   {
     "name": "Solomon Islands",
     "latitude": -9.64571,
     "longitude": 160.156194,
-    "ISO_name": "SB"
+    "ISO_name": "solomon islands"
   },
   {
     "name": "Seychelles",
     "latitude": -4.679574,
     "longitude": 55.491977,
-    "ISO_name": "SC"
+    "ISO_name": "seychelles"
   },
   {
     "name": "Sudan",
     "latitude": 12.862807,
     "longitude": 30.217636,
-    "ISO_name": "SD"
+    "ISO_name": "sudan"
   },
   {
     "name": "Sweden",
     "latitude": 60.128161,
     "longitude": 18.643501,
-    "ISO_name": "SE"
+    "ISO_name": "sweden"
   },
   {
     "name": "Singapore",
     "latitude": 1.352083,
     "longitude": 103.819836,
-    "ISO_name": "SG"
+    "ISO_name": "singapore"
   },
   {
     "name": "Saint Helena",
     "latitude": -24.143474,
     "longitude": -10.030696,
-    "ISO_name": ""
+    "ISO_name": "saint helena"
   },
   {
     "name": "Slovenia",
     "latitude": 46.151241,
     "longitude": 14.995463,
-    "ISO_name": "SI"
+    "ISO_name": "slovenia"
   },
   {
     "name": "Svalbard and Jan Mayen",
     "latitude": 77.553604,
     "longitude": 23.670272,
-    "ISO_name": "SJ"
+    "ISO_name": "svalbard and jan mayen"
   },
   {
     "name": "Slovakia",
     "latitude": 48.669026,
     "longitude": 19.699024,
-    "ISO_name": "SK"
+    "ISO_name": "slovakia"
   },
   {
     "name": "Sierra Leone",
     "latitude": 8.460555,
     "longitude": -11.779889,
-    "ISO_name": "SL"
+    "ISO_name": "sierra leone"
   },
   {
     "name": "San Marino",
     "latitude": 43.94236,
     "longitude": 12.457777,
-    "ISO_name": "SM"
+    "ISO_name": "san marino"
   },
   {
     "name": "Senegal",
     "latitude": 14.497401,
     "longitude": -14.452362,
-    "ISO_name": "SN"
+    "ISO_name": "senegal"
   },
   {
     "name": "Somalia",
     "latitude": 5.152149,
     "longitude": 46.199616,
-    "ISO_name": "SO"
+    "ISO_name": "somalia"
   },
   {
     "name": "Suriname",
     "latitude": 3.919305,
     "longitude": -56.027783,
-    "ISO_name": "SR"
+    "ISO_name": "suriname"
   },
   {
-    "name": "S\u00e3o Tom\u00e9 and Pr\u00edncipe",
+    "name": "São Tomé and Príncipe",
     "latitude": 0.18636,
     "longitude": 6.613081,
-    "ISO_name": ""
+    "ISO_name": "são tomé and príncipe"
   },
   {
     "name": "El Salvador",
     "latitude": 13.794185,
     "longitude": -88.89653,
-    "ISO_name": "SV"
+    "ISO_name": "el salvador"
   },
   {
     "name": "Syria",
     "latitude": 34.802075,
     "longitude": 38.996815,
-    "ISO_name": ""
+    "ISO_name": "syria"
   },
   {
     "name": "Swaziland",
     "latitude": -26.522503,
     "longitude": 31.465866,
-    "ISO_name": ""
+    "ISO_name": "swaziland"
   },
   {
     "name": "Turks and Caicos Islands",
     "latitude": 21.694025,
     "longitude": -71.797928,
-    "ISO_name": "TC"
+    "ISO_name": "turks and caicos islands"
   },
   {
     "name": "Chad",
     "latitude": 15.454166,
     "longitude": 18.732207,
-    "ISO_name": "TD"
+    "ISO_name": "chad"
   },
   {
     "name": "French Southern Territories",
     "latitude": -49.280366,
     "longitude": 69.348557,
-    "ISO_name": "TF"
+    "ISO_name": "french southern territories"
   },
   {
     "name": "Togo",
     "latitude": 8.619543,
     "longitude": 0.824782,
-    "ISO_name": "TG"
+    "ISO_name": "togo"
   },
   {
     "name": "Thailand",
     "latitude": 15.870032,
     "longitude": 100.992541,
-    "ISO_name": "TH"
+    "ISO_name": "thailand"
   },
   {
     "name": "Tajikistan",
     "latitude": 38.861034,
     "longitude": 71.276093,
-    "ISO_name": "TJ"
+    "ISO_name": "tajikistan"
   },
   {
     "name": "Tokelau",
     "latitude": -8.967363,
     "longitude": -171.855881,
-    "ISO_name": "TK"
+    "ISO_name": "tokelau"
   },
   {
     "name": "Timor-Leste",
     "latitude": -8.874217,
     "longitude": 125.727539,
-    "ISO_name": "TL"
+    "ISO_name": "timor-leste"
   },
   {
     "name": "Turkmenistan",
     "latitude": 38.969719,
     "longitude": 59.556278,
-    "ISO_name": "TM"
+    "ISO_name": "turkmenistan"
   },
   {
     "name": "Tunisia",
     "latitude": 33.886917,
     "longitude": 9.537499,
-    "ISO_name": "TN"
+    "ISO_name": "tunisia"
   },
   {
     "name": "Tonga",
     "latitude": -21.178986,
     "longitude": -175.198242,
-    "ISO_name": "TO"
+    "ISO_name": "tonga"
   },
   {
     "name": "Turkey",
     "latitude": 38.963745,
     "longitude": 35.243322,
-    "ISO_name": "TR"
+    "ISO_name": "turkey"
   },
   {
     "name": "Trinidad and Tobago",
     "latitude": 10.691803,
     "longitude": -61.222503,
-    "ISO_name": "TT"
+    "ISO_name": "trinidad and tobago"
   },
   {
     "name": "Tuvalu",
     "latitude": -7.109535,
     "longitude": 177.64933,
-    "ISO_name": "TV"
+    "ISO_name": "tuvalu"
   },
   {
     "name": "Taiwan",
     "latitude": 23.69781,
     "longitude": 120.960515,
-    "ISO_name": "TW"
+    "ISO_name": "taiwan"
   },
   {
-    "name": "Tanzania",
+    "name": "United Republic of Tanzania",
     "latitude": -6.369028,
     "longitude": 34.888822,
-    "ISO_name": "TZ"
+    "ISO_name": "tanzania"
   },
   {
     "name": "Ukraine",
     "latitude": 48.379433,
     "longitude": 31.16558,
-    "ISO_name": "UA"
+    "ISO_name": "ukraine"
   },
   {
     "name": "Uganda",
     "latitude": 1.373333,
     "longitude": 32.290275,
-    "ISO_name": "UG"
+    "ISO_name": "uganda"
   },
   {
     "name": "U.S. Minor Outlying Islands",
     "latitude": 28.202122,
     "longitude": -177.380452,
-    "ISO_name": ""
+    "ISO_name": "u.s. minor outlying islands"
   },
   {
     "name": "United States of America",
     "latitude": 37.09024,
     "longitude": -95.712891,
-    "ISO_name": "US"
+    "ISO_name": "united states"
   },
   {
     "name": "Uruguay",
     "latitude": -32.522779,
     "longitude": -55.765835,
-    "ISO_name": "UY"
+    "ISO_name": "uruguay"
   },
   {
     "name": "Uzbekistan",
     "latitude": 41.377491,
     "longitude": 64.585262,
-    "ISO_name": "UZ"
+    "ISO_name": "uzbekistan"
   },
   {
     "name": "Vatican City",
     "latitude": 41.902916,
     "longitude": 12.453389,
-    "ISO_name": ""
+    "ISO_name": "vatican city"
   },
   {
     "name": "Saint Vincent and the Grenadines",
     "latitude": 12.984305,
     "longitude": -61.287228,
-    "ISO_name": "VC"
+    "ISO_name": "saint vincent and the grenadines"
   },
   {
     "name": "Venezuela",
     "latitude": 6.42375,
     "longitude": -66.58973,
-    "ISO_name": "VE"
+    "ISO_name": "venezuela"
   },
   {
     "name": "British Virgin Islands",
     "latitude": 18.420695,
     "longitude": -64.639968,
-    "ISO_name": "VG"
+    "ISO_name": "british virgin islands"
   },
   {
     "name": "U.S. Virgin Islands",
     "latitude": 18.335765,
     "longitude": -64.896335,
-    "ISO_name": ""
+    "ISO_name": "u.s. virgin islands"
   },
   {
     "name": "Vietnam",
     "latitude": 14.058324,
     "longitude": 108.277199,
-    "ISO_name": "VN"
+    "ISO_name": "vietnam"
   },
   {
     "name": "Vanuatu",
     "latitude": -15.376706,
     "longitude": 166.959158,
-    "ISO_name": "VU"
+    "ISO_name": "vanuatu"
   },
   {
     "name": "Wallis and Futuna",
     "latitude": -13.768752,
     "longitude": -177.156097,
-    "ISO_name": "WF"
+    "ISO_name": "wallis and futuna"
   },
   {
     "name": "Samoa",
     "latitude": -13.759029,
     "longitude": -172.104629,
-    "ISO_name": "WS"
+    "ISO_name": "samoa"
   },
   {
     "name": "Kosovo",
     "latitude": 42.602636,
     "longitude": 20.902977,
-    "ISO_name": ""
+    "ISO_name": "kosovo"
   },
   {
     "name": "Yemen",
     "latitude": 15.552727,
     "longitude": 48.516388,
-    "ISO_name": "YE"
+    "ISO_name": "yemen"
   },
   {
     "name": "Mayotte",
     "latitude": -12.8275,
     "longitude": 45.166244,
-    "ISO_name": "YT"
+    "ISO_name": "mayotte"
   },
   {
     "name": "South Africa",
     "latitude": -30.559482,
     "longitude": 22.937506,
-    "ISO_name": "ZA"
+    "ISO_name": "south africa"
   },
   {
     "name": "Zambia",
     "latitude": -13.133897,
     "longitude": 27.849332,
-    "ISO_name": "ZM"
+    "ISO_name": "zambia"
   },
   {
     "name": "Zimbabwe",
     "latitude": -19.015438,
     "longitude": 29.154857,
-    "ISO_name": "ZW"
+    "ISO_name": "zimbabwe"
   }
 ]

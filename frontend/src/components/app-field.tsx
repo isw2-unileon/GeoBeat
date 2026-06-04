@@ -8,14 +8,6 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxItem,
-  ComboboxContent,
-} from "@/components/ui/combobox";
-import {
   Select,
   SelectContent,
   SelectGroup,
@@ -24,10 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { modes, genres } from "@/data/placeholder-data";
+import { modes } from "@/data/placeholder-data";
 import React, { useState } from "react";
 import { GameStatus, STATUS } from "@/types/gameTypes";
 import { useHandleGuess } from "@/hooks/handleGuess";
+import { GenreCombobox } from "./genre-combobox";
+import { ModeSelect } from "./mode-select";
 
 type Props = {
   country: string;
@@ -60,23 +54,7 @@ export function AppField({
           <FieldSeparator />
           <Field>
             <FieldLabel className="text-1xl">Mode selection</FieldLabel>
-            <Select
-              defaultValue={mode}
-              onValueChange={(value) => setMode(value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {modes.map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {mode}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <ModeSelect mode={mode} setMode={setMode} />
           </Field>
           <FieldSeparator />
           <Field>
@@ -84,19 +62,7 @@ export function AppField({
               ¿What is the most popular genre of?
             </FieldLabel>
             <FieldLabel>{country}</FieldLabel>
-            <Combobox items={genres} value={genre} onValueChange={setGenre}>
-              <ComboboxInput placeholder="Select a genre" />
-              <ComboboxContent>
-                <ComboboxEmpty>No genres available</ComboboxEmpty>
-                <ComboboxList>
-                  {(item: string) => (
-                    <ComboboxItem key={item} value={item}>
-                      {item}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
+            <GenreCombobox genre={genre} setGenre={setGenre} />
           </Field>
           <Field>
             {gameStatus.status !== STATUS.WON &&

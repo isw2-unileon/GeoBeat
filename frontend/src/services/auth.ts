@@ -50,10 +50,10 @@ async function emailLogin(e: React.FormEvent<HTMLFormElement>) {
     const token = data.token;
     localStorage.setItem("token", token);
 
-    notify.info("Login success: " + data);
+    notify.news("Login success: " + data);
     window.location.reload();
   } catch {
-    notify.error("Network error");
+    notify.error("Login failed");
   }
 }
 
@@ -99,17 +99,13 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
     }
 
     if (!res.ok) {
-      notify.error("Regsiter failed: " + data.error);
+      notify.error("Register failed: " + data.error);
       return;
     }
 
-    const token = data.token;
-    localStorage.setItem("token", token);
-
-    notify.info("Register success:" + data);
-    window.location.reload();
+    notify.news("Register success");
   } catch {
-    notify.error("Network error");
+    notify.error("Register failed");
   }
 }
 
