@@ -12,6 +12,7 @@ import (
 // ChallengeRepository defines the methods required to manage daily challenges.
 type ChallengeRepository interface {
 	GetChallengeByDate(ctx context.Context, date time.Time) (*daily.Challenge, error)
+	GetInverseChallengeByDate(ctx context.Context, date time.Time) (*daily.InverseChallenge, error)
 }
 
 // SessionRepository defines the methods required to manage user sessions for the daily challenge.
@@ -42,18 +43,42 @@ func (s *Daily) GetCurrentStatus(ctx context.Context, userID uuid.UUID) (*daily.
 		return nil, nil, daily.ErrChallengeNotFound
 	}
 
-	session, err := s.sessionRepo.GetSession(ctx, userID, challenge.ID)
+	session, err := s.doSessionLogic(ctx, userID, challenge.ID)
 	if err != nil {
-		session, err = daily.NewSession(userID, challenge.ID)
-		if err != nil {
-			return nil, nil, err
-		}
-		if err := s.sessionRepo.CreateSession(ctx, session); err != nil {
-			return nil, nil, errors.New("error while creating session")
-		}
+		return nil, nil, err
 	}
 
 	return challenge, session, nil
+}
+
+// GetCurrentInverseStatus retrieves the current inverse challenge and session status for a given user.
+func (s *Daily) GetCurrentInverseStatus(ctx context.Context, userID uuid.UUID) (*daily.InverseChallenge, *daily.Session, error) {
+	challenge, err := s.challengeRepo.GetInverseChallengeByDate(ctx, time.Now())
+	if err != nil {
+		return nil, nil, daily.ErrChallengeNotFound
+	}
+
+	session, err := s.doSessionLogic(ctx, userID, challenge.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return challenge, session, nil
+}
+
+func (s *Daily) doSessionLogic(ctx context.Context, userID uuid.UUID, challengeID int) (*daily.Session, error) {
+	session, err := s.sessionRepo.GetSession(ctx, userID, challengeID)
+	if err != nil {
+		session, err = daily.NewSession(userID, challengeID)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.sessionRepo.CreateSession(ctx, session); err != nil {
+			return nil, errors.New("error while creating session")
+		}
+	}
+
+	return session, nil
 }
 
 // ProcessAttempt processes a user's guess for the daily challenge and updates the session state accordingly.
@@ -64,6 +89,25 @@ func (s *Daily) ProcessAttempt(ctx context.Context, userID uuid.UUID, guess stri
 	}
 
 	result, err := session.MakeAttempt(guess, challenge)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.sessionRepo.UpdateSession(ctx, session); err != nil {
+		return nil, errors.New("error updating session")
+	}
+
+	return result, nil
+}
+
+// ProcessInverseAttempt processes a user's guess for the daily inverse challenge and updates the session state accordingly.
+func (s *Daily) ProcessInverseAttempt(ctx context.Context, userID uuid.UUID, guess string) (*daily.InverseAttemptResult, error) {
+	challenge, session, err := s.GetCurrentInverseStatus(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := session.MakeInverseAttempt(guess, challenge)
 	if err != nil {
 		return nil, err
 	}

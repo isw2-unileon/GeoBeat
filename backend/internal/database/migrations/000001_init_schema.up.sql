@@ -16,17 +16,31 @@ CREATE TABLE users (
     )
 );
 
-CREATE TABLE daily_challenges (
+CREATE TYPE challenge_type_enum AS ENUM ('daily', 'inverse');
+
+CREATE TABLE challenges (
     id SERIAL PRIMARY KEY,
+    challenge_type challenge_type_enum NOT NULL
+);
+
+CREATE TABLE daily_challenges (
+    id INT PRIMARY KEY REFERENCES challenges(id) ON DELETE CASCADE,
     target_country VARCHAR(255) NOT NULL,
     target_genre VARCHAR(255) NOT NULL,
     hint_songs TEXT[] NOT NULL,
     play_date DATE UNIQUE NOT NULL DEFAULT CURRENT_DATE
 );
 
+CREATE TABLE inverse_challenges (
+    id INT PRIMARY KEY REFERENCES challenges(id) ON DELETE CASCADE,
+    given_song_name VARCHAR(255) NOT NULL,
+    target_country VARCHAR(255) NOT NULL,
+    play_date DATE UNIQUE NOT NULL DEFAULT CURRENT_DATE
+);
+
 CREATE TABLE daily_sessions (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    challenge_id INT NOT NULL REFERENCES daily_challenges(id) ON DELETE CASCADE,
+    challenge_id INT NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
     attempts_used INT NOT NULL DEFAULT 0,
     status VARCHAR(50) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

@@ -50,11 +50,41 @@ func (r *PostgresDailyRepo) GetChallengeByDate(ctx context.Context, date time.Ti
 	return &c, nil
 }
 
+// GetInverseChallengeByDate retrieves the inverse challenge for a specific date. If no inverse challenge exists for that date, it returns an error.
+func (r *PostgresDailyRepo) GetInverseChallengeByDate(ctx context.Context, date time.Time) (*daily.InverseChallenge, error) {
+	query := `
+		SELECT id, given_song_name, target_country, play_date 
+		FROM inverse_challenges 
+		WHERE play_date = $1::DATE
+	`
+
+	var c daily.InverseChallenge
+	err := r.pool.QueryRow(ctx, query, date).Scan(
+		&c.ID,
+		&c.GivenSongName,
+		&c.TargetCountry,
+		&c.Date,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, daily.ErrChallengeNotFound
+		}
+		return nil, err
+	}
+
+	return &c, nil
+}
+
 // SaveDailyChallenge saves a new daily challenge to the database and updates the Challenge struct with the generated ID.
 func (r *PostgresDailyRepo) SaveDailyChallenge(ctx context.Context, c *daily.Challenge) error {
 	query := `
-		INSERT INTO daily_challenges (target_country, target_genre, hint_songs, play_date) 
-		VALUES ($1, $2, $3, $4) 
+		WITH new_challenge AS (
+			INSERT INTO challenges (challenge_type) 
+			VALUES ('daily') 
+			RETURNING id
+		)
+		INSERT INTO daily_challenges (id, target_country, target_genre, hint_songs, play_date) 
+		SELECT id, $1, $2, $3, $4 FROM new_challenge
 		RETURNING id
 	`
 
@@ -64,6 +94,30 @@ func (r *PostgresDailyRepo) SaveDailyChallenge(ctx context.Context, c *daily.Cha
 		c.TargetCountry,
 		c.TargetGenre,
 		c.HintSongs,
+		c.Date,
+	).Scan(&c.ID)
+
+	return err
+}
+
+// SaveInverseChallenge saves a new inverse challenge to the database and updates the InverseChallenge struct with the generated ID.
+func (r *PostgresDailyRepo) SaveInverseChallenge(ctx context.Context, c *daily.InverseChallenge) error {
+	query := `
+		WITH new_challenge AS (
+			INSERT INTO challenges (challenge_type) 
+			VALUES ('inverse') 
+			RETURNING id
+		)
+		INSERT INTO inverse_challenges (id, given_song_name, target_country, play_date) 
+		SELECT id, $1, $2, $3 FROM new_challenge
+		RETURNING id
+	`
+
+	err := r.pool.QueryRow(
+		ctx,
+		query,
+		c.GivenSongName,
+		c.TargetCountry,
 		c.Date,
 	).Scan(&c.ID)
 
