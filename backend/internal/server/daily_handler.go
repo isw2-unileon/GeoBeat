@@ -14,7 +14,9 @@ import (
 // DailyService defines the interface for the daily challenge service.
 type DailyService interface {
 	GetCurrentStatus(ctx context.Context, userID uuid.UUID) (*daily.Challenge, *daily.Session, error)
+	GetCurrentInverseStatus(ctx context.Context, userID uuid.UUID) (*daily.InverseChallenge, *daily.Session, error)
 	ProcessAttempt(ctx context.Context, userID uuid.UUID, guess string) (*daily.AttemptResult, error)
+	ProcessInverseAttempt(ctx context.Context, userID uuid.UUID, guess string) (*daily.InverseAttemptResult, error)
 }
 
 // Handler handles HTTP requests for the daily challenge endpoints.
@@ -30,11 +32,15 @@ func NewHandler(svc DailyService) *Handler {
 // RegisterRoutes registers the HTTP routes for the daily challenge endpoints.
 func (h *Handler) RegisterRoutes(mux *http.ServeMux, authMiddleware func(http.Handler) http.Handler) {
 	getStatusHandler := http.HandlerFunc(h.getDailyStatus)
+	getInverseStatusHandler := http.HandlerFunc(h.getInverseDailyStatus)
 	postAttemptHandler := http.HandlerFunc(h.postAttempt)
+	postInverseAttemptHandler := http.HandlerFunc(h.postInverseAttempt)
 
 	// Step 2: Wrap them in the middleware and use mux.Handle (NOT HandleFunc)
 	mux.Handle("GET /api/game/daily", authMiddleware(getStatusHandler))
+	mux.Handle("GET /api/game/inverse", authMiddleware(getInverseStatusHandler))
 	mux.Handle("POST /api/game/daily/attempt", authMiddleware(postAttemptHandler))
+	mux.Handle("POST /api/game/inverse/attempt", authMiddleware(postInverseAttemptHandler))
 }
 
 // attemptRequest represents the expected request body for making an attempt at the daily challenge.
@@ -45,6 +51,13 @@ type attemptRequest struct {
 // statusResponse represents the response structure for the daily status endpoint.
 type statusResponse struct {
 	Country      string `json:"country"`
+	AttemptsUsed int    `json:"attempts_used"`
+	Status       string `json:"status"`
+}
+
+// statusInverseResponse represents the response structure for the daily inverse status endpoint.
+type statusInverseResponse struct {
+	Song         string `json:"song"`
 	AttemptsUsed int    `json:"attempts_used"`
 	Status       string `json:"status"`
 }
@@ -72,6 +85,28 @@ func (h *Handler) getDailyStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+func (h *Handler) getInverseDailyStatus(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(UserIDContextKey).(uuid.UUID)
+	if userID == uuid.Nil {
+		http.Error(w, "server error: missing user context", http.StatusInternalServerError)
+		return
+	}
+
+	challenge, session, err := h.svc.GetCurrentInverseStatus(r.Context(), userID)
+	if err != nil {
+		dailyError(w, err)
+		return
+	}
+
+	resp := statusInverseResponse{
+		Song:         challenge.GivenSongName,
+		AttemptsUsed: session.AttemptsUsed,
+		Status:       string(session.Status),
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 // postAttempt handles the POST /api/game/daily/attempt endpoint to process a user's guess for the daily challenge.
 func (h *Handler) postAttempt(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
@@ -88,6 +123,28 @@ func (h *Handler) postAttempt(w http.ResponseWriter, r *http.Request) {
 
 	// Result contains status
 	result, err := h.svc.ProcessAttempt(r.Context(), userID, req.Guess)
+	if err != nil {
+		dailyError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) postInverseAttempt(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
+	if !ok {
+		http.Error(w, "server error: missing user context", http.StatusInternalServerError)
+		return
+	}
+
+	var req attemptRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	result, err := h.svc.ProcessInverseAttempt(r.Context(), userID, req.Guess)
 	if err != nil {
 		dailyError(w, err)
 		return

@@ -28,7 +28,8 @@ type mockSessionRepo struct {
 }
 
 type mockChallengeRepo struct {
-	challenge *daily.Challenge
+	challenge        *daily.Challenge
+	inverseChallenge *daily.InverseChallenge
 }
 
 func newMockSessionRepo() *mockSessionRepo {
@@ -44,11 +45,19 @@ func newMockChallengeRepo() *mockChallengeRepo {
 			TargetGenre: "Pop",
 			HintSongs:   []string{"Song 1", "Song 2", "Song 3", "Song 4", "Song 5"},
 		},
+		inverseChallenge: &daily.InverseChallenge{
+			ID:            2,
+			TargetCountry: "spain",
+		},
 	}
 }
 
 func (m *mockChallengeRepo) GetChallengeByDate(ctx context.Context, date time.Time) (*daily.Challenge, error) {
 	return m.challenge, nil
+}
+
+func (m *mockChallengeRepo) GetInverseChallengeByDate(ctx context.Context, date time.Time) (*daily.InverseChallenge, error) {
+	return m.inverseChallenge, nil
 }
 
 func (m *mockSessionRepo) GetSession(ctx context.Context, userID uuid.UUID, challengeID int) (*daily.Session, error) {
@@ -157,6 +166,58 @@ func TestHandler_GetDailyStatus(t *testing.T) {
 	}
 }
 
+func TestHandler_GetInverseDailyStatus(t *testing.T) {
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+
+	tests := []struct {
+		name           string
+		seedSession    bool
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "1. Creates new inverse session if none exists and returns 200 OK",
+			seedSession:    false, // Empty database
+			expectedStatus: http.StatusOK,
+			expectedBody:   `"attempts_used":0`,
+		},
+		{
+			name:           "2. Retrieves existing inverse session correctly",
+			seedSession:    true, // Database already has progress
+			expectedStatus: http.StatusOK,
+			expectedBody:   `"attempts_used":2`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mux, sessionRepo, _ := newTestServer(t, userID)
+
+			if tt.seedSession {
+				sessionRepo.sessions[sessionKey{userID: userID, challengeID: 2}] = &daily.Session{
+					UserID:       userID,
+					ChallengeID:  2,
+					AttemptsUsed: 2,
+					Status:       daily.StatusPlaying,
+				}
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/api/game/inverse", nil)
+			rec := httptest.NewRecorder()
+
+			mux.ServeHTTP(rec, req)
+
+			if rec.Code != tt.expectedStatus {
+				t.Errorf("status = %d, want %d", rec.Code, tt.expectedStatus)
+			}
+
+			if !strings.Contains(rec.Body.String(), tt.expectedBody) {
+				t.Errorf("expected body to contain %q, got %q", tt.expectedBody, rec.Body.String())
+			}
+		})
+	}
+}
+
 func TestHandler_PostAttempt(t *testing.T) {
 	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
@@ -214,6 +275,63 @@ func TestHandler_PostAttempt(t *testing.T) {
 	}
 }
 
+func TestHandler_PostInverseAttempt(t *testing.T) {
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+
+	tests := []struct {
+		name           string
+		requestBody    string
+		seedStatus     daily.GameStatus // Status to inject into the database before the test
+		seedAttempts   int              // Attempts already used
+		expectedStatus int
+	}{
+		{
+			name:           "Valid correct inverse guess returns 200 OK",
+			requestBody:    `{"guess":"spain"}`,
+			seedStatus:     daily.StatusPlaying,
+			seedAttempts:   0,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Invalid JSON format returns 400 Bad Request",
+			requestBody:    `{"guess":"spain"`, // Broken JSON
+			seedStatus:     daily.StatusPlaying,
+			seedAttempts:   0,
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name:           "Guessing on an already won inverse game returns 409 Conflict",
+			requestBody:    `{"guess":"france"}`,
+			seedStatus:     daily.StatusWon, // Game is already over
+			seedAttempts:   1,
+			expectedStatus: http.StatusConflict, // Matches daily.ErrGameOver
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mux, sessionRepo, _ := newTestServer(t, userID)
+
+			// Seed the database with the exact state we want to test
+			sessionRepo.sessions[sessionKey{userID: userID, challengeID: 2}] = &daily.Session{
+				UserID:       userID,
+				ChallengeID:  2,
+				AttemptsUsed: tt.seedAttempts,
+				Status:       tt.seedStatus,
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/api/game/inverse/attempt", bytes.NewBufferString(tt.requestBody))
+			rec := httptest.NewRecorder()
+
+			mux.ServeHTTP(rec, req)
+
+			if rec.Code != tt.expectedStatus {
+				t.Errorf("status = %d, want %d. Body: %s", rec.Code, tt.expectedStatus, rec.Body.String())
+			}
+		})
+	}
+}
+
 func TestHandler_PlayFullGameFlow(t *testing.T) {
 	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 	mux, _, challengeRepo := newTestServer(t, userID)
@@ -240,6 +358,40 @@ func TestHandler_PlayFullGameFlow(t *testing.T) {
 
 	// 3rd Request: Correct guess
 	req3 := httptest.NewRequest(http.MethodPost, "/api/game/daily/attempt", bytes.NewBufferString(`{"guess":"Pop"}`))
+	rec3 := httptest.NewRecorder()
+	mux.ServeHTTP(rec3, req3)
+
+	if !strings.Contains(rec3.Body.String(), `"status":"won"`) {
+		t.Errorf("expected game to be won, got body: %s", rec3.Body.String())
+	}
+}
+
+func TestHandler_PlayFullInverseGameFlow(t *testing.T) {
+	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
+	mux, _, challengeRepo := newTestServer(t, userID)
+
+	challengeRepo.inverseChallenge = &daily.InverseChallenge{ID: 2, TargetCountry: "spain"}
+
+	// 1st Request: Wrong guess
+	req1 := httptest.NewRequest(http.MethodPost, "/api/game/inverse/attempt", bytes.NewBufferString(`{"guess":"france"}`))
+	rec1 := httptest.NewRecorder()
+	mux.ServeHTTP(rec1, req1)
+
+	if rec1.Code != http.StatusOK {
+		t.Fatalf("req1 failed: status = %d", rec1.Code)
+	}
+
+	// 2nd Request: Get status to verify it saved the wrong guess
+	req2 := httptest.NewRequest(http.MethodGet, "/api/game/inverse", nil)
+	rec2 := httptest.NewRecorder()
+	mux.ServeHTTP(rec2, req2)
+
+	if !strings.Contains(rec2.Body.String(), `"attempts_used":1`) {
+		t.Fatalf("expected attempts to be 1, got body: %s", rec2.Body.String())
+	}
+
+	// 3rd Request: Correct guess
+	req3 := httptest.NewRequest(http.MethodPost, "/api/game/inverse/attempt", bytes.NewBufferString(`{"guess":"spain"}`))
 	rec3 := httptest.NewRecorder()
 	mux.ServeHTTP(rec3, req3)
 
