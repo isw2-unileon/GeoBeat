@@ -1,5 +1,5 @@
-import { AppField } from "./components/app-field";
-import { AppDrawer } from "./components/app-drawer";
+import { DailyField } from "./components/daily/daily-field";
+import { DailyDrawer } from "./components/daily/daily-drawer";
 import { AppDialog } from "./components/app-dialog";
 import { DailyModeMap } from "./components/map/DailyModeMap";
 import { InverseModeMap } from "./components/map/InverseModeMap";
@@ -10,33 +10,46 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { getDaily } from "./services/daily";
 import { Attempts } from "./components/attempts";
-import { Daily, GameStatus, STATUS } from "@/types/gameTypes";
+import { Daily, GameStatus, Inverse, STATUS } from "@/types/gameTypes";
 import { getDataFromISO } from "./lib/getCountryData";
 import { PopUp } from "./components/attempts-popup";
 import { GuessProvider } from "./context/GuessProvider";
-import { DailyModeTitle } from "./components/daily-title";
-import { InverseModeTitle } from "./components/inverse-title";
+import { DailyModeTitle } from "./components/daily/daily-title";
+import { InverseModeTitle } from "@/components/inverse/inverse-title";
 import { LoadingText } from "./components/loading-text";
 import { getInverse } from "./services/inverse";
+import { InverseField } from "./components/inverse/inverse-field";
+import { InverseDrawer } from "./components/inverse/inverse-drawer";
 
 export default function App() {
   const [mode, setMode] = useState<string>(modes[0]);
+
+  // Declare modes data
   const [daily, setDaily] = useState<Daily>(null);
-  const [countryISO, setCountryISO] = useState<string>("UNKOWN");
   const [gameStatus, setGameStatus] = useState<GameStatus>({
     attempts: 0,
     status: STATUS.PLAYING,
   });
+  const [countryISO, setCountryISO] = useState<string>("UNKOWN");
 
+  const [inverse, setInverse] = useState<Inverse>(null);
+  const [inverseStatus, setInverseStatus] = useState<GameStatus>({
+    attempts: 0,
+    status: STATUS.PLAYING,
+  });
+  const [inverseISO, setInverseISO] = useState<string>("UNKNOWN");
+
+  // Load daily infomation
   useEffect(() => {
     const load = async () => {
-      const data = await getDaily();
-      setDaily(data);
+      setDaily(await getDaily());
+      setInverse(await getInverse());
     };
 
     load();
   }, []);
 
+  const country = getDataFromISO(countryISO).name;
   useEffect(() => {
     if (daily) {
       setCountryISO(daily.country);
@@ -47,7 +60,16 @@ export default function App() {
     }
   }, [daily]);
 
-  const country = getDataFromISO(countryISO).name;
+  const [song, setSong] = useState("No song");
+  useEffect(() => {
+    if (inverse) {
+      setInverseStatus({
+        attempts: inverse.attempts,
+        status: inverse.status,
+      });
+      setSong(inverse.song);
+    }
+  }, [inverse]);
 
   const [forceLoad, setForceLoad] = useState(false);
   useEffect(() => {
@@ -59,68 +81,77 @@ export default function App() {
   }, []);
 
   const ready = countryISO !== "UNKOWN" || forceLoad;
-
-  let content;
-  switch (mode) {
-    case modes[0]:
-      if (ready) {
-        content = (
-          <>
-            <DailyModeTitle />
-            <DailyModeMap countryISO={countryISO} />
-          </>
-        );
-      } else {
-        content = (
-          <>
-            <DailyModeTitle />
-            <LoadingText />
-          </>
-        );
-      }
-
-      break;
-
-    case modes[1]:
-      content = (
-        <>
-          <InverseModeTitle />
-          <InverseModeMap
-            countryISO={countryISO}
-            setCountryISO={setCountryISO}
-          />
-        </>
-      );
-      break;
-  }
+  const dailyMode = mode === modes[0];
+  const inverseMode = mode === modes[1];
 
   return (
     <main className="relative min-h-screen flex flex-col">
       <AppDialog />
-      {content}
+      {dailyMode && <DailyModeTitle />}
+      {inverseMode && <InverseModeTitle />}
+      <div className={dailyMode ? "" : "hidden"}>
+        {ready ? <DailyModeMap countryISO={countryISO} /> : <LoadingText />}
+      </div>
+      <div className={inverseMode ? "" : "hidden"}>
+        <InverseModeMap countryISO={inverseISO} setCountryISO={setInverseISO} />
+      </div>
       <GuessProvider>
         {/* Desktop */}
         <div className="hidden md:block">
-          <AppField
-            country={country}
-            mode={mode}
-            setMode={setMode}
-            gameStatus={gameStatus}
-            setGameStatus={setGameStatus}
-          />
+          {dailyMode && (
+            <DailyField
+              country={country}
+              mode={mode}
+              setMode={setMode}
+              gameStatus={gameStatus}
+              setGameStatus={setGameStatus}
+            />
+          )}
+          {inverseMode && (
+            <InverseField
+              song={song}
+              countryISO={inverseISO}
+              mode={mode}
+              setMode={setMode}
+              inverseStatus={inverseStatus}
+              setInverseStatus={setInverseStatus}
+            />
+          )}
         </div>
         {/* Mobile */}
         <div className="md:hidden">
-          <AppDrawer
-            country={country}
-            mode={mode}
-            setMode={setMode}
-            gameStatus={gameStatus}
-            setGameStatus={setGameStatus}
-          />
+          {dailyMode && (
+            <DailyDrawer
+              country={country}
+              mode={mode}
+              setMode={setMode}
+              gameStatus={gameStatus}
+              setGameStatus={setGameStatus}
+            />
+          )}
+          {inverseMode && (
+            <InverseDrawer
+              song={song}
+              countryISO={inverseISO}
+              mode={mode}
+              setMode={setMode}
+              inverseStatus={inverseStatus}
+              setInverseStatus={setInverseStatus}
+            />
+          )}
         </div>
-        <PopUp status={gameStatus.status} />
-        <Attempts gameStatus={gameStatus} />
+        {dailyMode && (
+          <>
+            <Attempts gameStatus={gameStatus} mode={mode} />
+            <PopUp status={gameStatus.status} />
+          </>
+        )}
+        {inverseMode && (
+          <>
+            <Attempts gameStatus={inverseStatus} mode={mode} />
+            <PopUp status={inverseStatus.status} />
+          </>
+        )}
       </GuessProvider>
       <Toaster position={"top-center"} />
     </main>

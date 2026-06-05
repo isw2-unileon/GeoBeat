@@ -7,21 +7,12 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { modes } from "@/data/placeholder-data";
 import React, { useState } from "react";
 import { GameStatus, STATUS } from "@/types/gameTypes";
 import { useHandleGuess } from "@/hooks/handleGuess";
-import { GenreCombobox } from "./genre-combobox";
-import { ModeSelect } from "./mode-select";
+import { GenreCombobox } from "../genre-combobox";
+import { ModeSelect } from "../mode-select";
 
 type Props = {
   country: string;
@@ -31,7 +22,7 @@ type Props = {
   setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
 };
 
-export function AppField({
+export function DailyField({
   country,
   mode,
   setMode,
@@ -48,7 +39,8 @@ export function AppField({
           GeoBeat
         </FieldLegend>
         <FieldDescription>
-          The not so hit music genre guessing game
+          In daily mode you are given a country and have to guess the most
+          popular song for it. Every mistake gives a hint in form of a song
         </FieldDescription>
         <FieldGroup>
           <FieldSeparator />

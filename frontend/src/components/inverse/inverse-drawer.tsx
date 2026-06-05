@@ -9,38 +9,31 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { modes } from "@/data/placeholder-data";
-import { useState } from "react";
 import { GameStatus, STATUS } from "@/types/gameTypes";
-import { useHandleGuess } from "@/hooks/handleGuess";
-import { GenreCombobox } from "./genre-combobox";
-import { ModeSelect } from "./mode-select";
+import { ModeSelect } from "@/components/mode-select";
+import { useHandleInverseGuess } from "@/hooks/handleInverseGuess";
+import { getDataFromISO } from "@/lib/getCountryData";
+import { useState } from "react";
 type Props = {
-  country: string;
+  song: string;
+  countryISO: string;
   mode: string;
   setMode: React.Dispatch<React.SetStateAction<string>>;
-  gameStatus: GameStatus;
-  setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
+  inverseStatus: GameStatus;
+  setInverseStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
 };
 
-export function AppDrawer({
-  country,
-  setMode,
+export function InverseDrawer({
+  song,
+  countryISO,
   mode,
-  gameStatus,
-  setGameStatus,
+  setMode,
+  inverseStatus,
+  setInverseStatus,
 }: Props) {
-  const [genre, setGenre] = useState<string | null>(null);
+  const handleInverseGuess = useHandleInverseGuess();
+  const country = getDataFromISO(countryISO).name;
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const handleGuess = useHandleGuess();
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen} modal={false}>
@@ -50,8 +43,9 @@ export function AppDrawer({
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle className="text-xl">GeoBeat</DrawerTitle>
-          <DrawerDescription>
-            The not so hit music genre guessing game
+          <DrawerDescription className="max-w-xs mx-auto">
+            In guess the country mode you are given a song and have to guess
+            where that song is from, in this mode the are no hints!
           </DrawerDescription>
         </DrawerHeader>
         <div className="text-center mb-4">
@@ -61,20 +55,20 @@ export function AppDrawer({
           </div>
         </div>
         <div className="text-center mb-4">
-          <h1 className="text-base">What is the most popular genre of?</h1>
-          <label>{country}</label>
+          <h1 className="text-base">¿Where is this song from?</h1>
+          <label>{song}</label>
           <div className="max-w-xs mx-auto">
-            <GenreCombobox genre={genre} setGenre={setGenre} />
+            <span className="text-sm">Selected country: {country}</span>
           </div>
         </div>
         <div className="w-full flex justify-center">
-          {gameStatus.status !== STATUS.WON &&
-          gameStatus.status !== STATUS.LOST ? (
+          {inverseStatus.status !== STATUS.WON &&
+          inverseStatus.status !== STATUS.LOST ? (
             <Button
               type="button"
               className="w-1/3"
               onClick={() => {
-                handleGuess(genre, setGameStatus);
+                handleInverseGuess(countryISO, country, setInverseStatus);
                 setIsOpen(false);
               }}
             >
