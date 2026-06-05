@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/authsession"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
@@ -25,9 +26,11 @@ type OAuthProvider interface {
 // AuthService defines the interface for authentication-related operations used by the AuthHandler.
 type AuthService interface {
 	RegisterWithEmail(ctx context.Context, email, username, password string) error
-	LoginWithEmail(ctx context.Context, email, password string) (string, error)
+	LoginWithEmail(ctx context.Context, email, password string) (string, string, error)
 	ProcessOAuthLogin(ctx context.Context, code string, provider geouser.AuthProvider) (string, error)
 	ValidateToken(ctx context.Context, token string) (uuid.UUID, error)
+	Logout(ctx context.Context, rawToken string) error
+	RefreshToken(ctx context.Context, rawToken string) (string, error)
 }
 
 // AuthHandler handles authentication-related HTTP requests, including registration, login, and OAuth flows.
@@ -55,6 +58,8 @@ func NewAuthHandler(authService AuthService, providers map[geouser.AuthProvider]
 func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/auth/register", h.handleRegister)
 	mux.HandleFunc("POST /api/auth/login", h.handleLogin)
+	mux.HandleFunc("POST /api/auth/logout", h.handleLogout)
+	mux.HandleFunc("POST /api/auth/refresh", h.handleRefresh)
 	for provider := range h.providers {
 		p := provider
 		mux.HandleFunc("GET /api/auth/login/"+string(p), func(w http.ResponseWriter, r *http.Request) {
@@ -96,11 +101,19 @@ func (h *AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.authService.LoginWithEmail(r.Context(), req.Email, req.Password)
+	token, refreshToken, err := h.authService.LoginWithEmail(r.Context(), req.Email, req.Password)
 	if err != nil {
 		mapErrors(w, err)
 		return
 	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }
@@ -143,22 +156,62 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	token, err := h.authService.ProcessOAuthLogin(r.Context(), code, provider)
+	refreshToken, err := h.authService.ProcessOAuthLogin(r.Context(), code, provider)
 	if err != nil {
 		mapErrors(w, err)
 		return
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    token,
+		Name:     "refresh_token",
+		Value:    refreshToken,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
-		MaxAge:   600, // TODO: Change in production
 	})
 
 	http.Redirect(w, r, h.cfg.FrontendURL, http.StatusTemporaryRedirect)
+}
+
+func (h *AuthHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		formatError(w, http.StatusBadRequest, "missing refresh token")
+		return
+	}
+
+	err = h.authService.Logout(r.Context(), cookie.Value)
+	if err != nil {
+		mapErrors(w, err)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) handleRefresh(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		formatError(w, http.StatusBadRequest, "missing refresh token")
+		return
+	}
+
+	newToken, err := h.authService.RefreshToken(r.Context(), cookie.Value)
+	if err != nil {
+		mapErrors(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"token": newToken})
 }
 
 // AuthMiddleware is an HTTP middleware that validates the presence and validity of a Bearer token in the Authorization header.
@@ -228,7 +281,7 @@ func clearOAuthStateCookie(w http.ResponseWriter, provider geouser.AuthProvider,
 
 func mapErrors(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, geouser.ErrEmailNotVerified), errors.Is(err, geouser.ErrEmptyPassword), errors.Is(err, geouser.ErrEmptyEmailOrUsername), errors.Is(err, geouser.ErrAccountAlreadyLinked):
+	case errors.Is(err, authsession.ErrExpired), errors.Is(err, geouser.ErrEmailNotVerified), errors.Is(err, geouser.ErrEmptyPassword), errors.Is(err, geouser.ErrEmptyEmailOrUsername), errors.Is(err, geouser.ErrAccountAlreadyLinked):
 		formatError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, service.ErrInvalidCredentials):
 		formatError(w, http.StatusUnauthorized, err.Error())
@@ -236,6 +289,8 @@ func mapErrors(w http.ResponseWriter, err error) {
 		formatError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, service.ErrUserAlreadyExists):
 		formatError(w, http.StatusConflict, service.ErrUserCreationFailed.Error())
+	case errors.Is(err, service.ErrAlreadyLoggedIn):
+		formatError(w, http.StatusConflict, err.Error())
 	case errors.Is(err, service.ErrOAuthOnlyAccount):
 		formatError(w, http.StatusConflict, service.ErrUserLoginFailed.Error())
 	case errors.Is(err, service.ErrUserCreationFailed), errors.Is(err, service.ErrUserLoginFailed):
