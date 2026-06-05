@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const jwtExpirationTime = time.Minute * 15
+
 // JWTTokenizer implements the Tokenizer interface using JSON Web Tokens (JWT) for authentication token generation and validation
 type JWTTokenizer struct {
 	secret []byte
@@ -23,7 +25,7 @@ func NewJWTTokenizer(secret string) *JWTTokenizer {
 func (t *JWTTokenizer) GenerateToken(userID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+		"exp":     time.Now().Add(jwtExpirationTime).Unix(),
 		"iat":     time.Now().Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/authsession"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 )
 
@@ -20,6 +21,8 @@ type Tokenizer interface {
 type Hasher interface {
 	HashPassword(password string) (string, error)
 	CompareHashAndPassword(hash, password string) error
+	GenerateRawToken() (string, error)
+	HashToken(rawToken string) (string, error)
 }
 
 // OAuthUserInfo represents the user information retrieved from an OAuth provider
@@ -43,6 +46,14 @@ type UserRepository interface {
 	Update(ctx context.Context, u *geouser.User) error
 }
 
+// RefreshTokenRepository defines the interface for refresh token data access
+type RefreshTokenRepository interface {
+	Save(ctx context.Context, token *authsession.RefreshToken) error
+	FindByTokenHash(ctx context.Context, tokenHash string) (*authsession.RefreshToken, error)
+	FindByUserID(ctx context.Context, userID uuid.UUID) (*authsession.RefreshToken, error)
+	Delete(ctx context.Context, tokenHash string) error
+}
+
 var (
 	// ErrUserCreationFailed indicates a failure during user creation
 	ErrUserCreationFailed = errors.New("failed to create user")
@@ -56,25 +67,33 @@ var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	// ErrOAuthOnlyAccount indicates that the email is associated to an account that only supports OAuth login
 	ErrOAuthOnlyAccount = errors.New("email is associated to an account that only supports OAuth login")
+	// ErrAlreadyLoggedIn indicates that the user is already logged in
+	ErrAlreadyLoggedIn = errors.New("user is already logged in")
+	// ErrRefreshingToken indicates that there was an error refreshing the token
+	ErrRefreshingToken = errors.New("error refreshing token")
+	// ErrLoggingOut indicates that there was an error during logout
+	ErrLoggingOut = errors.New("error during logout")
 )
 
 // AuthService provides methods for user authentication and registration
 type AuthService struct {
-	userRepo       UserRepository
-	tokenizer      Tokenizer
-	hasher         Hasher
-	oauthProviders map[geouser.AuthProvider]OAuthProvider
-	logger         *slog.Logger
+	userRepo         UserRepository
+	refreshTokenRepo RefreshTokenRepository
+	tokenizer        Tokenizer
+	hasher           Hasher
+	oauthProviders   map[geouser.AuthProvider]OAuthProvider
+	logger           *slog.Logger
 }
 
 // NewAuthService creates a new instance of AuthService with the provided dependencies
-func NewAuthService(userRepo UserRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[geouser.AuthProvider]OAuthProvider) *AuthService {
+func NewAuthService(userRepo UserRepository, refreshTokenRepo RefreshTokenRepository, tokenizer Tokenizer, hasher Hasher, oauthProviders map[geouser.AuthProvider]OAuthProvider) *AuthService {
 	return &AuthService{
-		userRepo:       userRepo,
-		tokenizer:      tokenizer,
-		hasher:         hasher,
-		oauthProviders: oauthProviders,
-		logger:         slog.Default(),
+		userRepo:         userRepo,
+		refreshTokenRepo: refreshTokenRepo,
+		tokenizer:        tokenizer,
+		hasher:           hasher,
+		oauthProviders:   oauthProviders,
+		logger:           slog.Default(),
 	}
 }
 
@@ -166,27 +185,81 @@ func containsSpecialChar(s string) bool {
 	return false
 }
 
-// LoginWithEmail authenticates a user using email and password, returning a token if successful
-func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string) (string, error) {
-	storedUser, err := s.userRepo.FindByEmail(ctx, email)
+func (s *AuthService) checkExistingRefreshToken(ctx context.Context, userID uuid.UUID) (bool, error) {
+	oldRefreshToken, err := s.refreshTokenRepo.FindByUserID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, geouser.ErrNotFound) {
-			return "", ErrInvalidCredentials
+		if errors.Is(err, authsession.ErrNotFound) {
+			return false, nil
 		}
-		s.logger.Error("error retrieving user", "email", email, "error", err)
+		s.logger.Error("error retrieving refresh token for user", "userID", userID, "error", err)
+		return false, ErrUserLoginFailed
+	}
+	return oldRefreshToken != nil, nil
+}
+
+func (s *AuthService) generateRefreshToken(ctx context.Context, userID uuid.UUID) (string, error) {
+	rawToken, err := s.hasher.GenerateRawToken()
+	if err != nil {
+		s.logger.Error("error generating refresh token", "userID", userID, "error", err)
 		return "", ErrUserLoginFailed
 	}
 
+	tokenHash, err := s.hasher.HashToken(rawToken)
+	if err != nil {
+		s.logger.Error("error hashing refresh token", "userID", userID, "error", err)
+		return "", ErrUserLoginFailed
+	}
+
+	refreshToken := authsession.NewRefreshToken(userID, tokenHash)
+	err = s.refreshTokenRepo.Save(ctx, refreshToken)
+	if err != nil {
+		s.logger.Error("error saving refresh token", "userID", userID, "error", err)
+		return "", ErrUserLoginFailed
+	}
+
+	return rawToken, nil
+}
+
+// LoginWithEmail authenticates a user using email and password, returning a token if successful
+func (s *AuthService) LoginWithEmail(ctx context.Context, email, password string) (string, string, error) {
+	storedUser, err := s.userRepo.FindByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, geouser.ErrNotFound) {
+			return "", "", ErrInvalidCredentials
+		}
+		s.logger.Error("error retrieving user", "email", email, "error", err)
+		return "", "", ErrUserLoginFailed
+	}
+
 	if storedUser.Provider != geouser.ProviderEmail {
-		return "", ErrOAuthOnlyAccount
+		return "", "", ErrOAuthOnlyAccount
 	}
 
 	err = s.hasher.CompareHashAndPassword(*storedUser.PasswordHash, password)
 	if err != nil {
-		return "", ErrInvalidCredentials
+		return "", "", ErrInvalidCredentials
 	}
 
-	return s.tokenizer.GenerateToken(storedUser.ID)
+	exists, err := s.checkExistingRefreshToken(ctx, storedUser.ID)
+	if err != nil {
+		return "", "", err
+	}
+	if exists {
+		return "", "", ErrAlreadyLoggedIn
+	}
+
+	rawToken, err := s.generateRefreshToken(ctx, storedUser.ID)
+	if err != nil {
+		return "", "", err
+	}
+
+	authToken, err := s.tokenizer.GenerateToken(storedUser.ID)
+	if err != nil {
+		s.logger.Error("error generating auth token", "userID", storedUser.ID, "error", err)
+		return "", "", ErrUserLoginFailed
+	}
+
+	return authToken, rawToken, nil
 }
 
 // ProcessOAuthLogin processes an OAuth login flow, returning a token if successful
@@ -206,44 +279,94 @@ func (s *AuthService) ProcessOAuthLogin(ctx context.Context, code string, provid
 	}
 
 	if existingUser != nil {
-		if existingUser.Provider == oauthProvider.GetProviderName() {
-			if *existingUser.ProviderID != userInfo.ProviderID {
-				s.logger.Error("provider ID mismatch for existing user", "storedProviderID", *existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
-				return "", ErrInvalidCredentials
-			}
-			s.logger.Info("Oauth login processed", "Provider", oauthProvider.GetProviderName(), "ID", existingUser.ID)
-			return s.tokenizer.GenerateToken(existingUser.ID)
-		}
-		// Currently, we only support google as an external provider
-		// Therefore this code will not return ErrAccountAlreadyLinked
-		// Just here for extensibility
-		err = existingUser.LinkExternalAccount(userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
-		if err != nil {
-			return "", err
-		}
-		err = s.userRepo.Update(ctx, existingUser)
-		if err != nil {
-			s.logger.Error("error updating existing user", "email", userInfo.Email, "error", err)
-			return "", ErrUserLoginFailed
-		}
-		return s.tokenizer.GenerateToken(existingUser.ID)
+		return s.processOAuthExistingUser(ctx, existingUser, userInfo, oauthProvider)
 	}
 
+	return s.createAndSaveUserFromOAuth(ctx, userInfo, oauthProvider)
+}
+
+func (s *AuthService) processOAuthExistingUser(ctx context.Context, existingUser *geouser.User, userInfo *OAuthUserInfo, oauthProvider OAuthProvider) (string, error) {
+	if existingUser.Provider == oauthProvider.GetProviderName() {
+		if existingUser.ProviderID == nil || *existingUser.ProviderID != userInfo.ProviderID {
+			s.logger.Error("provider ID mismatch for existing user", "storedProviderID", existingUser.ProviderID, "oauthProviderID", userInfo.ProviderID)
+			return "", ErrInvalidCredentials
+		}
+		// Reissue the refresh token on every provider login to keep flow consistent
+		s.logger.Info("Oauth login processed", "Provider", oauthProvider.GetProviderName(), "ID", existingUser.ID)
+		return s.generateRefreshToken(ctx, existingUser.ID)
+	}
+
+	// Link external account for users that registered via other methods
+	if err := existingUser.LinkExternalAccount(userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified); err != nil {
+		return "", err
+	}
+	if err := s.userRepo.Update(ctx, existingUser); err != nil {
+		s.logger.Error("error updating existing user", "email", userInfo.Email, "error", err)
+		return "", ErrUserLoginFailed
+	}
+	return s.generateRefreshToken(ctx, existingUser.ID)
+}
+
+func (s *AuthService) createAndSaveUserFromOAuth(ctx context.Context, userInfo *OAuthUserInfo, oauthProvider OAuthProvider) (string, error) {
 	newUser, err := geouser.NewUserExternal(userInfo.Email, userInfo.UserName, userInfo.ProviderID, oauthProvider.GetProviderName(), userInfo.EmailVerified)
 	if err != nil {
 		return "", err
 	}
-
-	err = s.userRepo.Save(ctx, newUser)
-	if err != nil {
+	if err := s.userRepo.Save(ctx, newUser); err != nil {
 		s.logger.Error("error saving new user", "email", userInfo.Email, "error", err)
 		return "", ErrUserCreationFailed
 	}
-
-	return s.tokenizer.GenerateToken(newUser.ID)
+	return s.generateRefreshToken(ctx, newUser.ID)
 }
 
 // ValidateToken validates an authentication token and returns the associated user ID if valid
 func (s *AuthService) ValidateToken(ctx context.Context, token string) (uuid.UUID, error) {
 	return s.tokenizer.ValidateToken(token)
+}
+
+// RefreshToken validates the provided refresh token and issues a new authentication token if valid
+func (s *AuthService) RefreshToken(ctx context.Context, rawToken string) (string, error) {
+	tokenHash, err := s.hasher.HashToken(rawToken)
+	if err != nil {
+		s.logger.Error("error hashing refresh token", "rawToken", rawToken, "error", err)
+		return "", ErrRefreshingToken
+	}
+
+	storedToken, err := s.refreshTokenRepo.FindByTokenHash(ctx, tokenHash)
+	if err != nil {
+		if errors.Is(err, authsession.ErrNotFound) {
+			return "", ErrInvalidCredentials
+		}
+		s.logger.Error("error retrieving refresh token", "tokenHash", tokenHash, "error", err)
+		return "", ErrRefreshingToken
+	}
+
+	if storedToken.IsExpired() {
+		return "", authsession.ErrExpired
+	}
+
+	authToken, err := s.tokenizer.GenerateToken(storedToken.UserID)
+	if err != nil {
+		s.logger.Error("error generating auth token", "userID", storedToken.UserID, "error", err)
+		return "", ErrRefreshingToken
+	}
+
+	return authToken, nil
+}
+
+// Logout invalidates the provided refresh token, effectively logging the user out
+func (s *AuthService) Logout(ctx context.Context, rawToken string) error {
+	tokenHash, err := s.hasher.HashToken(rawToken)
+	if err != nil {
+		s.logger.Error("error hashing refresh token for logout", "rawToken", rawToken, "error", err)
+		return ErrLoggingOut
+	}
+
+	err = s.refreshTokenRepo.Delete(ctx, tokenHash)
+	if err != nil {
+		s.logger.Error("error deleting refresh token during logout", "tokenHash", tokenHash, "error", err)
+		return ErrLoggingOut
+	}
+
+	return nil
 }

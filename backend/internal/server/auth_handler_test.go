@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/authsession"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/config"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
@@ -62,6 +63,51 @@ func (m *mockHasher) CompareHashAndPassword(hash, password string) error {
 		return nil
 	}
 	return errors.New("password does not match")
+}
+
+func (m *mockHasher) GenerateRawToken() (string, error) {
+	return "raw-token", nil
+}
+
+func (m *mockHasher) HashToken(rawToken string) (string, error) {
+	return "hash-" + rawToken, nil
+}
+
+type mockRefreshTokenRepository struct {
+	tokens map[string]*authsession.RefreshToken
+}
+
+func newMockRefreshTokenRepo() *mockRefreshTokenRepository {
+	return &mockRefreshTokenRepository{tokens: make(map[string]*authsession.RefreshToken)}
+}
+
+func (m *mockRefreshTokenRepository) Save(ctx context.Context, token *authsession.RefreshToken) error {
+	m.tokens[token.TokenHash] = token
+	return nil
+}
+
+func (m *mockRefreshTokenRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*authsession.RefreshToken, error) {
+	if token, ok := m.tokens[tokenHash]; ok {
+		return token, nil
+	}
+	return nil, authsession.ErrNotFound
+}
+
+func (m *mockRefreshTokenRepository) FindByUserID(ctx context.Context, userID uuid.UUID) (*authsession.RefreshToken, error) {
+	for _, token := range m.tokens {
+		if token.UserID == userID {
+			return token, nil
+		}
+	}
+	return nil, authsession.ErrNotFound
+}
+
+func (m *mockRefreshTokenRepository) Delete(ctx context.Context, tokenHash string) error {
+	if _, ok := m.tokens[tokenHash]; !ok {
+		return authsession.ErrNotFound
+	}
+	delete(m.tokens, tokenHash)
+	return nil
 }
 
 type mockOAuthProvider struct {
@@ -427,6 +473,45 @@ func TestHandleOAuthRedirect(t *testing.T) {
 	}
 }
 
+func TestHandleRefreshAndLogout(t *testing.T) {
+	cases := []struct {
+		name string
+		path string
+	}{
+		{name: "refresh", path: "/api/auth/refresh"},
+		{name: "logout", path: "/api/auth/logout"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mux, _, refreshRepo := newTestAuthServerWithRefresh(t)
+			if err := refreshRepo.Save(context.Background(), authsession.NewRefreshToken(uuid.New(), "hash-raw-token")); err != nil {
+				t.Fatalf("setup Save failed: %v", err)
+			}
+
+			req := httptest.NewRequest("POST", tc.path, nil)
+			req.AddCookie(&http.Cookie{Name: "refresh_token", Value: "raw-token", Path: "/"})
+			w := httptest.NewRecorder()
+
+			mux.ServeHTTP(w, req)
+
+			if w.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d", w.Code)
+			}
+
+			if tc.name == "refresh" {
+				if !strings.Contains(w.Body.String(), `"token":"mock-jwt-token"`) {
+					t.Fatalf("expected access token in response, got %s", w.Body.String())
+				}
+			} else {
+				if !strings.Contains(w.Header().Get("Set-Cookie"), "refresh_token=") {
+					t.Fatalf("expected refresh_token cookie to be cleared, got %s", w.Header().Get("Set-Cookie"))
+				}
+			}
+		})
+	}
+}
+
 func TestAuthMiddleware(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -465,7 +550,7 @@ func TestAuthMiddleware(t *testing.T) {
 			userRepo := &mockUserRepository{users: make(map[string]*geouser.User)}
 			hasher := &mockHasher{}
 			tokenizer := &mockTokenizer{}
-			authSvc := service.NewAuthService(userRepo, tokenizer, hasher, nil)
+			authSvc := service.NewAuthService(userRepo, newMockRefreshTokenRepo(), tokenizer, hasher, nil)
 			handler := server.NewAuthHandler(authSvc, nil, mockCfg)
 
 			// Mock next handler
@@ -517,11 +602,41 @@ func newTestAuthServer(t *testing.T) (*http.ServeMux, *mockUserRepository) {
 		geouser.ProviderGoogle: provider,
 	}
 
-	authSvc := service.NewAuthService(repo, tokenizer, hasher, svcProviders)
+	authSvc := service.NewAuthService(repo, newMockRefreshTokenRepo(), tokenizer, hasher, svcProviders)
 	handler := server.NewAuthHandler(authSvc, hdlProviders, mockCfg)
 
 	mux := http.NewServeMux()
 	handler.RegisterRoutes(mux)
 
 	return mux, repo
+}
+
+func newTestAuthServerWithRefresh(t *testing.T) (*http.ServeMux, *mockUserRepository, *mockRefreshTokenRepository) {
+	t.Helper()
+
+	repo := &mockUserRepository{users: make(map[string]*geouser.User)}
+	refreshRepo := newMockRefreshTokenRepo()
+	hasher := &mockHasher{}
+	tokenizer := &mockTokenizer{}
+	provider := &mockOAuthProvider{
+		mockResponse: &service.OAuthUserInfo{
+			Email:      "oauth@example.com",
+			UserName:   "oauthuser",
+			ProviderID: "provider-id",
+		},
+	}
+	svcProviders := map[geouser.AuthProvider]service.OAuthProvider{
+		geouser.ProviderGoogle: provider,
+	}
+	hdlProviders := map[geouser.AuthProvider]server.OAuthProvider{
+		geouser.ProviderGoogle: provider,
+	}
+
+	authSvc := service.NewAuthService(repo, refreshRepo, tokenizer, hasher, svcProviders)
+	handler := server.NewAuthHandler(authSvc, hdlProviders, mockCfg)
+
+	mux := http.NewServeMux()
+	handler.RegisterRoutes(mux)
+
+	return mux, repo, refreshRepo
 }

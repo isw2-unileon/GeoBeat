@@ -18,6 +18,7 @@ import (
 	"github.com/isw2-unileon/GeoBeat/backend/internal/server"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/tools"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/robfig/cron/v3"
 )
@@ -34,7 +35,15 @@ func main() {
 
 	ctx := context.Background()
 
-	dbPool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	poolConfig, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("Failed to parse database URL", "error", err)
+		os.Exit(1)
+	}
+
+	poolConfig.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	dbPool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		slog.Error("Failed to connect to the database", "error", err)
 		os.Exit(1)
@@ -75,6 +84,7 @@ func setupRoutes(dbPool *pgxpool.Pool, cfg *config.Config) *http.ServeMux {
 // buildAuthHandler constructs the auth handler and its dependencies.
 func buildAuthHandler(dbPool *pgxpool.Pool, cfg *config.Config) *server.AuthHandler {
 	userRepo := pgdb.NewPostgresUserRepo(dbPool)
+	tokenRepo := pgdb.NewPostgresTokenRepo(dbPool)
 	tokenizer := tools.NewJWTTokenizer(cfg.JWTToken)
 	hasher := tools.NewBCryptHasher()
 
@@ -84,7 +94,7 @@ func buildAuthHandler(dbPool *pgxpool.Pool, cfg *config.Config) *server.AuthHand
 		cfg.RedirectURL+string(geouser.ProviderGoogle),
 	)
 
-	authService := service.NewAuthService(userRepo, tokenizer, hasher,
+	authService := service.NewAuthService(userRepo, tokenRepo, tokenizer, hasher,
 		map[geouser.AuthProvider]service.OAuthProvider{
 			geouser.ProviderGoogle: googleProvider,
 		},
