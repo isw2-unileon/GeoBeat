@@ -9,26 +9,11 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxItem,
-  ComboboxContent,
-} from "@/components/ui/combobox";
-import { modes, genres } from "@/data/placeholder-data";
 import { useState } from "react";
 import { GameStatus, STATUS } from "@/types/gameTypes";
 import { useHandleGuess } from "@/hooks/handleGuess";
+import { GenreCombobox } from "../genre-combobox";
+import { ModeSelect } from "../mode-select";
 type Props = {
   country: string;
   mode: string;
@@ -37,7 +22,7 @@ type Props = {
   setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
 };
 
-export function AppDrawer({
+export function DailyDrawer({
   country,
   setMode,
   mode,
@@ -49,59 +34,29 @@ export function AppDrawer({
   const handleGuess = useHandleGuess();
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <DrawerTrigger className="absolute top-10 right-4" asChild>
         <Button className="bg-white/80 text-black">Menu</Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle className="text-xl">GeoBeat</DrawerTitle>
-          <DrawerDescription>
-            The not so hit music genre guessing game
+          <DrawerDescription className="max-w-xs mx-auto">
+            In daily mode you are given a country and have to guess the most
+            popular song for it. Every mistake gives a hint in form of a song
           </DrawerDescription>
         </DrawerHeader>
         <div className="text-center mb-4">
           <h1 className="text-base">Mode selection</h1>
           <div className="max-w-xs mx-auto">
-            <Select
-              defaultValue={mode}
-              onValueChange={(value) => {
-                setMode(value);
-                setIsOpen(false);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {modes.map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {mode}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <ModeSelect mode={mode} setMode={setMode} setIsOpen={setIsOpen} />
           </div>
         </div>
         <div className="text-center mb-4">
           <h1 className="text-base">What is the most popular genre of?</h1>
           <label>{country}</label>
           <div className="max-w-xs mx-auto">
-            <Combobox items={genres} value={genre} onValueChange={setGenre}>
-              <ComboboxInput placeholder="Select a genre" />
-              <ComboboxContent>
-                <ComboboxEmpty>No genres available</ComboboxEmpty>
-                <ComboboxList>
-                  {(item: string) => (
-                    <ComboboxItem key={item} value={item}>
-                      {item}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
+            <GenreCombobox genre={genre} setGenre={setGenre} />
           </div>
         </div>
         <div className="w-full flex justify-center">

@@ -23,3 +23,9 @@ export type AttemptResult = {
   gameStatus: GameStatus;
   hint: string;
 } | null;
+
+export type Inverse = {
+  song: string;
+  attempts: number;
+  status: Status;
+} | null;

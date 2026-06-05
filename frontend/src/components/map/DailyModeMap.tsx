@@ -1,14 +1,13 @@
 import { Source, Layer, FillLayerSpecification } from "@vis.gl/react-maplibre";
 import { BaseGlobe } from "./base/BaseGlobe";
-import getCountryData from "@/lib/getCountryData";
+import { getDataFromISO } from "@/lib/getCountryData";
 
 type DailyMapProps = {
   countryISO: string;
 };
 
 export function DailyModeMap({ countryISO }: DailyMapProps) {
-  const country_data = getCountryData(countryISO);
-  // notify.info(country_data); TODO Check why it triggers two times
+  const country_data = getDataFromISO(countryISO);
 
   const selectedCountyLayer: FillLayerSpecification = {
     id: "selected-country-layer",

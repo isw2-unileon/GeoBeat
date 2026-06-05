@@ -7,27 +7,12 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
-import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxList,
-  ComboboxItem,
-  ComboboxContent,
-} from "@/components/ui/combobox";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { modes, genres } from "@/data/placeholder-data";
 import React, { useState } from "react";
 import { GameStatus, STATUS } from "@/types/gameTypes";
 import { useHandleGuess } from "@/hooks/handleGuess";
+import { GenreCombobox } from "../genre-combobox";
+import { ModeSelect } from "../mode-select";
 
 type Props = {
   country: string;
@@ -37,7 +22,7 @@ type Props = {
   setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
 };
 
-export function AppField({
+export function DailyField({
   country,
   mode,
   setMode,
@@ -54,29 +39,14 @@ export function AppField({
           GeoBeat
         </FieldLegend>
         <FieldDescription>
-          The not so hit music genre guessing game
+          In daily mode you are given a country and have to guess the most
+          popular song for it. Every mistake gives a hint in form of a song
         </FieldDescription>
         <FieldGroup>
           <FieldSeparator />
           <Field>
             <FieldLabel className="text-1xl">Mode selection</FieldLabel>
-            <Select
-              defaultValue={mode}
-              onValueChange={(value) => setMode(value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  {modes.map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {mode}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+            <ModeSelect mode={mode} setMode={setMode} />
           </Field>
           <FieldSeparator />
           <Field>
@@ -84,19 +54,7 @@ export function AppField({
               ¿What is the most popular genre of?
             </FieldLabel>
             <FieldLabel>{country}</FieldLabel>
-            <Combobox items={genres} value={genre} onValueChange={setGenre}>
-              <ComboboxInput placeholder="Select a genre" />
-              <ComboboxContent>
-                <ComboboxEmpty>No genres available</ComboboxEmpty>
-                <ComboboxList>
-                  {(item: string) => (
-                    <ComboboxItem key={item} value={item}>
-                      {item}
-                    </ComboboxItem>
-                  )}
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
+            <GenreCombobox genre={genre} setGenre={setGenre} />
           </Field>
           <Field>
             {gameStatus.status !== STATUS.WON &&

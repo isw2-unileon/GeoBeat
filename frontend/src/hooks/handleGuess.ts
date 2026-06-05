@@ -1,10 +1,10 @@
-import { useGuess } from "@/context/GuessContext";
+import { useDailyGuess } from "@/context/GuessContext";
 import { notify } from "@/lib/notifier";
 import { makeAttempt } from "@/services/daily";
 import { GameStatus } from "@/types/gameTypes";
 
 export function useHandleGuess() {
-  const { guess, setGuess } = useGuess();
+  const { guess, setGuess } = useDailyGuess();
 
   return async function handleGuess(
     genre: string | null,

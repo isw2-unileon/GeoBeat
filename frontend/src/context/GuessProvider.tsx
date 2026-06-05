@@ -1,12 +1,15 @@
 import { ReactNode, useState } from "react";
-import { GuessContext } from "./GuessContext";
+import { DailyGuessContext, InverseGuessContext } from "./GuessContext";
 
 export function GuessProvider({ children }: { children: ReactNode }) {
-  const [guess, setGuess] = useState<number>(0);
+  const [guess, setGuess] = useState(0);
+  const [inverseGuess, setInverseGuess] = useState(0);
 
   return (
-    <GuessContext.Provider value={{ guess, setGuess }}>
-      {children}
-    </GuessContext.Provider>
+    <DailyGuessContext.Provider value={{ guess, setGuess }}>
+      <InverseGuessContext.Provider value={{ inverseGuess, setInverseGuess }}>
+        {children}
+      </InverseGuessContext.Provider>
+    </DailyGuessContext.Provider>
   );
 }

@@ -1,24 +1,24 @@
 import { notify } from "@/lib/notifier";
 import {
-  AttemptResult,
-  Daily,
-  MAX_ATTEMPTS,
+  GameStatus,
+  Inverse,
   Status,
   STATUS,
+  MAX_ATTEMPTS,
 } from "@/types/gameTypes";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-export async function getDaily(): Promise<Daily> {
+export async function getInverse(): Promise<Inverse> {
   const token = localStorage.getItem("token");
 
   if (!token) {
-    notify.error("Couldn't get daily: missing token");
+    notify.error("Couldn't get inverse: missing token");
     return null;
   }
 
   try {
-    const res = await fetch(`${BACKEND_URL}/api/game/daily`, {
+    const res = await fetch(`${BACKEND_URL}/api/game/inverse`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -33,12 +33,12 @@ export async function getDaily(): Promise<Daily> {
     }
 
     if (!res.ok) {
-      notify.error("Couldn't get daily: " + data.error);
+      notify.error("Couldn't get guess the country mode data: " + data.error);
       return null;
     }
 
     if (!data) {
-      notify.error("Couldn't get daily no response data");
+      notify.error("Couldn't get guess the country mode data, no response");
       return null;
     }
 
@@ -49,26 +49,23 @@ export async function getDaily(): Promise<Daily> {
 
     notify.info(data);
     return {
-      country: data.country,
+      song: data.song,
       attempts: data.attempts_used,
       status: data.status,
     };
   } catch {
-    notify.error("Failed, couldn't retrieve daily");
+    notify.error("Failed, couldn't retrieve the guess the country mode data");
     return null;
   }
 }
 
-export async function makeAttempt(guess: string): Promise<AttemptResult> {
+export async function makeInverseAttempt(
+  guess: string,
+): Promise<GameStatus | null> {
   const token = localStorage.getItem("token");
 
-  if (!token) {
-    notify.error("Couldn't make attempt: missing token");
-    return null;
-  }
-
   try {
-    const res = await fetch(`${BACKEND_URL}/api/game/daily/attempt`, {
+    const res = await fetch(`${BACKEND_URL}/api/game/inverse/attempt`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -98,11 +95,8 @@ export async function makeAttempt(guess: string): Promise<AttemptResult> {
 
     notify.info(data);
     return {
-      gameStatus: {
-        attempts: MAX_ATTEMPTS - data.attempts_remaining,
-        status: data.status,
-      },
-      hint: data.hint,
+      attempts: MAX_ATTEMPTS - data.attempts_remaining,
+      status: data.status,
     };
   } catch {
     notify.error("Failed, couldn't make attempt");

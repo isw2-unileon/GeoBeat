@@ -1,13 +1,14 @@
 import { Source, Layer, FillLayerSpecification } from "@vis.gl/react-maplibre";
 import { BaseGlobe } from "./base/BaseGlobe";
-import getCountryData from "@/lib/getCountryData";
+import { getDataFromISO, getISOFromCountry } from "@/lib/getCountryData";
+import { notify } from "@/lib/notifier";
 
-type FreeMapProps = {
+type InverseMapProps = {
   countryISO: string;
   setCountryISO: React.Dispatch<React.SetStateAction<string>>;
 };
 
-export function FreeModeMap({ countryISO, setCountryISO }: FreeMapProps) {
+export function InverseModeMap({ countryISO, setCountryISO }: InverseMapProps) {
   const countryLayer: FillLayerSpecification = {
     id: "country-layer",
     type: "fill",
@@ -22,7 +23,7 @@ export function FreeModeMap({ countryISO, setCountryISO }: FreeMapProps) {
     id: "selected-country-layer",
     type: "fill",
     source: "countries",
-    filter: ["==", ["get", "name"], getCountryData(countryISO).name],
+    filter: ["==", ["get", "name"], getDataFromISO(countryISO).name],
     paint: {
       "fill-color": "#5145ac",
       "fill-opacity": 0.4,
@@ -37,9 +38,10 @@ export function FreeModeMap({ countryISO, setCountryISO }: FreeMapProps) {
         });
 
         if (features.length > 0) {
-          const country: string =
-            features[0]?.properties?.["ISO3166-1-Alpha-2"];
-          setCountryISO(country);
+          const country: string = features[0]?.properties?.name;
+          setCountryISO(getISOFromCountry(country));
+          notify.info("Selected: " + country);
+          notify.info("ISO: " + getISOFromCountry(country));
         }
       }}
     >
