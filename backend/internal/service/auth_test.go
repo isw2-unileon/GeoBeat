@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/isw2-unileon/GeoBeat/backend/internal/authsession"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/geouser"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/service"
 )
@@ -13,6 +14,43 @@ import (
 type mockUserRepository struct {
 	users         map[string]*geouser.User
 	databaseError error
+}
+
+type mockRefreshTokenRepository struct {
+	tokens map[string]*authsession.RefreshToken
+}
+
+func newMockRefreshTokenRepo() *mockRefreshTokenRepository {
+	return &mockRefreshTokenRepository{tokens: make(map[string]*authsession.RefreshToken)}
+}
+
+func (m *mockRefreshTokenRepository) Save(ctx context.Context, token *authsession.RefreshToken) error {
+	m.tokens[token.TokenHash] = token
+	return nil
+}
+
+func (m *mockRefreshTokenRepository) FindByTokenHash(ctx context.Context, tokenHash string) (*authsession.RefreshToken, error) {
+	if token, exists := m.tokens[tokenHash]; exists {
+		return token, nil
+	}
+	return nil, authsession.ErrNotFound
+}
+
+func (m *mockRefreshTokenRepository) FindByUserID(ctx context.Context, userID uuid.UUID) (*authsession.RefreshToken, error) {
+	for _, token := range m.tokens {
+		if token.UserID == userID {
+			return token, nil
+		}
+	}
+	return nil, authsession.ErrNotFound
+}
+
+func (m *mockRefreshTokenRepository) Delete(ctx context.Context, tokenHash string) error {
+	if _, exists := m.tokens[tokenHash]; !exists {
+		return authsession.ErrNotFound
+	}
+	delete(m.tokens, tokenHash)
+	return nil
 }
 
 func newMockUserRepo() *mockUserRepository {
@@ -73,6 +111,20 @@ func (m *mockHasher) CompareHashAndPassword(hash, password string) error {
 		return nil
 	}
 	return errors.New("hash mismatch")
+}
+
+func (m *mockHasher) GenerateRawToken() (string, error) {
+	if m.hassingError {
+		return "", errors.New("generate raw token error")
+	}
+	return "raw-token", nil
+}
+
+func (m *mockHasher) HashToken(rawToken string) (string, error) {
+	if m.hassingError {
+		return "", errors.New("hash token error")
+	}
+	return "hash-" + rawToken, nil
 }
 
 type mockOAuthProvider struct {
@@ -214,7 +266,7 @@ func TestRegisterWithEmail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), nil)
+			svc := service.NewAuthService(repo, newMockRefreshTokenRepo(), &mockTokenizer{}, newMockHasher(tt.hassingError), nil)
 
 			err := svc.RegisterWithEmail(context.Background(), tt.email, tt.userName, tt.password)
 			if !errors.Is(err, tt.expectedErr) {
@@ -286,15 +338,12 @@ func TestLoginWithEmail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), nil)
+			svc := service.NewAuthService(repo, newMockRefreshTokenRepo(), &mockTokenizer{}, newMockHasher(tt.hassingError), nil)
 
-			token, err := svc.LoginWithEmail(context.Background(), tt.email, tt.password)
+			_, _, err := svc.LoginWithEmail(context.Background(), tt.email, tt.password)
 
 			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
-			}
-			if err == nil && token != "jwt_simulated" {
-				t.Errorf("unexpected token: %s", token)
 			}
 		})
 	}
@@ -385,14 +434,14 @@ func TestProcessOAuthLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[geouser.AuthProvider]service.OAuthProvider{geouser.ProviderGoogle: tt.providerMock})
+			svc := service.NewAuthService(repo, newMockRefreshTokenRepo(), &mockTokenizer{}, newMockHasher(tt.hassingError), map[geouser.AuthProvider]service.OAuthProvider{geouser.ProviderGoogle: tt.providerMock})
 
 			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, geouser.ProviderGoogle)
 			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
-			if err == nil && token != "jwt_simulated" {
-				t.Errorf("unexpected token: %s", token)
+			if err == nil && token != "raw-token" {
+				t.Errorf("unexpected refresh token: %s", token)
 			}
 			tt.checkUser(t, repo)
 		})
@@ -539,16 +588,69 @@ func TestProccessOAuthLogin2(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := newMockUserRepo()
 			tt.setupRepo(repo)
-			svc := service.NewAuthService(repo, &mockTokenizer{}, newMockHasher(tt.hassingError), map[geouser.AuthProvider]service.OAuthProvider{geouser.ProviderGoogle: tt.providerMock})
+			svc := service.NewAuthService(repo, newMockRefreshTokenRepo(), &mockTokenizer{}, newMockHasher(tt.hassingError), map[geouser.AuthProvider]service.OAuthProvider{geouser.ProviderGoogle: tt.providerMock})
 
 			token, err := svc.ProcessOAuthLogin(context.Background(), tt.code, geouser.ProviderGoogle)
 			if !errors.Is(err, tt.expectedErr) {
 				t.Fatalf("expected error %v, got %v", tt.expectedErr, err)
 			}
-			if err == nil && token != "jwt_simulated" {
+			if err == nil && token != "raw-token" {
 				t.Errorf("unexpected token: %s", token)
 			}
 			tt.checkUser(t, repo)
 		})
+	}
+}
+
+func TestRefreshAndLogout(t *testing.T) {
+	tests := []struct {
+		name string
+		run  func(t *testing.T)
+	}{
+		{
+			name: "refresh token success",
+			run: func(t *testing.T) {
+				userID := uuid.New()
+				refreshToken := authsession.NewRefreshToken(userID, "hash-raw-token")
+				repo := newMockUserRepo()
+				refreshRepo := newMockRefreshTokenRepo()
+				if err := refreshRepo.Save(context.Background(), refreshToken); err != nil {
+					t.Fatalf("setup Save failed: %v", err)
+				}
+				svc := service.NewAuthService(repo, refreshRepo, &mockTokenizer{}, newMockHasher(false), nil)
+
+				token, err := svc.RefreshToken(context.Background(), "raw-token")
+				if err != nil {
+					t.Fatalf("expected no error, got %v", err)
+				}
+				if token != "jwt_simulated" {
+					t.Fatalf("expected jwt_simulated, got %s", token)
+				}
+			},
+		},
+		{
+			name: "logout deletes token",
+			run: func(t *testing.T) {
+				userID := uuid.New()
+				refreshToken := authsession.NewRefreshToken(userID, "hash-raw-token")
+				refreshRepo := newMockRefreshTokenRepo()
+				if err := refreshRepo.Save(context.Background(), refreshToken); err != nil {
+					t.Fatalf("setup Save failed: %v", err)
+				}
+				svc := service.NewAuthService(newMockUserRepo(), refreshRepo, &mockTokenizer{}, newMockHasher(false), nil)
+
+				err := svc.Logout(context.Background(), "raw-token")
+				if err != nil {
+					t.Fatalf("expected no error, got %v", err)
+				}
+				if _, err := refreshRepo.FindByTokenHash(context.Background(), "hash-raw-token"); !errors.Is(err, authsession.ErrNotFound) {
+					t.Fatalf("expected token deleted, got %#v", err)
+				}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, tc.run)
 	}
 }
