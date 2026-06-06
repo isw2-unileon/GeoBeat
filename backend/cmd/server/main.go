@@ -132,7 +132,7 @@ func startDailyChallengeJob(dbPool *pgxpool.Pool, cfg *config.Config) {
 	challengeService := service.NewChallengeGenService(musicProvider, genreRepo, dailyRepo, timetrialRepo)
 
 	c := cron.New(cron.WithLocation(time.UTC))
-	_, err := c.AddFunc("* * * * *", func() {
+	_, err := c.AddFunc("0 0 * * *", func() {
 		countries, err := service.GetRandomCountry(MaxDailyRandomCountries)
 		if err != nil {
 			slog.Error("Failed to get random countries for daily challenge", "error", err)
