@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/isw2-unileon/GeoBeat/backend/internal/authsession"
@@ -113,6 +114,7 @@ func (h *AuthHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
+		MaxAge:   int(time.Hour) * 24,
 	})
 
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
@@ -169,6 +171,7 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
+		MaxAge:   int(time.Hour) * 24,
 	})
 
 	http.Redirect(w, r, h.cfg.FrontendURL, http.StatusTemporaryRedirect)
