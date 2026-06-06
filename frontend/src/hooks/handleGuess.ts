@@ -1,7 +1,7 @@
 import { useDailyGuess } from "@/context/GuessContext";
 import { notify } from "@/lib/notifier";
 import { makeAttempt } from "@/services/daily";
-import { GameStatus } from "@/types/gameTypes";
+import { GameStatus, STATUS } from "@/types/gameTypes";
 
 export function useHandleGuess() {
   const { guess, setGuess } = useDailyGuess();
@@ -29,7 +29,9 @@ export function useHandleGuess() {
         localStorage.setItem(`hint${gameStatus.attempts}`, attemptResult.hint);
         notify.news("New hint added, hover the left squares to see it!");
       }
-
+      if (gameStatus.status == STATUS.WON) {
+        localStorage.removeItem(`hint${gameStatus.attempts}`);
+      }
       setGuess(guess + 1);
     }
   };
