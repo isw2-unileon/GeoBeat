@@ -23,6 +23,8 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+const MaxDailyRandomCountries = 7
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
@@ -74,9 +76,11 @@ func setupRoutes(dbPool *pgxpool.Pool, cfg *config.Config) *http.ServeMux {
 
 	authHandler := buildAuthHandler(dbPool, cfg)
 	dailyHandler := buildDailyHandler(dbPool)
+	timetrialHandler := buildTimetrialHandler(dbPool)
 
 	authHandler.RegisterRoutes(mux)
 	dailyHandler.RegisterRoutes(mux, authHandler.AuthMiddleware)
+	timetrialHandler.RegisterRoutes(mux, authHandler.AuthMiddleware)
 
 	return mux
 }
@@ -114,6 +118,11 @@ func buildDailyHandler(dbPool *pgxpool.Pool) *server.Handler {
 	return server.NewHandler(service.NewService(dailyRepo, dailyRepo))
 }
 
+func buildTimetrialHandler(dbPool *pgxpool.Pool) *server.TimetrialHandler {
+	timetrialRepo := pgdb.NewPostgresTimetrialRepo(dbPool)
+	return server.NewTimetrialHandler(service.NewTimetrialService(timetrialRepo, timetrialRepo, timetrialRepo))
+}
+
 // startDailyChallengeJob schedules the daily challenge generation at midnight UTC.
 func startDailyChallengeJob(dbPool *pgxpool.Pool, cfg *config.Config) {
 	genreRepo := pgdb.NewPostgresGenreRepo(dbPool)
@@ -123,18 +132,29 @@ func startDailyChallengeJob(dbPool *pgxpool.Pool, cfg *config.Config) {
 	challengeService := service.NewChallengeGenService(musicProvider, genreRepo, dailyRepo, timetrialRepo)
 
 	c := cron.New(cron.WithLocation(time.UTC))
-	_, err := c.AddFunc("0 0 * * *", func() {
-		slog.Info("Running daily challenge generation", "country", "spain")
-		if err := challengeService.GenerateDailyChallenge("spain"); err != nil {
+	_, err := c.AddFunc("* * * * *", func() {
+		countries, err := service.GetRandomCountry(MaxDailyRandomCountries)
+		if err != nil {
+			slog.Error("Failed to get random countries for daily challenge", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("Running daily challenge generation", "country", countries[0])
+		if err := challengeService.GenerateDailyChallenge(countries[0]); err != nil {
 			slog.Error("Daily challenge generation failed", "error", err)
 		} else {
-			slog.Info("Daily challenge generation succeeded", "country", "spain")
+			slog.Info("Daily challenge generation succeeded", "country", countries[0])
 		}
-		slog.Info("Running inverse daily challenge generation", "country", "spain")
-		if err := challengeService.GenerateInverseChallenge("spain"); err != nil {
+		slog.Info("Running inverse daily challenge generation", "country", countries[1])
+		if err := challengeService.GenerateInverseChallenge(countries[1]); err != nil {
 			slog.Error("Inverse daily challenge generation failed", "error", err)
 		} else {
-			slog.Info("Inverse daily challenge generation succeeded", "country", "spain")
+			slog.Info("Inverse daily challenge generation succeeded", "country", countries[1])
+		}
+		slog.Info("Running timetrial daily challenge generation", "countries", countries[2:])
+		if err := challengeService.GenerateTimetrialChallenge(countries[2:]); err != nil {
+			slog.Error("Timetrial daily challenge generation failed", "error", err)
+		} else {
+			slog.Info("Timetrial daily challenge generation succeeded", "countries", countries[2:])
 		}
 	})
 	if err != nil {
