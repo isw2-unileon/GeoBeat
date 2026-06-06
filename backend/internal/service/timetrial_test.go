@@ -3,8 +3,6 @@ package service_test
 import (
 	"context"
 	"errors"
-	"io"
-	"log/slog"
 	"sync"
 	"testing"
 	"time"
@@ -93,8 +91,7 @@ func (m *mockTimetrialLeaderboardRepo) GetLeaderboard(ctx context.Context, chall
 }
 
 func setupTestService(cRepo service.TimetrialChallengeRepository, sRepo service.TimetrialSessionRepository, lRepo service.TimetrialLeaderboardRepository) *service.TimetrialService {
-	silentLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	return service.NewTimetrialService(cRepo, sRepo, lRepo, silentLogger)
+	return service.NewTimetrialService(cRepo, sRepo, lRepo)
 }
 
 func TestGetCurrentStatus(t *testing.T) {

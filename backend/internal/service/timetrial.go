@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,16 +31,14 @@ type TimetrialService struct {
 	challengeRepo   TimetrialChallengeRepository
 	sessionRepo     TimetrialSessionRepository
 	leaderboardRepo TimetrialLeaderboardRepository
-	logger          *slog.Logger
 }
 
 // NewTimetrialService creates a new instance of the service with injected dependencies.
-func NewTimetrialService(challengeRepo TimetrialChallengeRepository, sessionRepo TimetrialSessionRepository, leaderboardRepo TimetrialLeaderboardRepository, logger *slog.Logger) *TimetrialService {
+func NewTimetrialService(challengeRepo TimetrialChallengeRepository, sessionRepo TimetrialSessionRepository, leaderboardRepo TimetrialLeaderboardRepository) *TimetrialService {
 	return &TimetrialService{
 		challengeRepo:   challengeRepo,
 		sessionRepo:     sessionRepo,
 		leaderboardRepo: leaderboardRepo,
-		logger:          logger,
 	}
 }
 
@@ -78,7 +75,6 @@ func (s *TimetrialService) StartGame(ctx context.Context, userID uuid.UUID) (*ti
 	}
 
 	if !errors.Is(err, timetrial.ErrSessionNotFound) {
-		s.logger.Error("database error while fetching session", "error", err, "user_id", userID)
 		return nil, "", err
 	}
 
@@ -88,7 +84,6 @@ func (s *TimetrialService) StartGame(ctx context.Context, userID uuid.UUID) (*ti
 	}
 
 	if err := s.sessionRepo.CreateSession(ctx, newSession); err != nil {
-		s.logger.Error("failed to persist new session", "error", err, "user_id", userID)
 		return nil, "", err
 	}
 
@@ -114,7 +109,6 @@ func (s *TimetrialService) ProcessAttempt(ctx context.Context, userID uuid.UUID,
 
 	if result.Correct {
 		if updateErr := s.sessionRepo.UpdateSession(ctx, session); updateErr != nil {
-			s.logger.Error("failed to update session after attempt", "error", updateErr, "user_id", userID)
 			return nil, updateErr
 		}
 	}
@@ -131,7 +125,6 @@ func (s *TimetrialService) GetLeaderboard(ctx context.Context, userID uuid.UUID)
 
 	leaderboard, err := s.leaderboardRepo.GetLeaderboard(ctx, challenge.ID, userID)
 	if err != nil {
-		s.logger.Error("failed to fetch leaderboard", "error", err, "challenge_id", challenge.ID)
 		return nil, err
 	}
 
