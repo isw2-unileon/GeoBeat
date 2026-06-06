@@ -7,7 +7,7 @@ import {
   ComboboxContent,
 } from "@/components/ui/combobox";
 
-import { genres } from "@/data/placeholder-data";
+import { genres } from "@/data/constats";
 
 type Porps = {
   genre: string | null;

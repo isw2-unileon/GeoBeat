@@ -4,13 +4,12 @@ import { AppDialog } from "./components/app-dialog";
 import { DailyModeMap } from "./components/map/DailyModeMap";
 import { InverseModeMap } from "./components/map/InverseModeMap";
 import { Toaster } from "./components/ui/sonner";
-
-import { modes } from "./data/placeholder-data";
+import { modes } from "./data/constats";
 import { useState } from "react";
 import { useEffect } from "react";
 import { getDaily } from "./services/daily";
 import { Attempts } from "./components/attempts";
-import { Daily, GameStatus, Inverse, STATUS } from "@/types/gameTypes";
+import { COUNTRY, Daily, GameStatus, Inverse, STATUS } from "@/types/gameTypes";
 import { getDataFromISO } from "./lib/getCountryData";
 import { PopUp } from "./components/attempts-popup";
 import { GuessProvider } from "./context/GuessProvider";
@@ -30,20 +29,20 @@ export default function App() {
     attempts: 0,
     status: STATUS.PLAYING,
   });
-  const [countryISO, setCountryISO] = useState<string>("UNKOWN");
+  const [countryISO, setCountryISO] = useState<string>(COUNTRY.UNDEFINED_ISO);
 
   const [inverse, setInverse] = useState<Inverse>(null);
   const [inverseStatus, setInverseStatus] = useState<GameStatus>({
     attempts: 0,
     status: STATUS.PLAYING,
   });
-  const [inverseISO, setInverseISO] = useState<string>("UNKNOWN");
+  const [inverseISO, setInverseISO] = useState<string>(COUNTRY.UNDEFINED_ISO);
 
   // Load daily infomation
   useEffect(() => {
     const load = async () => {
-      setDaily(await getDaily());
-      setInverse(await getInverse());
+      setDaily(await getDaily(1));
+      setInverse(await getInverse(1));
     };
 
     load();
@@ -80,7 +79,7 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  const ready = countryISO !== "UNKOWN" || forceLoad;
+  const ready = countryISO !== COUNTRY.UNDEFINED_ISO || forceLoad;
   const dailyMode = mode === modes[0];
   const inverseMode = mode === modes[1];
 

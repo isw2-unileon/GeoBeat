@@ -15,7 +15,7 @@ export function useHandleGuess() {
       return;
     }
 
-    const attemptResult = await makeAttempt(genre);
+    const attemptResult = await makeAttempt(genre, 1);
     if (attemptResult) {
       const gameStatus = attemptResult.gameStatus;
 

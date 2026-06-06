@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { modes } from "@/data/placeholder-data";
+import { modes } from "@/data/constats";
 
 type Props = {
   mode: string;

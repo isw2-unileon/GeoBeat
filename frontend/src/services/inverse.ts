@@ -6,14 +6,19 @@ import {
   STATUS,
   MAX_ATTEMPTS,
 } from "@/types/gameTypes";
+import { retrieveToken } from "./auth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-export async function getInverse(): Promise<Inverse> {
+export async function getInverse(retryNum: number): Promise<Inverse> {
   const token = localStorage.getItem("token");
 
   if (!token) {
-    notify.error("Couldn't get inverse: missing token");
+    if (retryNum > 0) {
+      await retrieveToken();
+      return getInverse(retryNum - 1);
+    }
+    notify.error("Couldn't get guess the country mode data: missing token");
     return null;
   }
 
@@ -33,7 +38,12 @@ export async function getInverse(): Promise<Inverse> {
     }
 
     if (!res.ok) {
-      notify.error("Couldn't get guess the country mode data: " + data.error);
+      if (res.status === 401 && retryNum > 0) {
+        await retrieveToken();
+        getInverse(retryNum);
+      } else {
+        notify.error("Couldn't get guess the country mode data: " + data.error);
+      }
       return null;
     }
 
@@ -61,8 +71,18 @@ export async function getInverse(): Promise<Inverse> {
 
 export async function makeInverseAttempt(
   guess: string,
+  retryNum: number,
 ): Promise<GameStatus | null> {
   const token = localStorage.getItem("token");
+
+  if (!token) {
+    if (retryNum > 0) {
+      await retrieveToken();
+      return makeInverseAttempt(guess, retryNum - 1);
+    }
+    notify.error("Couldn't make attempt: missing token");
+    return null;
+  }
 
   try {
     const res = await fetch(`${BACKEND_URL}/api/game/inverse/attempt`, {
@@ -84,8 +104,13 @@ export async function makeInverseAttempt(
     }
 
     if (!res.ok) {
-      notify.error("Couldn't make attempt: " + data.error);
-      return null;
+      if (res.status === 401 && retryNum > 0) {
+        await retrieveToken();
+        return makeInverseAttempt(guess, retryNum - 1);
+      } else {
+        notify.error("Couldn't make attempt: " + data.error);
+        return null;
+      }
     }
 
     if (!Object.values(STATUS).includes(data.status as Status)) {

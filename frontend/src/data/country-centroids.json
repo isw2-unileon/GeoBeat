@@ -246,10 +246,10 @@
     "ISO_name": "switzerland"
   },
   {
-    "name": "Côte d'Ivoire",
+    "name": "Ivory Coast",
     "latitude": 7.539989,
     "longitude": -5.54708,
-    "ISO_name": "côte d'ivoire"
+    "ISO_name": "ivory coast"
   },
   {
     "name": "Cook Islands",
@@ -1290,10 +1290,10 @@
     "ISO_name": "tokelau"
   },
   {
-    "name": "Timor-Leste",
+    "name": "East Timor",
     "latitude": -8.874217,
     "longitude": 125.727539,
-    "ISO_name": "timor-leste"
+    "ISO_name": "east timor"
   },
   {
     "name": "Turkmenistan",

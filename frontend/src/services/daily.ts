@@ -6,13 +6,18 @@ import {
   Status,
   STATUS,
 } from "@/types/gameTypes";
+import { retrieveToken } from "./auth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-export async function getDaily(): Promise<Daily> {
+export async function getDaily(retryNum: number): Promise<Daily> {
   const token = localStorage.getItem("token");
 
   if (!token) {
+    if (retryNum > 0) {
+      await retrieveToken();
+      return getDaily(retryNum - 1);
+    }
     notify.error("Couldn't get daily: missing token");
     return null;
   }
@@ -33,8 +38,13 @@ export async function getDaily(): Promise<Daily> {
     }
 
     if (!res.ok) {
-      notify.error("Couldn't get daily: " + data.error);
-      return null;
+      if (res.status === 401 && retryNum > 0) {
+        await retrieveToken();
+        return getDaily(retryNum - 1);
+      } else {
+        notify.error("Couldn't get daily: " + data.error);
+        return null;
+      }
     }
 
     if (!data) {
@@ -59,10 +69,17 @@ export async function getDaily(): Promise<Daily> {
   }
 }
 
-export async function makeAttempt(guess: string): Promise<AttemptResult> {
+export async function makeAttempt(
+  guess: string,
+  retryNum: number,
+): Promise<AttemptResult> {
   const token = localStorage.getItem("token");
 
   if (!token) {
+    if (retryNum > 0) {
+      await retrieveToken();
+      return makeAttempt(guess, retryNum - 1);
+    }
     notify.error("Couldn't make attempt: missing token");
     return null;
   }
@@ -87,8 +104,13 @@ export async function makeAttempt(guess: string): Promise<AttemptResult> {
     }
 
     if (!res.ok) {
-      notify.error("Couldn't make attempt: " + data.error);
-      return null;
+      if (res.status === 401 && retryNum > 0) {
+        await retrieveToken();
+        return makeAttempt(guess, retryNum - 1);
+      } else {
+        notify.error("Couldn't make attempt: " + data.error);
+        return null;
+      }
     }
 
     if (!Object.values(STATUS).includes(data.status as Status)) {

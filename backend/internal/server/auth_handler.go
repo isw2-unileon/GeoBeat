@@ -165,6 +165,7 @@ func (h *AuthHandler) handleOAuthRedirect(w http.ResponseWriter, r *http.Request
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
+		Path:     "/api/auth",
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
@@ -189,6 +190,7 @@ func (h *AuthHandler) handleLogout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
+		Path:     "/api/auth",
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
