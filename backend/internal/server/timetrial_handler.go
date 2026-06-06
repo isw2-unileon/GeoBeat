@@ -31,15 +31,10 @@ func NewTimetrialHandler(svc TimetrialService) *TimetrialHandler {
 
 // RegisterRoutes registers the HTTP routes for the time trial endpoints.
 func (h *TimetrialHandler) RegisterRoutes(mux *http.ServeMux, authMiddleware func(http.Handler) http.Handler) {
-	getStatusHandler := http.HandlerFunc(h.getStatus)
-	startGameHandler := http.HandlerFunc(h.startGame)
-	postAttemptHandler := http.HandlerFunc(h.postAttempt)
-	getLeaderboardHandler := http.HandlerFunc(h.getLeaderboard)
-
-	mux.Handle("GET /api/game/timetrial/status", authMiddleware(getStatusHandler))
-	mux.Handle("POST /api/game/timetrial/start", authMiddleware(startGameHandler))
-	mux.Handle("POST /api/game/timetrial/attempt", authMiddleware(postAttemptHandler))
-	mux.Handle("GET /api/game/timetrial/leaderboard", authMiddleware(getLeaderboardHandler))
+	mux.Handle("GET /api/game/timetrial/status", authMiddleware(http.HandlerFunc(h.getStatus)))
+	mux.Handle("POST /api/game/timetrial/start", authMiddleware(http.HandlerFunc(h.startGame)))
+	mux.Handle("POST /api/game/timetrial/attempt", authMiddleware(http.HandlerFunc(h.postAttempt)))
+	mux.Handle("GET /api/game/timetrial/leaderboard", authMiddleware(http.HandlerFunc(h.getLeaderboard)))
 }
 
 // timetrialAttemptRequest represents the expected request body for making a time trial guess.

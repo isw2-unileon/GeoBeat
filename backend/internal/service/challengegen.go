@@ -136,6 +136,7 @@ func (s *ChallengeGenService) GenerateDailyChallenge(country string) error {
 	return s.dailyRepo.SaveDailyChallenge(ctx, &challenge)
 }
 
+// GenerateTimetrialChallenge generates a new time trial challenge based on the top genres of the specified countries and saves it to the repository.
 func (s *ChallengeGenService) GenerateTimetrialChallenge(countries []string) error {
 	ctx := context.Background()
 

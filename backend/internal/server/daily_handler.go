@@ -31,16 +31,10 @@ func NewHandler(svc DailyService) *Handler {
 
 // RegisterRoutes registers the HTTP routes for the daily challenge endpoints.
 func (h *Handler) RegisterRoutes(mux *http.ServeMux, authMiddleware func(http.Handler) http.Handler) {
-	getStatusHandler := http.HandlerFunc(h.getDailyStatus)
-	getInverseStatusHandler := http.HandlerFunc(h.getInverseDailyStatus)
-	postAttemptHandler := http.HandlerFunc(h.postAttempt)
-	postInverseAttemptHandler := http.HandlerFunc(h.postInverseAttempt)
-
-	// Step 2: Wrap them in the middleware and use mux.Handle (NOT HandleFunc)
-	mux.Handle("GET /api/game/daily", authMiddleware(getStatusHandler))
-	mux.Handle("GET /api/game/inverse", authMiddleware(getInverseStatusHandler))
-	mux.Handle("POST /api/game/daily/attempt", authMiddleware(postAttemptHandler))
-	mux.Handle("POST /api/game/inverse/attempt", authMiddleware(postInverseAttemptHandler))
+	mux.Handle("GET /api/game/daily", authMiddleware(http.HandlerFunc(h.getDailyStatus)))
+	mux.Handle("GET /api/game/inverse", authMiddleware(http.HandlerFunc(h.getInverseDailyStatus)))
+	mux.Handle("POST /api/game/daily/attempt", authMiddleware(http.HandlerFunc(h.postAttempt)))
+	mux.Handle("POST /api/game/inverse/attempt", authMiddleware(http.HandlerFunc(h.postInverseAttempt)))
 }
 
 // attemptRequest represents the expected request body for making an attempt at the daily challenge.

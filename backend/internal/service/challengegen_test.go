@@ -167,13 +167,15 @@ func TestGenerateDailyInverseChallenge(t *testing.T) {
 	}
 }
 
+type timetrialTestCase struct {
+	name          string
+	countries     []string
+	mockSongs     []Track
+	expectedError error
+}
+
 func TestGenerateTimetrialChallenge(t *testing.T) {
-	tests := []struct {
-		name          string
-		countries     []string
-		mockSongs     []Track
-		expectedError error
-	}{
+	tests := []timetrialTestCase{
 		{
 			name:      "generates successfully for multiple countries",
 			countries: []string{"spain", "france", "italy"},
@@ -191,41 +193,51 @@ func TestGenerateTimetrialChallenge(t *testing.T) {
 		{
 			name:          "fails and aborts if inner calculation fails for any country",
 			countries:     []string{"spain", "france"},
-			mockSongs:     []Track{}, // Esto forzará el error "no songs found..." en la primera iteración
+			mockSongs:     []Track{},
 			expectedError: errors.New("no songs found for the specified country"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mp := &mockMusicProvider{songs: tt.mockSongs}
-			gr := &mockGenreRepository{}
-			dr := &mockDailyChallengeRepository{}
-			tr := &mockTimetrialChallengeRepository{}
-
-			service := NewChallengeGenService(mp, gr, dr, tr)
-
-			err := service.GenerateTimetrialChallenge(tt.countries)
-
-			// Verificar el error esperado
-			if (err != nil && tt.expectedError == nil) || (err == nil && tt.expectedError != nil) {
-				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
-			} else if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
-				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
-			}
-
-			// Si se esperaba que funcionase, verificar la estructura del desafío guardado
-			if err == nil {
-				if tr.savedChallenge == nil {
-					t.Fatal("Expected challenge to be saved, but it was nil")
-				}
-				if len(tr.savedChallenge.TargetCountries) != len(tt.countries) {
-					t.Errorf("Expected %d countries saved, got %d", len(tt.countries), len(tr.savedChallenge.TargetCountries))
-				}
-				if len(tr.savedChallenge.TargetGenres) != len(tt.countries) {
-					t.Errorf("Expected %d genres saved, got %d", len(tt.countries), len(tr.savedChallenge.TargetGenres))
-				}
-			}
+			runTimetrialTestCase(t, tt)
 		})
+	}
+}
+
+// runTimetrialTestCase ejecuta el setup y las aserciones de un caso de prueba individual.
+func runTimetrialTestCase(t *testing.T, tt timetrialTestCase) {
+	t.Helper()
+
+	mp := &mockMusicProvider{songs: tt.mockSongs}
+	gr := &mockGenreRepository{}
+	dr := &mockDailyChallengeRepository{}
+	tr := &mockTimetrialChallengeRepository{}
+
+	service := NewChallengeGenService(mp, gr, dr, tr)
+	err := service.GenerateTimetrialChallenge(tt.countries)
+
+	if tt.expectedError != nil {
+		if err == nil {
+			t.Fatalf("expected error: %v, got nil", tt.expectedError)
+		}
+		if err.Error() != tt.expectedError.Error() {
+			t.Errorf("expected error message: '%v', got: '%v'", tt.expectedError, err)
+		}
+		return
+	}
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if tr.savedChallenge == nil {
+		t.Fatal("Expected challenge to be saved, but it was nil")
+	}
+	if len(tr.savedChallenge.TargetCountries) != len(tt.countries) {
+		t.Errorf("Expected %d countries saved, got %d", len(tt.countries), len(tr.savedChallenge.TargetCountries))
+	}
+	if len(tr.savedChallenge.TargetGenres) != len(tt.countries) {
+		t.Errorf("Expected %d genres saved, got %d", len(tt.countries), len(tr.savedChallenge.TargetGenres))
 	}
 }

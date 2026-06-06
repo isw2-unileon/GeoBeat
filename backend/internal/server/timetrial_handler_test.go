@@ -106,7 +106,7 @@ func (m *mockTimetrialLeaderboardRepo) GetLeaderboard(ctx context.Context, chall
 }
 
 // newTimetrialTestServer wires up the real service with the in-memory fake repositories.
-func newTimetrialTestServer(t *testing.T, loggedInUser uuid.UUID) (*http.ServeMux, *mockTimetrialSessionRepo, *mockTimetrialChallengeRepo) {
+func newTimetrialTestServer(t *testing.T, loggedInUser uuid.UUID) (*http.ServeMux, *mockTimetrialSessionRepo) {
 	t.Helper()
 
 	sessionRepo := newMockTimetrialSessionRepo()
@@ -127,7 +127,7 @@ func newTimetrialTestServer(t *testing.T, loggedInUser uuid.UUID) (*http.ServeMu
 
 	handler.RegisterRoutes(mux, mockAuthMiddleware)
 
-	return mux, sessionRepo, challengeRepo
+	return mux, sessionRepo 
 }
 
 func TestTimetrialHandler_GetStatus(t *testing.T) {
@@ -155,7 +155,7 @@ func TestTimetrialHandler_GetStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux, sessionRepo, _ := newTimetrialTestServer(t, userID)
+			mux, sessionRepo := newTimetrialTestServer(t, userID)
 
 			if tt.seedSession {
 				sessionRepo.sessions[timetrialSessionKey{userID: userID, challengeID: 1}] = &timetrial.Session{
@@ -208,7 +208,7 @@ func TestTimetrialHandler_StartGame(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux, sessionRepo, _ := newTimetrialTestServer(t, userID)
+			mux, sessionRepo := newTimetrialTestServer(t, userID)
 
 			if tt.seedSession {
 				sessionRepo.sessions[timetrialSessionKey{userID: userID, challengeID: 1}] = &timetrial.Session{
@@ -283,7 +283,7 @@ func TestTimetrialHandler_PostAttempt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux, sessionRepo, _ := newTimetrialTestServer(t, userID)
+			mux, sessionRepo := newTimetrialTestServer(t, userID)
 
 			sessionRepo.sessions[timetrialSessionKey{userID: userID, challengeID: 1}] = &timetrial.Session{
 				UserID:       userID,
@@ -310,7 +310,7 @@ func TestTimetrialHandler_PostAttempt(t *testing.T) {
 
 func TestTimetrialHandler_PlayFullGameFlow(t *testing.T) {
 	userID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
-	mux, _, _ := newTimetrialTestServer(t, userID)
+	mux, _ := newTimetrialTestServer(t, userID)
 
 	req1 := httptest.NewRequest(http.MethodPost, "/api/game/timetrial/start", nil)
 	rec1 := httptest.NewRecorder()
