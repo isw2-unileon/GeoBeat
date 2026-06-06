@@ -3,8 +3,6 @@ package server_test
 import (
 	"bytes"
 	"context"
-	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -113,8 +111,7 @@ func newTimetrialTestServer(t *testing.T, loggedInUser uuid.UUID) (*http.ServeMu
 	challengeRepo := newMockTimetrialChallengeRepo()
 	leaderboardRepo := newMockTimetrialLeaderboardRepo()
 
-	silentLogger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	svc := service.NewTimetrialService(challengeRepo, sessionRepo, leaderboardRepo, silentLogger)
+	svc := service.NewTimetrialService(challengeRepo, sessionRepo, leaderboardRepo)
 	handler := server.NewTimetrialHandler(svc)
 
 	mux := http.NewServeMux()
@@ -127,7 +124,7 @@ func newTimetrialTestServer(t *testing.T, loggedInUser uuid.UUID) (*http.ServeMu
 
 	handler.RegisterRoutes(mux, mockAuthMiddleware)
 
-	return mux, sessionRepo 
+	return mux, sessionRepo
 }
 
 func TestTimetrialHandler_GetStatus(t *testing.T) {
