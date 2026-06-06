@@ -77,11 +77,12 @@ func setupRoutes(dbPool *pgxpool.Pool, cfg *config.Config) *http.ServeMux {
 	authHandler := buildAuthHandler(dbPool, cfg)
 	dailyHandler := buildDailyHandler(dbPool)
 	timetrialHandler := buildTimetrialHandler(dbPool)
+	genreHandler := buildGenreHandler(dbPool)
 
 	authHandler.RegisterRoutes(mux)
 	dailyHandler.RegisterRoutes(mux, authHandler.AuthMiddleware)
 	timetrialHandler.RegisterRoutes(mux, authHandler.AuthMiddleware)
-
+	genreHandler.RegisterRoutes(mux)
 	return mux
 }
 
@@ -110,6 +111,12 @@ func buildAuthHandler(dbPool *pgxpool.Pool, cfg *config.Config) *server.AuthHand
 		},
 		cfg,
 	)
+}
+
+func buildGenreHandler(dbPool *pgxpool.Pool) *server.GenreHandler {
+	genreRepo := pgdb.NewPostgresGenreRepo(dbPool)
+	genreService := service.NewGenreService(genreRepo)
+	return server.NewGenreHandler(genreService)
 }
 
 // buildDailyHandler constructs the daily challenge handler and its dependencies.
