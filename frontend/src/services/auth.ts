@@ -28,19 +28,14 @@ async function emailLogin(e: React.FormEvent<HTMLFormElement>) {
     const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         email: String(email),
         password: String(password),
       }),
     });
 
-    let data = null;
-
-    const text = await res.text();
-
-    if (text) {
-      data = JSON.parse(text);
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       notify.error("Login failed: " + data.error);
@@ -90,15 +85,8 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
       }),
     });
 
-    let data = null;
-
-    const text = await res.text();
-
-    if (text) {
-      data = JSON.parse(text);
-    }
-
     if (!res.ok) {
+      const data = await res.json();
       notify.error("Register failed: " + data.error);
       return;
     }
@@ -109,8 +97,66 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
   }
 }
 
+async function logout(
+  e: React.MouseEvent<HTMLButtonElement>,
+  retryNum: number,
+) {
+  e.preventDefault();
+  notify.news("Loging out");
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      if (res.status === 401 && retryNum > 0) {
+        await retrieveToken();
+        logout(e, retryNum - 1);
+      } else {
+        const data = await res.json();
+        notify.error("Error logging out: " + data.error);
+      }
+    }
+
+    localStorage.removeItem("token");
+    notify.info("Logged out correctly");
+    window.location.reload();
+  } catch {
+    notify.error("Couldn't log out please try again later");
+    localStorage.removeItem("token");
+  }
+}
+
+/**
+ * Handles token refresh from cookie
+ */
+async function retrieveToken() {
+  notify.info("Retrieving token");
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      notify.info("Error updating token " + data.error);
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+    notify.info("Token retrieved");
+  } catch {
+    notify.info("Error updating token");
+  }
+}
+
 function googleLogin() {
   window.location.href = GOOGLE_LOGIN_API;
 }
 
-export { emailLogin, emailRegister, googleLogin };
+export { emailLogin, emailRegister, googleLogin, retrieveToken, logout };

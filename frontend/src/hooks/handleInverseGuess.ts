@@ -1,6 +1,7 @@
-import { GameStatus } from "@/types/gameTypes";
+import { COUNTRY, GameStatus } from "@/types/gameTypes";
 import { useInverseGuess } from "@/context/GuessContext";
 import { makeInverseAttempt } from "@/services/inverse";
+import { notify } from "@/lib/notifier";
 
 export function useHandleInverseGuess() {
   const { inverseGuess, setInverseGuess } = useInverseGuess();
@@ -10,7 +11,12 @@ export function useHandleInverseGuess() {
     country: string,
     setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>,
   ) {
-    const attemptResult = await makeInverseAttempt(countryISO);
+    if (countryISO === COUNTRY.UNDEFINED_ISO) {
+      notify.error("Please select a country");
+      return;
+    }
+
+    const attemptResult = await makeInverseAttempt(countryISO, 1);
     if (attemptResult) {
       setGameStatus({
         attempts: attemptResult.attempts,

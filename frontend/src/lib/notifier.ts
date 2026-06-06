@@ -3,7 +3,7 @@ import { toast } from "sonner";
 export const notify = {
   error: (msg: string) => {
     console.log("[ERROR]", msg);
-    toast(msg);
+    toast.error(msg);
   },
 
   // Info is not displayed to user
@@ -12,6 +12,6 @@ export const notify = {
   },
 
   news: (msg: string) => {
-    toast(msg);
+    toast.info(msg);
   },
 };

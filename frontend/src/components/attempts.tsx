@@ -4,7 +4,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { modes } from "@/data/placeholder-data";
+import { modes } from "@/data/constats";
 
 type Props = {
   gameStatus: GameStatus;

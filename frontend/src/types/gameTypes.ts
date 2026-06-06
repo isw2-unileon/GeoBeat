@@ -29,3 +29,8 @@ export type Inverse = {
   attempts: number;
   status: Status;
 } | null;
+
+export const COUNTRY = {
+  UNDEFINED: "Missing country",
+  UNDEFINED_ISO: "UNKNOWN",
+};
