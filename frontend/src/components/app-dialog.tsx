@@ -33,7 +33,7 @@ type Mode = (typeof MODES)[keyof typeof MODES];
 
 export function AppDialog() {
   const [mode, setMode] = useState<Mode>(MODES.LOGIN);
-  let logged = localStorage.getItem("token") != null;
+  const logged = localStorage.getItem("token") != null;
 
   return (
     <Dialog>
