@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 )
 
+// supportedCountries is a predefined list of country names that can be used for random selection.
 var supportedCountries = []string{
 	"spain", "france", "italy", "germany", "united kingdom", "ireland",
 	"portugal", "netherlands", "belgium", "switzerland", "austria",
@@ -29,6 +30,7 @@ var supportedCountries = []string{
 	"australia", "new zealand",
 }
 
+// GetRandomCountry returns a slice of random country names from the supported list.
 func GetRandomCountry(numberCountries int) ([]string, error) {
 	if numberCountries <= 0 {
 		return nil, errors.New("number of countries must be greater than zero")
