@@ -119,7 +119,8 @@ func startDailyChallengeJob(dbPool *pgxpool.Pool, cfg *config.Config) {
 	genreRepo := pgdb.NewPostgresGenreRepo(dbPool)
 	musicProvider := lastfm.NewClient(cfg.LastFMAPIKey)
 	dailyRepo := pgdb.NewPostgresDailyRepo(dbPool)
-	challengeService := service.NewDailyChallengeService(musicProvider, genreRepo, dailyRepo)
+	timetrialRepo := pgdb.NewPostgresTimetrialRepo(dbPool)
+	challengeService := service.NewChallengeGenService(musicProvider, genreRepo, dailyRepo, timetrialRepo)
 
 	c := cron.New(cron.WithLocation(time.UTC))
 	_, err := c.AddFunc("0 0 * * *", func() {
