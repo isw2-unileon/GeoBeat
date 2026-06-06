@@ -85,7 +85,11 @@ function NotLoggedContet({ mode, setMode }: NotLoggedConterProps) {
           </Field>
           <Field>
             <FieldLabel> Password </FieldLabel>
-            <Input name="input-password" placeholder="password" />
+            <Input
+              type="password"
+              name="input-password"
+              placeholder="password"
+            />
           </Field>
           <Field>
             <Button variant={"default"} type="submit">

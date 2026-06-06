@@ -35,13 +35,7 @@ async function emailLogin(e: React.FormEvent<HTMLFormElement>) {
       }),
     });
 
-    let data = null;
-
-    const text = await res.text();
-
-    if (text) {
-      data = JSON.parse(text);
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       notify.error("Login failed: " + data.error);
@@ -91,15 +85,8 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
       }),
     });
 
-    let data = null;
-
-    const text = await res.text();
-
-    if (text) {
-      data = JSON.parse(text);
-    }
-
     if (!res.ok) {
+      const data = await res.json();
       notify.error("Register failed: " + data.error);
       return;
     }
@@ -123,21 +110,13 @@ async function logout(
       credentials: "include",
     });
 
-    let data = null;
-    const text = await res.text();
-
-    if (text) {
-      data = JSON.parse(text);
-    }
-
     if (!res.ok) {
       if (res.status === 401 && retryNum > 0) {
         await retrieveToken();
         logout(e, retryNum - 1);
       } else {
-        notify.error("Couldn't log out: " + data.error);
-        localStorage.removeItem("token");
-        return;
+        const data = await res.json();
+        notify.error("Error logging out: " + data.error);
       }
     }
 
@@ -162,12 +141,7 @@ async function retrieveToken() {
       credentials: "include",
     });
 
-    let data = null;
-    const text = await res.text();
-
-    if (text) {
-      data = JSON.parse(text);
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       notify.info("Error updating token " + data.error);

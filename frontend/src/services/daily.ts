@@ -29,13 +29,7 @@ export async function getDaily(retryNum: number): Promise<Daily> {
       },
     });
 
-    let data;
-
-    const text = await res.text();
-
-    if (text) {
-      data = JSON.parse(text);
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       if (res.status === 401 && retryNum > 0) {
@@ -96,12 +90,7 @@ export async function makeAttempt(
       }),
     });
 
-    const text = await res.text();
-    let data;
-
-    if (text) {
-      data = JSON.parse(text);
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       if (res.status === 401 && retryNum > 0) {
