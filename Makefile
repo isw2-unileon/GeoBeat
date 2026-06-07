@@ -2,7 +2,7 @@ TEST_DB_URL="postgresql://postgres:supersecret@localhost:5433/geobeat_test?sslmo
 LOCAL_DB_URL="postgresql://postgres:supersecret@localhost:5432/geobeat_local?sslmode=disable"
 MIGRATION_PATH="backend/internal/database/migrations"
 
-.PHONY: install run-backend run-frontend build-backend build-frontend test lint e2e db-test-up db-test-down migrate-up migrate-down migrate-reset
+.PHONY: install run-backend run-frontend build-backend build-frontend test lint e2e db-test-up db-test-down migrate-test-up migrate-test-down migrate-test-reset db-local-up db-local-down migrate-local-up migrate-local-down migrate-local-reset
 
 ## Install all dependencies
 install:
@@ -28,8 +28,8 @@ build-backend:
 build-frontend:
 	cd frontend && npm run build
 
-## Run all tests
-test:
+## Run all tests (Automatically applies test migrations first)
+test: migrate-test-up
 	TEST_DATABASE_URL=$(TEST_DB_URL) go test -v -race ./...
 	cd frontend && npm run test
 
@@ -44,23 +44,23 @@ e2e:
 
 ## Start the test database in the background
 db-test-up:
-	docker-compose up -d geobeat-test-db
+	docker compose up -d geobeat-test-db
 
 ## Stop and completely remove the test database
 db-test-down:
-	docker-compose down geobeat-test-db
+	docker compose stop geobeat-test-db
+	docker compose rm -f geobeat-test-db
 
 ## Apply all up migrations
-migrate-up:
+migrate-test-up:
 	migrate -path $(MIGRATION_PATH) -database $(TEST_DB_URL) up
 
 ## Rollback all migrations (Destroys all tables)
-migrate-down:
+migrate-test-down:
 	migrate -path $(MIGRATION_PATH) -database $(TEST_DB_URL) down -all
 
 ## Nuke the database and rebuild it fresh
-migrate-reset: migrate-down migrate-up
-
+migrate-test-reset: migrate-test-down migrate-test-up
 
 ## Start the local development database
 db-local-up:
@@ -71,12 +71,12 @@ db-local-down:
 	docker compose stop geobeat-local-db
 
 ## Apply all up migrations to the LOCAL database
-migrate-up:
+migrate-local-up:
 	migrate -path $(MIGRATION_PATH) -database $(LOCAL_DB_URL) up
 
 ## Rollback all migrations on the LOCAL database
-migrate-down:
+migrate-local-down:
 	migrate -path $(MIGRATION_PATH) -database $(LOCAL_DB_URL) down -all
 
 ## Nuke the LOCAL database and rebuild it fresh
-migrate-reset: migrate-down migrate-up
+migrate-local-reset: migrate-local-down migrate-local-up
