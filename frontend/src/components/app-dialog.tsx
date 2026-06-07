@@ -6,7 +6,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import googleLogo from "@/graphics/google-icon.svg";
-import { User } from "lucide-react";
+import { CircleQuestionMark, User } from "lucide-react";
 import {
   FieldGroup,
   Field,
@@ -16,6 +16,11 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import {
   emailLogin,
   emailRegister,
@@ -84,7 +89,12 @@ function NotLoggedContet({ mode, setMode }: NotLoggedConterProps) {
             <Input name="input-email" placeholder="mail@example.com" />
           </Field>
           <Field>
-            <FieldLabel> Password </FieldLabel>
+            <FieldLabel>
+              Password
+              <span>
+                <PasswordRequirements />
+              </span>
+            </FieldLabel>
             <Input
               type="password"
               name="input-password"
@@ -153,5 +163,22 @@ function LoggedContent() {
         Log out
       </Button>
     </>
+  );
+}
+
+function PasswordRequirements() {
+  return (
+    <HoverCard>
+      <HoverCardTrigger>
+        <CircleQuestionMark size={16} />
+      </HoverCardTrigger>
+      <HoverCardContent>
+        <ul style={{ paddingLeft: "1rem", listStyleType: "disc" }}>
+          <li>More than 8 characters</li>
+          <li>Has an uppercase letter</li>
+          <li>Has a special character</li>
+        </ul>
+      </HoverCardContent>
+    </HoverCard>
   );
 }
