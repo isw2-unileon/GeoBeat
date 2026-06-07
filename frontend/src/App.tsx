@@ -59,7 +59,7 @@ export default function App() {
     duration_ms: 0.0,
   });
   const [timetrialStatus, setTimetrialStatus] = useState<TimetrialStatus>({
-    attempt_status: { status: STATUS.PLAYING, attempts: null },
+    attempt_status: { status: STATUS.PLAYING, attempts: -1 },
     status: STATUS_TIME.PLAYING,
     next_county: COUNTRY.UNDEFINED,
     duration: 0.0,
