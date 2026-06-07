@@ -182,10 +182,8 @@ Before your code can be merged into the `main` branch, it must pass our quality 
 
 For a deep dive into the system's design, architectural patterns, and data flow, please refer to our dedicated documentation directory. 
 
-* [📚 Read the Technical Documentation Index](./docs/README.md)
+* [📚 Read the Technical Documentation Index](./docs/)
 
 Inside the `/docs` folder, you will find detailed explanations regarding:
 * **System Architecture:** Clean Architecture layers and dependency injection.
 * **Database Schema:** PostgreSQL relational models, UUID strategies, and `pgxpool` configuration.
-* **API Specification:** RESTful JSON contracts and endpoint security.
-* **Core Algorithms:** The mathematical randomization engine and state management for daily challenges.
