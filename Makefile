@@ -67,7 +67,8 @@ db-local-up:
 
 ## Stop the local development database
 db-local-down:
-	docker compose stop geobeat-local-db
+	docker compose stop geobeat-test-db
+	docker compose rm -f geobeat-test-db
 
 ## Apply all up migrations to the LOCAL database
 migrate-local-up:
