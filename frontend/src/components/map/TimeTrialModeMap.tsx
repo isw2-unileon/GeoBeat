@@ -38,15 +38,21 @@ export function TimeTrialModeMap({
   });
 
   useEffect(() => {
+    const source =
+      countryISO !== COUNTRY.UNDEFINED ? countryISO : firstCountryISO;
+
+    console.log("Source: " + source);
+    console.log("First: " + firstCountryISO);
+    console.log("Second: " + countryISO);
+
     let country_data = {
       longitude: 0,
       latitude: 0,
       name: COUNTRY.UNDEFINED,
     };
-    if (countryISO !== undefined) {
-      country_data = getDataFromISO(countryISO);
-    } else if (firstCountryISO !== undefined) {
-      country_data = getDataFromISO(firstCountryISO);
+
+    if (source) {
+      country_data = getDataFromISO(source);
     }
 
     setSelectedCountryLayer({
