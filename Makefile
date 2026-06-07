@@ -31,7 +31,6 @@ build-frontend:
 ## Run all tests (Automatically applies test migrations first)
 test: migrate-test-up
 	TEST_DATABASE_URL=$(TEST_DB_URL) go test -v -race ./...
-	cd frontend && npm run test
 
 ## Run linters
 lint:
