@@ -85,7 +85,7 @@ We will use Docker to spin up an isolated PostgreSQL instance for development (w
 make db-local-up
 
 # Apply migrations to create the database tables
-make migrate-up
+make migrate-local-up
 
 # IMPORTANT: Run the seeder to populate the music genres table
 # (Replace this path with the actual location of your seeder if different)
@@ -121,7 +121,8 @@ make db-test-up
 ```
 
 ### 2. Unit and Integration Tests
-Run the core test suites for both the Go backend and the React frontend. The backend tests will automatically connect to the test database you just started.
+Run the core test suites. 
+*Note: The `make test` command will automatically apply the latest database migrations to your test container before running the Go tests, ensuring schema integrity.*
 ```bash
 make test
 ```
