@@ -258,7 +258,7 @@ func setOAuthStateCookie(w http.ResponseWriter, state string, provider geouser.A
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   secure,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 		MaxAge:   300,
 	})
 }
@@ -279,7 +279,7 @@ func clearOAuthStateCookie(w http.ResponseWriter, provider geouser.AuthProvider,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   secure,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 		MaxAge:   -1,
 	})
 }
