@@ -64,15 +64,15 @@ export async function getInverse(retryNum: number): Promise<Inverse> {
 }
 
 export async function makeInverseAttempt(
-  guess: string,
   retryNum: number,
+  guess: string,
 ): Promise<GameStatus | null> {
   const token = localStorage.getItem("token");
 
   if (!token) {
     if (retryNum > 0) {
       await retrieveToken();
-      return makeInverseAttempt(guess, retryNum - 1);
+      return makeInverseAttempt(retryNum - 1, guess);
     }
     notify.error("Couldn't make attempt: missing token");
     return null;
@@ -95,7 +95,7 @@ export async function makeInverseAttempt(
     if (!res.ok) {
       if (res.status === 401 && retryNum > 0) {
         await retrieveToken();
-        return makeInverseAttempt(guess, retryNum - 1);
+        return makeInverseAttempt(retryNum - 1, guess);
       } else {
         notify.error("Couldn't make attempt: " + data.error);
         return null;

@@ -16,7 +16,7 @@ export function useHandleInverseGuess() {
       return;
     }
 
-    const attemptResult = await makeInverseAttempt(countryISO, 1);
+    const attemptResult = await makeInverseAttempt(1, countryISO);
     if (attemptResult) {
       setGameStatus({
         attempts: attemptResult.attempts,

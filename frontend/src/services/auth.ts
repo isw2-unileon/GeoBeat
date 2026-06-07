@@ -97,11 +97,7 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
   }
 }
 
-async function logout(
-  e: React.MouseEvent<HTMLButtonElement>,
-  retryNum: number,
-) {
-  e.preventDefault();
+async function logout(retryNum: number) {
   notify.news("Loging out");
 
   try {
@@ -113,7 +109,7 @@ async function logout(
     if (!res.ok) {
       if (res.status === 401 && retryNum > 0) {
         await retrieveToken();
-        logout(e, retryNum - 1);
+        logout(retryNum - 1);
       } else {
         const data = await res.json();
         notify.error("Error logging out: " + data.error);

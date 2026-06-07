@@ -10,28 +10,43 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { GameStatus, STATUS } from "@/types/gameTypes";
-import { useHandleGuess } from "@/hooks/handleGuess";
-import { GenreCombobox } from "../genre-combobox";
-import { ModeSelect } from "../mode-select";
+import {
+  COUNTRY,
+  STATUS_TIME,
+  Timetrial,
+  TimetrialStatus,
+} from "@/types/gameTypes";
+import { GenreCombobox } from "@/components/genre-combobox";
+import { ModeSelect } from "@/components/mode-select";
+import { LeaderboardDialog } from "./leaderboard-dialog";
+import { useHandleTimetrialGuess } from "@/hooks/handleTimetrialGuess";
+import { useHandleStartTimetrial } from "@/hooks/handleStartTimetrial";
+
 type Props = {
-  country: string;
   mode: string;
   setMode: React.Dispatch<React.SetStateAction<string>>;
-  gameStatus: GameStatus;
-  setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>;
+  timetrial: Timetrial;
+  setTimeTrial: React.Dispatch<React.SetStateAction<Timetrial>>;
+  timetrialStatus: TimetrialStatus;
+  setTimetrialStatus: React.Dispatch<React.SetStateAction<TimetrialStatus>>;
 };
 
-export function DailyDrawer({
-  country,
-  setMode,
+export function TimetrialDrawer({
   mode,
-  gameStatus,
-  setGameStatus,
+  setMode,
+  timetrial,
+  setTimeTrial,
+  timetrialStatus,
+  setTimetrialStatus,
 }: Props) {
+  const [country, setCountry] = useState<string>(
+    timetrial?.target_country ?? COUNTRY.UNDEFINED,
+  );
   const [genre, setGenre] = useState<string | null>(null);
+  const [hasStarted, setHasStarted] = useState<boolean>(false);
+  const handleTimetrial = useHandleTimetrialGuess();
+  const handleStartTimetrial = useHandleStartTimetrial();
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const handleGuess = useHandleGuess();
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen} modal={false}>
@@ -43,8 +58,10 @@ export function DailyDrawer({
           <DrawerTitle className="text-xl">GeoBeat</DrawerTitle>
           <DrawerDescription className="max-w-xs mx-auto">
             <strong className="block">{mode}</strong>
-            In daily mode you are given a country and have to guess the most
-            popular song for it. Every mistake gives a hint in form of a song
+            In this mode you have infite guesses, start the mode by clicking on
+            "Start". After that you will have to guess the top genre for five
+            countries. This mode has score depending on the time, so try to be
+            fast!
           </DrawerDescription>
         </DrawerHeader>
         <div className="text-center mb-4">
@@ -52,6 +69,9 @@ export function DailyDrawer({
           <div className="max-w-xs mx-auto">
             <ModeSelect mode={mode} setMode={setMode} setIsOpen={setIsOpen} />
           </div>
+        </div>
+        <div className="max-w-xs mx-auto pb-3">
+          <LeaderboardDialog />
         </div>
         <div className="text-center mb-4">
           <h1 className="text-base">What is the most popular genre of?</h1>
@@ -61,21 +81,28 @@ export function DailyDrawer({
           </div>
         </div>
         <div className="w-full flex justify-center">
-          {gameStatus.status !== STATUS.WON &&
-          gameStatus.status !== STATUS.LOST ? (
+          {hasStarted &&
+            (timetrial?.status !== STATUS_TIME.COMPLETED &&
+            timetrialStatus?.status !== STATUS_TIME.COMPLETED ? (
+              <Button
+                type="button"
+                onClick={() => {
+                  handleTimetrial(genre, setTimetrialStatus, setCountry);
+                }}
+              >
+                Guess
+              </Button>
+            ) : (
+              <Button disabled>Guess</Button>
+            ))}
+          {!hasStarted && (
             <Button
               type="button"
-              className="w-1/3"
               onClick={() => {
-                handleGuess(genre, setGameStatus);
-                setIsOpen(false);
+                handleStartTimetrial(setTimeTrial, setHasStarted, setCountry);
               }}
             >
-              Guess
-            </Button>
-          ) : (
-            <Button disabled className="w-1/3">
-              Guess
+              Start
             </Button>
           )}
         </div>

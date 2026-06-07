@@ -40,6 +40,7 @@ export function InverseField({
           GeoBeat
         </FieldLegend>
         <FieldDescription>
+          <strong className="block">{mode}</strong>
           In guess the country mode you are given a song and have to guess where
           that song is from, in this mode the are no hints!
         </FieldDescription>

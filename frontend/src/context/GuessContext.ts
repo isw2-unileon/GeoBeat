@@ -33,3 +33,22 @@ export function useInverseGuess() {
   }
   return context;
 }
+
+type TimetrialGuessContextType = {
+  timetrialGuess: number;
+  setTimetrialGuess: React.Dispatch<React.SetStateAction<number>>;
+};
+
+export const TimetrialGuessContext = createContext<
+  TimetrialGuessContextType | undefined
+>(undefined);
+
+export function useTimetrialGuess() {
+  const context = useContext(TimetrialGuessContext);
+  if (!context) {
+    throw new Error(
+      "useTimetrialGuess must be used within InverseGuessProvider",
+    );
+  }
+  return context;
+}

@@ -9,21 +9,33 @@ import { useState } from "react";
 import { useEffect } from "react";
 import { getDaily } from "./services/daily";
 import { Attempts } from "./components/attempts";
-import { COUNTRY, Daily, GameStatus, Inverse, STATUS } from "@/types/gameTypes";
+import {
+  COUNTRY,
+  Daily,
+  GameStatus,
+  Inverse,
+  STATUS,
+  STATUS_TIME,
+  Timetrial,
+  TimetrialStatus,
+} from "@/types/gameTypes";
 import { getDataFromISO } from "./lib/getCountryData";
 import { PopUp } from "./components/attempts-popup";
 import { GuessProvider } from "./context/GuessProvider";
 import { DailyModeTitle } from "./components/daily/daily-title";
 import { InverseModeTitle } from "@/components/inverse/inverse-title";
-import { LoadingText } from "./components/loading-text";
 import { getInverse } from "./services/inverse";
 import { InverseField } from "./components/inverse/inverse-field";
 import { InverseDrawer } from "./components/inverse/inverse-drawer";
+import { TimetrialField } from "./components/timetrial/timetrial-field";
+import { TimeTrialModeMap } from "./components/map/TimeTrialModeMap";
+import { TimetrialModeTitle } from "./components/timetrial/timetrial-title";
+import { TimetrialDrawer } from "./components/timetrial/timetrial-drawer";
 
 export default function App() {
   const [mode, setMode] = useState<string>(modes[0]);
 
-  // Declare modes data
+  // daily mode data
   const [daily, setDaily] = useState<Daily>(null);
   const [gameStatus, setGameStatus] = useState<GameStatus>({
     attempts: 0,
@@ -31,6 +43,7 @@ export default function App() {
   });
   const [countryISO, setCountryISO] = useState<string>(COUNTRY.UNDEFINED_ISO);
 
+  // inverse mode data
   const [inverse, setInverse] = useState<Inverse>(null);
   const [inverseStatus, setInverseStatus] = useState<GameStatus>({
     attempts: 0,
@@ -38,7 +51,23 @@ export default function App() {
   });
   const [inverseISO, setInverseISO] = useState<string>(COUNTRY.UNDEFINED_ISO);
 
-  // Load daily infomation
+  // timetrial mode data
+  const [timetrial, setTimetrial] = useState<Timetrial>({
+    status: STATUS_TIME.PLAYING,
+    target_country: COUNTRY.UNDEFINED,
+    start_time: 0.0,
+    duration_ms: 0.0,
+  });
+  const [timetrialStatus, setTimetrialStatus] = useState<TimetrialStatus>({
+    attempt_status: { status: STATUS.PLAYING, attempts: -1 },
+    status: STATUS_TIME.PLAYING,
+    next_county: COUNTRY.UNDEFINED,
+    duration: 0.0,
+  });
+  const timetrialISO = timetrial?.target_country;
+  const timetrialStatusISO = timetrialStatus?.next_county;
+
+  // Load information when page first loads
   useEffect(() => {
     const load = async () => {
       setDaily(await getDaily(1));
@@ -70,29 +99,27 @@ export default function App() {
     }
   }, [inverse]);
 
-  const [forceLoad, setForceLoad] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setForceLoad(true);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const ready = countryISO !== COUNTRY.UNDEFINED_ISO || forceLoad;
   const dailyMode = mode === modes[0];
   const inverseMode = mode === modes[1];
+  const timetrialMode = mode === modes[2];
 
   return (
     <main className="relative min-h-screen flex flex-col">
       <AppDialog />
       {dailyMode && <DailyModeTitle />}
       {inverseMode && <InverseModeTitle />}
+      {timetrialMode && <TimetrialModeTitle />}
       <div className={dailyMode ? "" : "hidden"}>
-        {ready ? <DailyModeMap countryISO={countryISO} /> : <LoadingText />}
+        <DailyModeMap countryISO={countryISO} />
       </div>
       <div className={inverseMode ? "" : "hidden"}>
         <InverseModeMap countryISO={inverseISO} setCountryISO={setInverseISO} />
+      </div>
+      <div className={timetrialMode ? "" : "hidden"}>
+        <TimeTrialModeMap
+          firstCountryISO={timetrialISO}
+          countryISO={timetrialStatusISO}
+        />
       </div>
       <GuessProvider>
         {/* Desktop */}
@@ -114,6 +141,16 @@ export default function App() {
               setMode={setMode}
               inverseStatus={inverseStatus}
               setInverseStatus={setInverseStatus}
+            />
+          )}
+          {timetrialMode && (
+            <TimetrialField
+              mode={mode}
+              setMode={setMode}
+              timetrial={timetrial}
+              setTimeTrial={setTimetrial}
+              timetrialStatus={timetrialStatus}
+              setTimetrialStatus={setTimetrialStatus}
             />
           )}
         </div>
@@ -138,6 +175,16 @@ export default function App() {
               setInverseStatus={setInverseStatus}
             />
           )}
+          {timetrialMode && (
+            <TimetrialDrawer
+              mode={mode}
+              setMode={setMode}
+              timetrial={timetrial}
+              setTimeTrial={setTimetrial}
+              timetrialStatus={timetrialStatus}
+              setTimetrialStatus={setTimetrialStatus}
+            />
+          )}
         </div>
         {dailyMode && (
           <>
@@ -149,6 +196,11 @@ export default function App() {
           <>
             <Attempts gameStatus={inverseStatus} mode={mode} />
             <PopUp status={inverseStatus.status} />
+          </>
+        )}
+        {timetrialMode && timetrialStatus !== null && (
+          <>
+            <PopUp status={timetrialStatus.attempt_status.status}></PopUp>
           </>
         )}
       </GuessProvider>
