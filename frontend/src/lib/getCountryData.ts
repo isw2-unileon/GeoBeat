@@ -8,7 +8,7 @@ type countryData = {
 };
 
 export function getDataFromISO(ISO_name: string): countryData {
-  const country_data = data.find((item) => item.ISO_name == ISO_name) ?? {
+  const country_data = data.find((item) => item.ISO_name === ISO_name) ?? {
     longitude: 0,
     latitude: 0,
     name: COUNTRY.UNDEFINED,

@@ -13,14 +13,11 @@ export function TimeTrialModeMap({
   firstCountryISO,
   countryISO,
 }: TimeTrialProps) {
-  let first_country_data = {
+  const first_country_data = {
     longitude: 0,
     latitude: 0,
     name: COUNTRY.UNDEFINED,
   };
-  if (firstCountryISO !== undefined) {
-    first_country_data = getDataFromISO(firstCountryISO);
-  }
 
   const layer: FillLayerSpecification = {
     id: "selected-country-layer",
@@ -41,13 +38,17 @@ export function TimeTrialModeMap({
   });
 
   useEffect(() => {
+    const source =
+      countryISO !== COUNTRY.UNDEFINED ? countryISO : firstCountryISO;
+
     let country_data = {
       longitude: 0,
       latitude: 0,
       name: COUNTRY.UNDEFINED,
     };
-    if (countryISO !== undefined) {
-      country_data = getDataFromISO(countryISO);
+
+    if (source) {
+      country_data = getDataFromISO(source);
     }
 
     setSelectedCountryLayer({
@@ -65,7 +66,7 @@ export function TimeTrialModeMap({
       longitude: country_data.longitude,
       latitude: country_data.latitude,
     });
-  }, [countryISO]);
+  }, [countryISO, firstCountryISO]);
 
   return (
     <BaseGlobe longitude={coords.longitude} latitude={coords.latitude}>
