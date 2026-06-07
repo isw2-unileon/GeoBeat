@@ -109,6 +109,7 @@ async function logout() {
     if (!res.ok) {
       const data = await res.json();
       notify.error("Error logging out: " + data.error);
+      return;
     }
 
     localStorage.removeItem("token");
