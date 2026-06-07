@@ -107,7 +107,7 @@ func (s *Session) MakeAttempt(guess string, challenge *Challenge) (*AttemptResul
 		if s.CurrentIndex >= len(challenge.TargetCountries) {
 			s.Status = StatusCompleted
 			s.EndTime = time.Now()
-			s.Duration = s.EndTime.Sub(s.StartTime)
+			s.Duration = time.Duration(s.EndTime.Sub(s.StartTime).Milliseconds())
 			result.Duration = s.Duration
 		}
 	}
