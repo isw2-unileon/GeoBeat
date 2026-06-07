@@ -22,7 +22,7 @@ export type Daily = {
 } | null;
 
 export type GameStatus = {
-  attempts: number | null;
+  attempts: number;
   status: Status;
 };
 

@@ -173,8 +173,8 @@ async function makeTimetrialAttempt(
     notify.info(data);
     return {
       attempt_status: data.correct
-        ? { status: STATUS.WON, attempts: null }
-        : { status: STATUS.PLAYING, attempts: null },
+        ? { status: STATUS.WON, attempts: -1 }
+        : { status: STATUS.PLAYING, attempts: -1 },
       status: data.status,
       next_county: data.next_country ?? COUNTRY.UNDEFINED,
       duration: data.duration ?? 0.0,
