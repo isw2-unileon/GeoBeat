@@ -13,6 +13,7 @@ import { GameStatus, STATUS } from "@/types/gameTypes";
 import { useHandleGuess } from "@/hooks/handleGuess";
 import { GenreCombobox } from "../genre-combobox";
 import { ModeSelect } from "../mode-select";
+import { useNormalizeGenre } from "@/hooks/useNormalizeGenre";
 
 type Props = {
   country: string;
@@ -31,6 +32,7 @@ export function DailyField({
 }: Props) {
   const [genre, setGenre] = useState<string | null>(null);
   const handleGuess = useHandleGuess();
+  const normalizeGuess = useNormalizeGenre();
 
   return (
     <>
@@ -62,7 +64,10 @@ export function DailyField({
             gameStatus.status !== STATUS.LOST ? (
               <Button
                 type="button"
-                onClick={() => handleGuess(genre, setGameStatus)}
+                onClick={() => {
+                  const normalized_genre = normalizeGuess(genre);
+                  handleGuess(normalized_genre, genre, setGameStatus);
+                }}
               >
                 Guess
               </Button>

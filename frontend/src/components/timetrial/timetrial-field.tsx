@@ -20,6 +20,7 @@ import { GenreCombobox } from "../genre-combobox";
 import { useHandleTimetrialGuess } from "@/hooks/handleTimetrialGuess";
 import { useHandleStartTimetrial } from "@/hooks/handleStartTimetrial";
 import { LeaderboardDialog } from "./leaderboard-dialog";
+import { useNormalizeGenre } from "@/hooks/useNormalizeGenre";
 
 type Props = {
   mode: string;
@@ -45,6 +46,7 @@ export function TimetrialField({
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const handleTimetrial = useHandleTimetrialGuess();
   const handleStartTimetrial = useHandleStartTimetrial();
+  const normalizeGuess = useNormalizeGenre();
 
   return (
     <>
@@ -84,7 +86,12 @@ export function TimetrialField({
                 <Button
                   type="button"
                   onClick={() => {
-                    handleTimetrial(genre, setTimetrialStatus, setCountry);
+                    const normalized_genre = normalizeGuess(genre);
+                    handleTimetrial(
+                      normalized_genre,
+                      setTimetrialStatus,
+                      setCountry,
+                    );
                   }}
                 >
                   Guess

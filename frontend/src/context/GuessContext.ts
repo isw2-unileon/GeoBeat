@@ -1,3 +1,4 @@
+import { Genre } from "@/types/gameTypes";
 import { createContext, useContext } from "react";
 
 type DailyGuessContextType = {
@@ -49,6 +50,23 @@ export function useTimetrialGuess() {
     throw new Error(
       "useTimetrialGuess must be used within InverseGuessProvider",
     );
+  }
+  return context;
+}
+
+type GenresContextType = {
+  genres: Genre[];
+  setGenres: React.Dispatch<React.SetStateAction<Genre[]>>;
+};
+
+export const GenresContext = createContext<GenresContextType | undefined>(
+  undefined,
+);
+
+export function useGenres() {
+  const context = useContext(GenresContext);
+  if (!context) {
+    throw new Error("useGenres must be used within GenresProvider");
   }
   return context;
 }

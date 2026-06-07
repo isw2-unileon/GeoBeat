@@ -31,7 +31,6 @@ import { TimetrialField } from "./components/timetrial/timetrial-field";
 import { TimeTrialModeMap } from "./components/map/TimeTrialModeMap";
 import { TimetrialModeTitle } from "./components/timetrial/timetrial-title";
 import { TimetrialDrawer } from "./components/timetrial/timetrial-drawer";
-
 export default function App() {
   const [mode, setMode] = useState<string>(modes[0]);
 

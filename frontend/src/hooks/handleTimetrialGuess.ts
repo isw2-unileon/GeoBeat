@@ -9,16 +9,16 @@ export function useHandleTimetrialGuess() {
   const { timetrialGuess, setTimetrialGuess } = useTimetrialGuess();
 
   return async function handleTimetrialGuess(
-    genre: string | null,
+    normalized_genre: string | null,
     setTimetrialStatus: React.Dispatch<React.SetStateAction<TimetrialStatus>>,
     setCountry: React.Dispatch<React.SetStateAction<string>>,
   ) {
-    if (!genre) {
+    if (!normalized_genre) {
       notify.info("Please enter a valid genre");
       return;
     }
 
-    const timetrialStatus = await makeTimetrialAttempt(1, genre);
+    const timetrialStatus = await makeTimetrialAttempt(1, normalized_genre);
     if (timetrialStatus) {
       setTimetrialStatus(timetrialStatus);
       setTimetrialGuess(timetrialGuess + 1);

@@ -14,6 +14,7 @@ import { GameStatus, STATUS } from "@/types/gameTypes";
 import { useHandleGuess } from "@/hooks/handleGuess";
 import { GenreCombobox } from "../genre-combobox";
 import { ModeSelect } from "../mode-select";
+import { useNormalizeGenre } from "@/hooks/useNormalizeGenre";
 type Props = {
   country: string;
   mode: string;
@@ -32,6 +33,7 @@ export function DailyDrawer({
   const [genre, setGenre] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const handleGuess = useHandleGuess();
+  const normalizeGuess = useNormalizeGenre();
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen} modal={false}>
@@ -67,7 +69,8 @@ export function DailyDrawer({
               type="button"
               className="w-1/3"
               onClick={() => {
-                handleGuess(genre, setGameStatus);
+                const normalized_genre = normalizeGuess(genre);
+                handleGuess(normalized_genre, genre, setGameStatus);
                 setIsOpen(false);
               }}
             >

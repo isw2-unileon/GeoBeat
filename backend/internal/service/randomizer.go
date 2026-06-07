@@ -20,7 +20,7 @@ var supportedCountries = []string{
 	"puerto rico", "guatemala", "el salvador", "honduras", "jamaica",
 
 	"japan", "south korea", "india", "indonesia", "philippines",
-	"thailand", "vietnam", "malaysia", "singapore", "taiwan",
+	"thailand", "malaysia", "singapore", "taiwan",
 	"china", "pakistan", "bangladesh", "sri lanka", "nepal",
 	"saudi arabia", "united arab emirates", "israel", "lebanon",
 

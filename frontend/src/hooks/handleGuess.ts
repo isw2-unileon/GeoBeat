@@ -7,15 +7,16 @@ export function useHandleGuess() {
   const { guess, setGuess } = useDailyGuess();
 
   return async function handleGuess(
+    normalized_genre: string | null,
     genre: string | null,
     setGameStatus: React.Dispatch<React.SetStateAction<GameStatus>>,
   ) {
-    if (!genre) {
+    if (!normalized_genre) {
       notify.error("Please enter a valid genre");
       return;
     }
 
-    const attemptResult = await makeAttempt(1, genre);
+    const attemptResult = await makeAttempt(1, normalized_genre);
     if (attemptResult) {
       const gameStatus = attemptResult.gameStatus;
 
@@ -24,7 +25,10 @@ export function useHandleGuess() {
         status: gameStatus.status,
       });
 
-      localStorage.setItem(`guess${gameStatus.attempts}`, genre);
+      localStorage.setItem(
+        `guess${gameStatus.attempts}`,
+        genre ?? normalized_genre,
+      );
       if (attemptResult.hint) {
         localStorage.setItem(`hint${gameStatus.attempts}`, attemptResult.hint);
         notify.news("New hint added, hover the left squares to see it!");

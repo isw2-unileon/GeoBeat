@@ -147,7 +147,7 @@ function LoggedContent() {
         type="button"
         variant={"destructive"}
         onClick={() => {
-          logout(1);
+          logout();
         }}
       >
         Log out
