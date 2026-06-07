@@ -7,6 +7,7 @@ MIGRATION_PATH="backend/internal/database/migrations"
 ## Install all dependencies
 install:
 	go install github.com/air-verse/air@latest
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin
 	go mod download
 	cd frontend && npm ci
