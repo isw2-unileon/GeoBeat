@@ -63,6 +63,11 @@ export type Entry = {
   rank: number;
 };
 
+export type Genre = {
+  name: string;
+  normalized_name: string;
+};
+
 export const COUNTRY = {
   UNDEFINED: "Missing country",
   UNDEFINED_ISO: "UNKNOWN",

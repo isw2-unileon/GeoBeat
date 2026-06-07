@@ -97,7 +97,7 @@ async function emailRegister(e: React.FormEvent<HTMLFormElement>) {
   }
 }
 
-async function logout(retryNum: number) {
+async function logout() {
   notify.news("Loging out");
 
   try {
@@ -107,13 +107,8 @@ async function logout(retryNum: number) {
     });
 
     if (!res.ok) {
-      if (res.status === 401 && retryNum > 0) {
-        await retrieveToken();
-        logout(retryNum - 1);
-      } else {
-        const data = await res.json();
-        notify.error("Error logging out: " + data.error);
-      }
+      const data = await res.json();
+      notify.error("Error logging out: " + data.error);
     }
 
     localStorage.removeItem("token");

@@ -21,6 +21,7 @@ import { ModeSelect } from "@/components/mode-select";
 import { LeaderboardDialog } from "./leaderboard-dialog";
 import { useHandleTimetrialGuess } from "@/hooks/handleTimetrialGuess";
 import { useHandleStartTimetrial } from "@/hooks/handleStartTimetrial";
+import { useNormalizeGenre } from "@/hooks/useNormalizeGenre";
 
 type Props = {
   mode: string;
@@ -47,6 +48,7 @@ export function TimetrialDrawer({
   const handleTimetrial = useHandleTimetrialGuess();
   const handleStartTimetrial = useHandleStartTimetrial();
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const normalizeGuess = useNormalizeGenre();
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen} modal={false}>
@@ -87,7 +89,12 @@ export function TimetrialDrawer({
               <Button
                 type="button"
                 onClick={() => {
-                  handleTimetrial(genre, setTimetrialStatus, setCountry);
+                  const normalized_genre = normalizeGuess(genre);
+                  handleTimetrial(
+                    normalized_genre,
+                    setTimetrialStatus,
+                    setCountry,
+                  );
                 }}
               >
                 Guess

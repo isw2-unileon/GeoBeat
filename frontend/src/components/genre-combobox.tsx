@@ -6,8 +6,7 @@ import {
   ComboboxItem,
   ComboboxContent,
 } from "@/components/ui/combobox";
-
-import { genres } from "@/data/constats";
+import { useGenres } from "@/context/GuessContext";
 
 type Porps = {
   genre: string | null;
@@ -15,8 +14,11 @@ type Porps = {
 };
 
 export function GenreCombobox({ genre, setGenre }: Porps) {
+  const { genres } = useGenres();
+  const genre_names = genres.map((g) => g.name);
+
   return (
-    <Combobox items={genres} value={genre} onValueChange={setGenre}>
+    <Combobox items={genre_names} value={genre} onValueChange={setGenre}>
       <ComboboxInput placeholder="Select a genre" />
       <ComboboxContent>
         <ComboboxEmpty>No genres available</ComboboxEmpty>
