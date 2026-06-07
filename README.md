@@ -30,7 +30,7 @@ Follow these steps to set up the complete development environment (Backend, Fron
 Download the source code and navigate to the project directory:
 ```bash
 git clone <REPOSITORY_URL>
-cd geobeat
+cd Geobeat
 ```
 
 ### 2. Install dependencies
@@ -55,7 +55,7 @@ ENV=development
 DATABASE_URL=postgresql://postgres:supersecret@localhost:5432/geobeat_local?sslmode=disable
 
 # Security & Authentication
-JWT_TOKEN=super_secret_local_token_change_in_production
+JWT_TOKEN=your_jwt_token
 GOOGLE_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_SECRET=your_google_oauth_secret
 REDIRECT_URL=http://localhost:8080/api/auth/login/callback/
