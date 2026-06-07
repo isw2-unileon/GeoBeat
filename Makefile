@@ -47,8 +47,7 @@ db-test-up:
 
 ## Stop and completely remove the test database
 db-test-down:
-	docker compose stop geobeat-test-db
-	docker compose rm -f geobeat-test-db
+	docker compose down geobeat-test-db -v
 
 ## Apply all up migrations
 migrate-test-up:
@@ -67,8 +66,7 @@ db-local-up:
 
 ## Stop the local development database
 db-local-down:
-	docker compose stop geobeat-test-db
-	docker compose rm -f geobeat-test-db
+	docker compose down geobeat-local-db -v
 
 ## Apply all up migrations to the LOCAL database
 migrate-local-up:
