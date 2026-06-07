@@ -177,6 +177,7 @@ function PasswordRequirements() {
           <li>More than 8 characters</li>
           <li>Has an uppercase letter</li>
           <li>Has a special character</li>
+          <li>Contains a number</li>
         </ul>
       </HoverCardContent>
     </HoverCard>
