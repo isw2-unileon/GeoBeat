@@ -41,10 +41,6 @@ export function TimeTrialModeMap({
     const source =
       countryISO !== COUNTRY.UNDEFINED ? countryISO : firstCountryISO;
 
-    console.log("Source: " + source);
-    console.log("First: " + firstCountryISO);
-    console.log("Second: " + countryISO);
-
     let country_data = {
       longitude: 0,
       latitude: 0,
