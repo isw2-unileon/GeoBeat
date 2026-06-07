@@ -39,6 +39,7 @@ export function DailyField({
           GeoBeat
         </FieldLegend>
         <FieldDescription>
+          <strong className="block">{mode}</strong>
           In daily mode you are given a country and have to guess the most
           popular song for it. Every mistake gives a hint in form of a song
         </FieldDescription>

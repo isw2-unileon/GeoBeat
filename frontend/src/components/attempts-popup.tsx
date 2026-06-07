@@ -1,5 +1,9 @@
 import { GameStatus, STATUS } from "@/types/gameTypes";
-import { useDailyGuess, useInverseGuess } from "@/context/GuessContext";
+import {
+  useDailyGuess,
+  useInverseGuess,
+  useTimetrialGuess,
+} from "@/context/GuessContext";
 import React, { useEffect, useRef, useState } from "react";
 
 type PopUpProps = {
@@ -12,9 +16,11 @@ export function PopUp({ status }: PopUpProps) {
 
   const { guess } = useDailyGuess();
   const { inverseGuess } = useInverseGuess();
+  const { timetrialGuess } = useTimetrialGuess();
 
   const prevGuessRef = useRef<number | null>(null);
   const prevInverseRef = useRef<number | null>(null);
+  const prevTimetrialRef = useRef<number | null>(null);
 
   // TODO discutir mejor método
   useEffect(() => {
@@ -24,6 +30,10 @@ export function PopUp({ status }: PopUpProps) {
   useEffect(() => {
     updateGuess(prevInverseRef, inverseGuess, setIsHidden);
   }, [inverseGuess]);
+
+  useEffect(() => {
+    updateGuess(prevTimetrialRef, timetrialGuess, setIsHidden);
+  }, [timetrialGuess]);
 
   return (
     !isHidden && (

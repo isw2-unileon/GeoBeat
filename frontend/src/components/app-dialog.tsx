@@ -146,7 +146,9 @@ function LoggedContent() {
       <Button
         type="button"
         variant={"destructive"}
-        onClick={(e) => logout(e, 1)}
+        onClick={() => {
+          logout(1);
+        }}
       >
         Log out
       </Button>

@@ -64,15 +64,15 @@ export async function getDaily(retryNum: number): Promise<Daily> {
 }
 
 export async function makeAttempt(
-  guess: string,
   retryNum: number,
+  guess: string,
 ): Promise<AttemptResult> {
   const token = localStorage.getItem("token");
 
   if (!token) {
     if (retryNum > 0) {
       await retrieveToken();
-      return makeAttempt(guess, retryNum - 1);
+      return makeAttempt(retryNum - 1, guess);
     }
     notify.error("Couldn't make attempt: missing token");
     return null;
@@ -95,7 +95,7 @@ export async function makeAttempt(
     if (!res.ok) {
       if (res.status === 401 && retryNum > 0) {
         await retrieveToken();
-        return makeAttempt(guess, retryNum - 1);
+        return makeAttempt(retryNum - 1, guess);
       } else {
         notify.error("Couldn't make attempt: " + data.error);
         return null;

@@ -1,6 +1,6 @@
 import { Map, MapLayerMouseEvent } from "@vis.gl/react-maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 type BaseGlobeProps = {
   onClick?: (event: MapLayerMouseEvent) => void;
@@ -21,13 +21,24 @@ export function BaseGlobe({
   longitude,
   latitude,
 }: BaseGlobeProps) {
+  const [viewState, setViewState] = useState({
+    longitude: longitude ?? DEFAULT_VIEW.longitude,
+    latitude: latitude ?? DEFAULT_VIEW.latitude,
+    zoom: DEFAULT_VIEW.zoom,
+  });
+
+  useEffect(() => {
+    setViewState((prev) => ({
+      ...prev,
+      longitude: longitude ?? DEFAULT_VIEW.longitude,
+      latitude: latitude ?? DEFAULT_VIEW.latitude,
+    }));
+  }, [longitude, latitude]);
+
   return (
     <Map
-      initialViewState={{
-        longitude: longitude ?? DEFAULT_VIEW.longitude,
-        latitude: latitude ?? DEFAULT_VIEW.latitude,
-        zoom: DEFAULT_VIEW.zoom,
-      }}
+      {...viewState}
+      onMove={(evt) => setViewState(evt.viewState)}
       style={{ width: "100vw", height: "100vh" }}
       projection={"globe"}
       mapStyle="https://tiles.openfreemap.org/styles/positron"

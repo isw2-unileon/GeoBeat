@@ -44,6 +44,7 @@ export function InverseDrawer({
         <DrawerHeader>
           <DrawerTitle className="text-xl">GeoBeat</DrawerTitle>
           <DrawerDescription className="max-w-xs mx-auto">
+            <strong className="block">{mode}</strong>
             In guess the country mode you are given a song and have to guess
             where that song is from, in this mode the are no hints!
           </DrawerDescription>

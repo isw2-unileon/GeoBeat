@@ -1,4 +1,4 @@
 import genres from "./genres.json";
 
-export const modes = ["daily", "inverse"] as const;
+export const modes = ["Daily", "Guess the country", "Time trial"] as const;
 export { genres };
