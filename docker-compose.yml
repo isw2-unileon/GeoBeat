@@ -1,4 +1,19 @@
+version: '3.8'
+
 services:
+  geobeat-local-db:
+    image: postgres:15-alpine
+    container_name: geobeat-local-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_DB: geobeat_local
+    ports:
+      - "5432:5432" 
+    volumes:
+      - pgdata_local:/var/lib/postgresql/data
+    restart: unless-stopped
+
   geobeat-test-db:
     image: postgres:15-alpine
     container_name: geobeat-test-db
@@ -7,7 +22,10 @@ services:
       POSTGRES_PASSWORD: supersecret
       POSTGRES_DB: geobeat_test
     ports:
-      - "5433:5432"
-    restart: unless-stopped
+      - "5433:5432" 
     tmpfs:
       - /var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata_local:

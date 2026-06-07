@@ -1,4 +1,5 @@
 TEST_DB_URL="postgresql://postgres:supersecret@localhost:5433/geobeat_test?sslmode=disable"
+LOCAL_DB_URL="postgresql://postgres:supersecret@localhost:5432/geobeat_local?sslmode=disable"
 MIGRATION_PATH="backend/internal/database/migrations"
 
 .PHONY: install run-backend run-frontend build-backend build-frontend test lint e2e db-test-up db-test-down migrate-up migrate-down migrate-reset
@@ -43,11 +44,11 @@ e2e:
 
 ## Start the test database in the background
 db-test-up:
-	docker-compose up -d
+	docker-compose up -d geobeat-test-db
 
 ## Stop and completely remove the test database
 db-test-down:
-	docker-compose down
+	docker-compose down geobeat-test-db
 
 ## Apply all up migrations
 migrate-up:
@@ -58,4 +59,24 @@ migrate-down:
 	migrate -path $(MIGRATION_PATH) -database $(TEST_DB_URL) down -all
 
 ## Nuke the database and rebuild it fresh
+migrate-reset: migrate-down migrate-up
+
+
+## Start the local development database
+db-local-up:
+	docker compose up -d geobeat-local-db
+
+## Stop the local development database
+db-local-down:
+	docker compose stop geobeat-local-db
+
+## Apply all up migrations to the LOCAL database
+migrate-up:
+	migrate -path $(MIGRATION_PATH) -database $(LOCAL_DB_URL) up
+
+## Rollback all migrations on the LOCAL database
+migrate-down:
+	migrate -path $(MIGRATION_PATH) -database $(LOCAL_DB_URL) down -all
+
+## Nuke the LOCAL database and rebuild it fresh
 migrate-reset: migrate-down migrate-up
