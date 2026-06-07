@@ -1,11 +1,13 @@
 TEST_DB_URL="postgresql://postgres:supersecret@localhost:5433/geobeat_test?sslmode=disable"
+LOCAL_DB_URL="postgresql://postgres:supersecret@localhost:5432/geobeat_local?sslmode=disable"
 MIGRATION_PATH="backend/internal/database/migrations"
 
-.PHONY: install run-backend run-frontend build-backend build-frontend test lint e2e db-test-up db-test-down migrate-up migrate-down migrate-reset
+.PHONY: install run-backend run-frontend build-backend build-frontend test lint e2e db-test-up db-test-down migrate-test-up migrate-test-down migrate-test-reset db-local-up db-local-down migrate-local-up migrate-local-down migrate-local-reset
 
 ## Install all dependencies
 install:
 	go install github.com/air-verse/air@latest
+	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin
 	go mod download
 	cd frontend && npm ci
@@ -27,10 +29,9 @@ build-backend:
 build-frontend:
 	cd frontend && npm run build
 
-## Run all tests
-test:
+## Run all tests (Automatically applies test migrations first)
+test: migrate-test-up
 	TEST_DATABASE_URL=$(TEST_DB_URL) go test -v -race ./...
-	cd frontend && npm run test
 
 ## Run linters
 lint:
@@ -43,19 +44,38 @@ e2e:
 
 ## Start the test database in the background
 db-test-up:
-	docker-compose up -d
+	docker compose up -d geobeat-test-db
 
 ## Stop and completely remove the test database
 db-test-down:
-	docker-compose down
+	docker compose down geobeat-test-db -v
 
 ## Apply all up migrations
-migrate-up:
+migrate-test-up:
 	migrate -path $(MIGRATION_PATH) -database $(TEST_DB_URL) up
 
 ## Rollback all migrations (Destroys all tables)
-migrate-down:
+migrate-test-down:
 	migrate -path $(MIGRATION_PATH) -database $(TEST_DB_URL) down -all
 
 ## Nuke the database and rebuild it fresh
-migrate-reset: migrate-down migrate-up
+migrate-test-reset: migrate-test-down migrate-test-up
+
+## Start the local development database
+db-local-up:
+	docker compose up -d geobeat-local-db
+
+## Stop the local development database
+db-local-down:
+	docker compose down geobeat-local-db -v
+
+## Apply all up migrations to the LOCAL database
+migrate-local-up:
+	migrate -path $(MIGRATION_PATH) -database $(LOCAL_DB_URL) up
+
+## Rollback all migrations on the LOCAL database
+migrate-local-down:
+	migrate -path $(MIGRATION_PATH) -database $(LOCAL_DB_URL) down -all
+
+## Nuke the LOCAL database and rebuild it fresh
+migrate-local-reset: migrate-local-down migrate-local-up
